@@ -81,7 +81,7 @@ export default function AuthenticationLoginPage() {
         button:disabled { opacity: .7; cursor: not-allowed; }
         .auth-alert { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; border-radius: 12px; padding: 12px; font-size: 14px; }
         .auth-inline { display: flex; justify-content: flex-start; margin: 2px 0 8px; }
-        .auth-link { color: #2563eb; text-decoration: none; font-size: 13px; font-weight: 600; }
+        .auth-link { color: #1e293b; text-decoration: none; font-size: 13px; font-weight: 600; }
         .auth-link:hover { text-decoration: underline; }
         .auth-actions { margin-top: 8px; display: flex; justify-content: flex-end; gap: 8px; }
         .ghost { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #e5e7eb; color: #111827; text-decoration: none; font-weight: 700; }

@@ -7,6 +7,7 @@ export type SidebarLink = {
   icon?: React.ReactNode;
   onClick?: () => void;
   badgeText?: string;
+  subItems?: SidebarLink[];
 };
 
 export type SidebarGroup = {

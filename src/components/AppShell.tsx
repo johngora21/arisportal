@@ -3,15 +3,32 @@ import React from 'react';
 import { Sidebar, type SidebarGroup } from '@/components';
 import {
   LayoutDashboard,
-  Rocket,
-  CircleDollarSign,
-  BriefcaseBusiness,
-  BookOpen,
-  Trophy,
   MessageSquare,
   Bell,
-  Landmark,
-  FolderPlus,
+  FileText,
+  Users,
+  Globe,
+  Wallet,
+  BarChart3,
+  ShieldCheck,
+  Telescope,
+  Handshake,
+  Megaphone,
+  UserCheck,
+  CreditCard,
+  FileCheck,
+  Award,
+  Wrench,
+  Settings,
+  Package,
+  Building,
+  MapPin,
+  Home,
+  Key,
+  FileText as FileTextIcon,
+  DollarSign,
+  Shield,
+  TrendingUp
 } from 'lucide-react';
 import { FaUserTie, FaSignOutAlt } from 'react-icons/fa';
 import { useRouter, usePathname } from 'next/navigation';
@@ -22,10 +39,13 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = React.useState<CurrentUser>(null);
+  const [isMobile, setIsMobile] = React.useState<boolean>(false);
   const API_BASE = '';
+  const AUTH_DISABLED = true; // temporarily disable auth enforcement
   const isAuthPage = pathname === '/authentication/login' || pathname?.startsWith('/authentication');
 
   React.useEffect(() => {
+    if (AUTH_DISABLED) return; // skip auth check entirely
     if (isAuthPage) return; // avoid fetching when on auth pages
     const load = async () => {
       try {
@@ -35,51 +55,102 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
           setUser(data?.data || null);
         } else {
           setUser(null);
-          if (pathname && pathname !== '/authentication/login') router.replace('/authentication/login');
+          if (pathname && pathname !== '/authentication/login') router.replace('/');
         }
       } catch {
         setUser(null);
-        if (pathname && pathname !== '/authentication/login') router.replace('/authentication/login');
+        if (pathname && pathname !== '/authentication/login') router.replace('/');
       }
     };
     load();
-  }, [pathname, router, isAuthPage, API_BASE]);
+  }, [pathname, router, isAuthPage, API_BASE, AUTH_DISABLED]);
+
+  React.useEffect(() => {
+    const update = () => setIsMobile(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   const items: SidebarGroup[] = React.useMemo(() => {
     const base = [
       { id: 'dashboard', label: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={20} /> },
-      { id: 'projects', label: 'Projects', href: '/projects', icon: <FolderPlus size={20} /> },
-      { id: 'crat', label: 'CRAT Tool', href: '/crat', icon: <BriefcaseBusiness size={20} /> },
-      { id: 'funding', label: 'Opportunities', href: '/opportunities', icon: <CircleDollarSign size={20} /> },
-      { id: 'entrepreneurs', label: 'Startups', href: '/entrepreneurs', icon: <Rocket size={20} /> },
-      { id: 'resources', label: 'Resources', href: '/resources', icon: <BookOpen size={20} /> },
-      { id: 'success', label: 'Success Stories', href: '/success-stories', icon: <Trophy size={20} /> },
+      { id: 'crm', label: 'CRM', href: '/crm', icon: <UserCheck size={20} /> },
+      { 
+        id: 'hr', 
+        label: 'HR', 
+        href: '/hr', 
+        icon: <FaUserTie size={20} />,
+        subItems: [
+          { id: 'hr-dashboard', label: 'Dashboard', href: '/hr', icon: <LayoutDashboard size={16} /> },
+          { id: 'hr-employees', label: 'Employees', href: '/hr/employees', icon: <Users size={16} /> },
+          { id: 'hr-payroll', label: 'Payroll', href: '/hr/modules', icon: <CreditCard size={16} /> },
+          { id: 'hr-reports', label: 'Reports', href: '/hr/reports', icon: <BarChart3 size={16} /> }
+        ]
+      },
+      { 
+        id: 'tenders', 
+        label: 'Tenders', 
+        href: '/tenders', 
+        icon: <FileText size={20} />,
+        subItems: [
+          { id: 'tenders-list', label: 'All Tenders', href: '/tenders', icon: <FileText size={16} /> },
+          { id: 'tenders-tools', label: 'Tender Tools', href: '/tenders/tools', icon: <Wrench size={16} /> }
+        ]
+      },
+      { 
+        id: 'finance', 
+        label: 'Finance', 
+        href: '/finance', 
+        icon: <Wallet size={20} />,
+        subItems: [
+          { id: 'finance-module', label: 'Payments', href: '/finance', icon: <CreditCard size={16} /> },
+          { id: 'audit-module', label: 'Audit', href: '/finance/audit', icon: <FileCheck size={16} /> }
+        ]
+      },
+      { id: 'marketing', label: 'Marketing', href: '/marketing', icon: <Megaphone size={20} /> },
+      { id: 'inventory', label: 'Inventory', href: '/inventory', icon: <Package size={20} /> },
+      { 
+        id: 'departments', 
+        label: 'Departments', 
+        href: '/departments', 
+        icon: <Building size={20} />,
+        subItems: [
+          { id: 'departments-list', label: 'All Departments', href: '/departments', icon: <Building size={16} /> },
+          { id: 'branches-list', label: 'Branches', href: '/departments/branches', icon: <MapPin size={16} /> }
+        ]
+      },
+      { id: 'assets', label: 'Assets', href: '/assets', icon: <Home size={20} /> },
+      { id: 'portfolios', label: 'Portifolio', href: '/portfolios', icon: <Globe size={20} /> },
+      { id: 'compliance', label: 'Compliance & Security', href: '/compliance', icon: <ShieldCheck size={20} /> },
+      { id: 'settings', label: 'Settings', href: '/settings', icon: <Settings size={20} /> },
     ];
-    const role = user?.role;
-    if (role === 'admin') {
-      base.splice(5, 0, { id: 'mentors', label: 'Mentors', href: '/mentors', icon: <FaUserTie size={20} /> });
-      base.splice(6, 0, { id: 'investors', label: 'Investors', href: '/investors', icon: <Landmark size={20} /> });
-      base.splice(7, 0, { id: 'investments', label: 'Investments', href: '/investments', icon: <CircleDollarSign size={20} /> });
-      base.splice(8, 0, { id: 'reviews', label: 'Project Reviews', href: '/reviews', icon: <BriefcaseBusiness size={20} /> });
-      base.splice(9, 0, { id: 'admin-system', label: 'Admin System', href: '/admin', icon: <Landmark size={20} /> });
-    } else if (role === 'mentor') {
-      base.splice(5, 0, { id: 'mentors', label: 'Mentors', href: '/mentors', icon: <FaUserTie size={20} /> });
-      base.splice(6, 0, { id: 'reviews', label: 'Project Reviews', href: '/reviews', icon: <BriefcaseBusiness size={20} /> });
-    } else if (role === 'investor') {
-      base.splice(5, 0, { id: 'investors', label: 'Investors', href: '/investors', icon: <Landmark size={20} /> });
-      base.splice(6, 0, { id: 'investments', label: 'Investments', href: '/investments', icon: <CircleDollarSign size={20} /> });
-    }
     return [{ id: 'main', items: base }];
-  }, [user]);
+  }, []);
 
   if (isAuthPage) {
     return <>{children}</>;
   }
 
+  if (isMobile) {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        minHeight: '100vh', background: '#0f172a', color: '#e2e8f0',
+        textAlign: 'center', padding: 24
+      }}>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Mobile Not Supported</div>
+          <div style={{ opacity: 0.9 }}>Please use a desktop or tablet to access this application.</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Sidebar
-      productName="merit capital"
-      logo={<div className="mc-logo">MC</div>}
+      productName="meritportal"
+      logo={<div className="mc-logo">MG</div>}
       items={items}
       initialCollapsed={false}
       onNavigate={(href) => { if (href !== pathname) router.push(href); }}
@@ -88,7 +159,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       header={{
         actions: (
           <>
-            <button className="mc-icon-btn" aria-label="Chats" onClick={() => router.push('/chats')}>
+            <button className="mc-icon-btn" aria-label="Chats" onClick={() => router.push('/communications')}>
               <MessageSquare size={18} />
             </button>
             <button className="mc-icon-btn" aria-label="Notifications">
@@ -111,5 +182,3 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
 };
 
 export default AppShell;
-
-
