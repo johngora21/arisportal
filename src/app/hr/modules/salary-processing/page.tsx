@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { 
   DollarSign, Calculator, Users, Calendar, Plus, Search, Filter,
   Edit, Eye, Download, ArrowLeft, CheckCircle, AlertCircle, Clock
@@ -151,8 +151,9 @@ export default function SalaryProcessingPage() {
             </select>
           </div>
         </div>
+      </div>
           
-          <div style={{ display: 'flex', gap: '12px' }}>
+      <div style={{ display: 'flex', gap: '12px' }}>
             <button
               style={{
                 display: 'flex',
@@ -394,3 +395,6 @@ export default function SalaryProcessingPage() {
     </div>
   );
 }
+
+
+

@@ -1,99 +1,163 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
-  CreditCard, 
-  Wallet, 
-  ArrowUpRight,
-  ArrowDownLeft,
-  Plus
+  Search, 
+  Plus, 
+  Filter, 
+  MoreVertical,
+  TrendingUp,
+  DollarSign,
+  AlertTriangle,
+  Clock,
+  FileText,
+  Shield,
+  Eye,
+  Edit,
+  Trash2
 } from 'lucide-react';
 
-export default function FinancePage() {
+export default function FinanceDashboardPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+
   return (
     <div style={{ padding: '24px', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <div>
-            <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', margin: '0 0 8px 0' }}>
-              Finance Hub
+        <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1f2937', margin: 0 }}>
+          Finance Dashboard
             </h1>
-            <p style={{ fontSize: '16px', color: '#6b7280', margin: 0 }}>
-              Manage financial operations, payments, disbursements, and transactions
+        <p style={{ fontSize: '16px', color: '#6b7280', margin: '8px 0 0 0' }}>
+          Overview of cashflow, pending collections, invoices, and escrow
             </p>
           </div>
-          <button
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '12px 24px',
-              backgroundColor: '#0f172a',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-            }}
-          >
-            <Plus size={20} />
-            New Payment
-          </button>
-        </div>
+
+
 
         {/* Stats Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <ArrowUpRight size={20} color="#10b981" />
-              <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Collections</span>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+        gap: '24px', 
+        marginBottom: '32px' 
+      }}>
+        <div style={{ 
+          backgroundColor: 'white', 
+          borderRadius: '12px', 
+          padding: '24px',
+          border: '1px solid #e5e7eb',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ 
+              width: '48px', 
+              height: '48px', 
+              backgroundColor: '#f9fafb', 
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <DollarSign size={24} color="#0f172a" />
             </div>
-            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              $25,000
-            </div>
+            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>TZS 2.4M</div>
           </div>
-
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <ArrowDownLeft size={20} color="#ef4444" />
-              <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Disbursements</span>
-            </div>
-            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              $12,500
-            </div>
+          <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>
+            Total Cashflow
           </div>
-
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <Wallet size={20} color="#0f172a" />
-              <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Wallet Balance</span>
-            </div>
-            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              $12,500
-            </div>
-          </div>
-
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <CreditCard size={20} color="#8b5cf6" />
-              <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Active Methods</span>
-            </div>
-            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              3
-            </div>
+          <div style={{ fontSize: '12px', color: '#6b7280' }}>
+            +12% from last month
           </div>
         </div>
-      </div>
 
-      {/* Content Placeholder */}
-      <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '40px', textAlign: 'center' }}>
-        <CreditCard size={48} style={{ marginBottom: '16px', opacity: 0.5, color: '#6b7280' }} />
-        <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#374151', margin: '0 0 8px 0' }}>Payment Processing</h3>
-        <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>Full payment processing interface coming soon...</p>
-      </div>
+        <div style={{ 
+          backgroundColor: 'white', 
+          borderRadius: '12px', 
+          padding: '24px',
+          border: '1px solid #e5e7eb',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ 
+              width: '48px', 
+              height: '48px', 
+              backgroundColor: '#f9fafb', 
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Clock size={24} color="#f59e0b" />
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>TZS 850K</div>
+          </div>
+          <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>
+            Pending Collections
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280' }}>
+            5 invoices pending
+          </div>
+        </div>
+
+        <div style={{ 
+          backgroundColor: 'white', 
+          borderRadius: '12px', 
+          padding: '24px',
+          border: '1px solid #e5e7eb',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ 
+              width: '48px', 
+              height: '48px', 
+              backgroundColor: '#f9fafb', 
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <FileText size={24} color="#10b981" />
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>23</div>
+          </div>
+          <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>
+            Active Invoices
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280' }}>
+            18 paid, 5 pending
+          </div>
+        </div>
+
+        <div style={{ 
+          backgroundColor: 'white', 
+          borderRadius: '12px', 
+          padding: '24px',
+          border: '1px solid #e5e7eb',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ 
+              width: '48px', 
+              height: '48px', 
+              backgroundColor: '#f3e8ff', 
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Shield size={24} color="#8b5cf6" />
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>TZS 1.2M</div>
+          </div>
+          <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>
+            Escrow Funds
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280' }}>
+            3 active accounts
+          </div>
+            </div>
+          </div>
+
     </div>
   );
 }

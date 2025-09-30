@@ -17,6 +17,7 @@ import {
   UserCheck,
   CreditCard,
   FileCheck,
+  Banknote,
   Award,
   Wrench,
   Settings,
@@ -28,8 +29,12 @@ import {
   FileText as FileTextIcon,
   DollarSign,
   Shield,
-  TrendingUp
+  TrendingUp,
+  Briefcase,
+  Warehouse,
+  SearchCheck
 } from 'lucide-react';
+import { Database } from 'lucide-react';
 import { FaUserTie, FaSignOutAlt } from 'react-icons/fa';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -75,52 +80,66 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const items: SidebarGroup[] = React.useMemo(() => {
     const base = [
       { id: 'dashboard', label: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={20} /> },
-      { id: 'crm', label: 'CRM', href: '/crm', icon: <UserCheck size={20} /> },
-      { 
-        id: 'hr', 
-        label: 'HR', 
-        href: '/hr', 
-        icon: <FaUserTie size={20} />,
-        subItems: [
-          { id: 'hr-dashboard', label: 'Dashboard', href: '/hr', icon: <LayoutDashboard size={16} /> },
-          { id: 'hr-employees', label: 'Employees', href: '/hr/employees', icon: <Users size={16} /> },
-          { id: 'hr-payroll', label: 'Payroll', href: '/hr/modules', icon: <CreditCard size={16} /> },
-          { id: 'hr-reports', label: 'Reports', href: '/hr/reports', icon: <BarChart3 size={16} /> }
-        ]
-      },
-      { 
-        id: 'tenders', 
-        label: 'Tenders', 
-        href: '/tenders', 
-        icon: <FileText size={20} />,
-        subItems: [
-          { id: 'tenders-list', label: 'All Tenders', href: '/tenders', icon: <FileText size={16} /> },
-          { id: 'tenders-tools', label: 'Tender Tools', href: '/tenders/tools', icon: <Wrench size={16} /> }
-        ]
-      },
       { 
         id: 'finance', 
         label: 'Finance', 
         href: '/finance', 
         icon: <Wallet size={20} />,
         subItems: [
-          { id: 'finance-module', label: 'Payments', href: '/finance', icon: <CreditCard size={16} /> },
-          { id: 'audit-module', label: 'Audit', href: '/finance/audit', icon: <FileCheck size={16} /> }
+          { id: 'finance-transactions', label: 'Transactions', href: '/finance/transactions', icon: <CreditCard size={16} /> },
+          { id: 'finance-wallet', label: 'My Wallet', href: '/finance/wallets', icon: <Wallet size={16} /> },
+          { id: 'finance-invoicing', label: 'Invoicing', href: '/finance/invoicing', icon: <FileText size={16} /> },
+          { id: 'finance-escrow', label: 'Escrow', href: '/finance/escrow', icon: <Shield size={16} /> },
+          { id: 'finance-insurance', label: 'Insurance', href: '/finance/insurance', icon: <ShieldCheck size={16} /> },
+          { id: 'finance-loans', label: 'Loans', href: '/finance/loans', icon: <Banknote size={16} /> },
+          { id: 'finance-audit', label: 'Audit', href: '/finance/audit', icon: <SearchCheck size={16} /> }
         ]
       },
+      { id: 'crm', label: 'CRM', href: '/crm', icon: <UserCheck size={20} /> },
+      // { 
+      //   id: 'hr', 
+      //   label: 'HR', 
+      //   href: '/hr', 
+      //   icon: <FaUserTie size={20} />,
+      //   subItems: [
+      //     { id: 'hr-dashboard', label: 'Overview', href: '/hr', icon: <LayoutDashboard size={16} /> },
+      //     { id: 'hr-employees', label: 'Employees', href: '/hr/employees', icon: <Users size={16} /> },
+      //     { id: 'hr-payroll', label: 'Payroll', href: '/hr/modules', icon: <CreditCard size={16} /> },
+      //     { id: 'hr-reports', label: 'Reports', href: '/hr/reports', icon: <BarChart3 size={16} /> }
+      //   ]
+      // },
+      // { 
+      //   id: 'departments', 
+      //   label: 'Departments', 
+      //   href: '/departments', 
+      //   icon: <Users size={20} />,
+      //   subItems: [
+      //     { id: 'departments-list', label: 'Departments', href: '/departments', icon: <Users size={16} /> },
+      //     { id: 'branches-list', label: 'Branches', href: '/departments/branches', icon: <MapPin size={16} /> }
+      //   ]
+      // },
       { id: 'marketing', label: 'Marketing', href: '/marketing', icon: <Megaphone size={20} /> },
-      { id: 'inventory', label: 'Inventory', href: '/inventory', icon: <Package size={20} /> },
+      // { 
+      //   id: 'tenders', 
+      //   label: 'Tenders', 
+      //   href: '/tenders', 
+      //   icon: <Briefcase size={20} />,
+      //   subItems: [
+      //     { id: 'tenders-list', label: 'All Tenders', href: '/tenders', icon: <Briefcase size={16} /> },
+      //     { id: 'tenders-tools', label: 'Tender Tools', href: '/tenders/tools', icon: <Wrench size={16} /> }
+      //   ]
+      // },
       { 
-        id: 'departments', 
-        label: 'Departments', 
-        href: '/departments', 
-        icon: <Building size={20} />,
+        id: 'inventory', 
+        label: 'Inventory', 
+        href: '/inventory', 
+        icon: <Package size={20} />,
         subItems: [
-          { id: 'departments-list', label: 'All Departments', href: '/departments', icon: <Building size={16} /> },
-          { id: 'branches-list', label: 'Branches', href: '/departments/branches', icon: <MapPin size={16} /> }
+          { id: 'inventory-home', label: 'Inventories', href: '/inventory', icon: <Package size={16} /> },
+          { id: 'inventory-modules', label: 'Modules', href: '/inventory/modules', icon: <Database size={16} /> }
         ]
       },
-      { id: 'assets', label: 'Assets', href: '/assets', icon: <Home size={20} /> },
+      { id: 'real-estates', label: 'Real Estates', href: '/real-estates', icon: <Building size={20} /> },
       { id: 'portfolios', label: 'Portifolio', href: '/portfolios', icon: <Globe size={20} /> },
       { id: 'compliance', label: 'Compliance & Security', href: '/compliance', icon: <ShieldCheck size={20} /> },
       { id: 'settings', label: 'Settings', href: '/settings', icon: <Settings size={20} /> },

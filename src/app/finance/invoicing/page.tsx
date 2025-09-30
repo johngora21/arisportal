@@ -6,18 +6,18 @@ import {
   Plus, 
   Filter, 
   MoreVertical,
-  Shield,
+  FileText,
   Download,
   Clock,
   RefreshCw,
   Eye,
   Edit,
   Trash2,
-  Lock,
-  LockOpen
+  Clipboard,
+  File
 } from 'lucide-react';
 
-export default function EscrowPage() {
+export default function InvoicingPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -26,10 +26,10 @@ export default function EscrowPage() {
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>
         <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1f2937', margin: 0 }}>
-          Escrow
+          Invoicing
         </h1>
         <p style={{ fontSize: '16px', color: '#6b7280', margin: '8px 0 0 0' }}>
-          Create and manage escrow accounts for contracts, sales, or services
+          Create invoices, track payments, and manage collections
         </p>
       </div>
 
@@ -58,7 +58,7 @@ export default function EscrowPage() {
           />
           <input
             type="text"
-            placeholder="Search escrow accounts..."
+            placeholder="Search invoices..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -89,10 +89,10 @@ export default function EscrowPage() {
             }}
           >
             <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="pending">Pending Release</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="draft">Draft</option>
+            <option value="sent">Sent</option>
+            <option value="paid">Paid</option>
+            <option value="overdue">Overdue</option>
           </select>
         </div>
         
@@ -110,7 +110,7 @@ export default function EscrowPage() {
           gap: '8px'
         }}>
           <Plus size={16} />
-          Create Escrow
+          Create Invoice
         </button>
       </div>
 
@@ -144,7 +144,7 @@ export default function EscrowPage() {
             }}
           >
             <Plus size={16} />
-            Create Escrow
+            Create Invoice
           </button>
           <button
             style={{
@@ -163,8 +163,8 @@ export default function EscrowPage() {
               gap: '8px'
             }}
           >
-            <Eye size={16} />
-            Monitor Funds
+            <File size={16} />
+            Templates
           </button>
           <button
             style={{
@@ -183,8 +183,8 @@ export default function EscrowPage() {
               gap: '8px'
             }}
           >
-            <LockOpen size={16} />
-            Release Funds
+            <Clipboard size={16} />
+            Invoice Reports
           </button>
           <button
             style={{
@@ -203,13 +203,13 @@ export default function EscrowPage() {
               gap: '8px'
             }}
           >
-            <RefreshCw size={16} />
-            Auto Release
+            <Download size={16} />
+            Export Data
           </button>
         </div>
       </div>
 
-      {/* Escrow Stats */}
+      {/* Invoice Status */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
@@ -225,10 +225,10 @@ export default function EscrowPage() {
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '24px', marginBottom: '8px' }}>
-            <Lock size={24} color="#0f172a" />
+            <FileText size={24} color="#0f172a" />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>3</div>
-          <div style={{ fontSize: '14px', color: '#6b7280' }}>Active Accounts</div>
+          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>23</div>
+          <div style={{ fontSize: '14px', color: '#6b7280' }}>Total Invoices</div>
         </div>
         <div style={{ 
           backgroundColor: 'white', 
@@ -241,8 +241,8 @@ export default function EscrowPage() {
           <div style={{ fontSize: '24px', marginBottom: '8px' }}>
             <Download size={24} color="#10b981" />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>TZS 1.2M</div>
-          <div style={{ fontSize: '14px', color: '#6b7280' }}>Total Funds</div>
+          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>18</div>
+          <div style={{ fontSize: '14px', color: '#6b7280' }}>Paid</div>
         </div>
         <div style={{ 
           backgroundColor: 'white', 
@@ -255,8 +255,8 @@ export default function EscrowPage() {
           <div style={{ fontSize: '24px', marginBottom: '8px' }}>
             <Clock size={24} color="#f59e0b" />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>2</div>
-          <div style={{ fontSize: '14px', color: '#6b7280' }}>Pending Release</div>
+          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>5</div>
+          <div style={{ fontSize: '14px', color: '#6b7280' }}>Pending</div>
         </div>
         <div style={{ 
           backgroundColor: 'white', 
@@ -267,14 +267,14 @@ export default function EscrowPage() {
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '24px', marginBottom: '8px' }}>
-            <LockOpen size={24} color="#10b981" />
+            <RefreshCw size={24} color="#ef4444" />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>12</div>
-          <div style={{ fontSize: '14px', color: '#6b7280' }}>Completed</div>
+          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>0</div>
+          <div style={{ fontSize: '14px', color: '#6b7280' }}>Overdue</div>
         </div>
       </div>
 
-      {/* Escrow Accounts */}
+      {/* Invoice List */}
       <div style={{ 
         backgroundColor: 'white', 
         borderRadius: '12px', 
@@ -283,10 +283,10 @@ export default function EscrowPage() {
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
       }}>
         <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
-          Active Escrow Accounts
+          Recent Invoices
         </h3>
         <div style={{ fontSize: '14px', color: '#6b7280', textAlign: 'center', padding: '40px' }}>
-          Escrow account management features will be implemented here
+          Invoice list and management features will be implemented here
         </div>
       </div>
     </div>

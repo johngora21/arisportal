@@ -452,11 +452,6 @@ export default function InventoryPage() {
 
       {/* Inventory Table */}
       <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-        <div style={{ padding: '24px', borderBottom: '1px solid #e5e7eb' }}>
-          <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-            Inventory Items ({filteredItems.length})
-          </h3>
-        </div>
         
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -871,6 +866,184 @@ export default function InventoryPage() {
               >
                 {formLoading ? 'Adding...' : 'Add Item'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Outgoings Modal */}
+      {showOutgoings && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            width: 'min(560px, 90vw)',
+            maxHeight: '90vh',
+            borderRadius: '12px',
+            padding: '28px',
+            overflowY: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '22px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
+                Update Outgoings
+              </h2>
+              <button
+                onClick={() => setShowOutgoings(false)}
+                style={{
+                  padding: '8px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  color: '#6b7280'
+                }}
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+                  Item
+                </label>
+                <select
+                  value={outgoingsForm.itemId}
+                  onChange={(e) => setOutgoingsForm(prev => ({ ...prev, itemId: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    backgroundColor: 'white'
+                  }}
+                >
+                  <option value="">Select item</option>
+                  {inventoryItems.map(i => (
+                    <option key={i.id} value={i.id}>{i.name} — {i.sku}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+                    Quantity
+                  </label>
+                  <input
+                    type="number"
+                    value={outgoingsForm.quantity}
+                    onChange={(e) => setOutgoingsForm(prev => ({ ...prev, quantity: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+                    Destination
+                  </label>
+                  <input
+                    type="text"
+                    value={outgoingsForm.destination}
+                    onChange={(e) => setOutgoingsForm(prev => ({ ...prev, destination: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+                  Reason
+                </label>
+                <input
+                  type="text"
+                  value={outgoingsForm.reason}
+                  onChange={(e) => setOutgoingsForm(prev => ({ ...prev, reason: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+                  Notes
+                </label>
+                <textarea
+                  rows={3}
+                  value={outgoingsForm.notes}
+                  onChange={(e) => setOutgoingsForm(prev => ({ ...prev, notes: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                <button
+                  onClick={() => setShowOutgoings(false)}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: 'transparent',
+                    color: '#6b7280',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={outgoingsLoading || !outgoingsForm.itemId || !outgoingsForm.quantity}
+                  onClick={() => setShowOutgoings(false)}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#0f172a',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: outgoingsLoading ? 'not-allowed' : 'pointer',
+                    opacity: outgoingsLoading ? 0.6 : 1
+                  }}
+                >
+                  {outgoingsLoading ? 'Updating...' : 'Save'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -2908,6 +2908,8 @@ body { font-family: 'Poppins', sans-serif; }
   flex: 1;
   overflow-y: auto;
   padding: 16px; /* iris nav padding */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
 }
 
 .mc-nav-group { margin-bottom: 12px; }
@@ -3004,10 +3006,8 @@ body { font-family: 'Poppins', sans-serif; }
 
 .mc-w-full { width: 100%; }
 
-/* Compact scrollbar */
-.mc-sidebar__nav::-webkit-scrollbar { width: 8px; }
-.mc-sidebar__nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 8px; }
-.mc-sidebar__nav::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+/* Hide sidebar scrollbar */
+.mc-sidebar__nav::-webkit-scrollbar { display: none; }
 
 /* Team Member Buttons */
 .startup-form-add-team-btn {

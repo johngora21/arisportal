@@ -2,482 +2,565 @@
 
 import React, { useState } from 'react';
 import { 
-  Upload, 
   FileText, 
+  Upload, 
+  Search, 
+  Download, 
+  CheckCircle, 
+  AlertCircle, 
   BarChart3, 
   TrendingUp, 
-  AlertCircle, 
-  CheckCircle, 
-  Download,
-  Eye,
-  Filter,
-  Search,
-  Calendar,
+  PieChart,
   DollarSign,
-  Receipt,
   Building,
-  PieChart
+  Users,
+  Shield,
+  Eye,
+  Plus, 
+  Filter, 
+  Calendar,
+  Clock,
+  Target,
+  Award,
+  Zap
 } from 'lucide-react';
 
-interface Document {
-  id: string;
-  name: string;
-  type: 'receipt' | 'invoice' | 'statement' | 'transaction';
-  date: string;
-  amount: number;
-  status: 'pending' | 'processed' | 'error';
-  uploadedAt: string;
-}
-
-interface FinancialStatement {
-  id: string;
-  name: string;
-  period: string;
-  generatedAt: string;
-  status: 'ready' | 'processing' | 'error';
-}
-
-const mockDocuments: Document[] = [
-  {
-    id: '1',
-    name: 'Q3 Bank Statement.pdf',
-    type: 'statement',
-    date: '2024-09-30',
-    amount: 125000,
-    status: 'processed',
-    uploadedAt: '2024-10-01'
-  },
-  {
-    id: '2',
-    name: 'Office Rent Receipt.pdf',
-    type: 'receipt',
-    date: '2024-10-01',
-    amount: 5000,
-    status: 'processed',
-    uploadedAt: '2024-10-02'
-  },
-  {
-    id: '3',
-    name: 'Client Invoice #1234.pdf',
-    type: 'invoice',
-    date: '2024-10-05',
-    amount: 15000,
-    status: 'pending',
-    uploadedAt: '2024-10-06'
-  },
-  {
-    id: '4',
-    name: 'Vendor Payment Receipt.pdf',
-    type: 'receipt',
-    date: '2024-10-08',
-    amount: 2500,
-    status: 'error',
-    uploadedAt: '2024-10-09'
-  }
-];
-
-const mockStatements: FinancialStatement[] = [
-  {
-    id: '1',
-    name: 'Income Statement Q3 2024',
-    period: 'Q3 2024',
-    generatedAt: '2024-10-01',
-    status: 'ready'
-  },
-  {
-    id: '2',
-    name: 'Balance Sheet Q3 2024',
-    period: 'Q3 2024',
-    generatedAt: '2024-10-01',
-    status: 'ready'
-  },
-  {
-    id: '3',
-    name: 'Cash Flow Statement Q3 2024',
-    period: 'Q3 2024',
-    generatedAt: '2024-10-01',
-    status: 'processing'
-  }
-];
-
 export default function AuditPage() {
-  const [activeTab, setActiveTab] = useState<'documents' | 'statements' | 'analysis'>('documents');
+  const [activeTab, setActiveTab] = useState('overview');
+  const [auditSubTab, setAuditSubTab] = useState('documents');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<string>('all');
+  const [filterType, setFilterType] = useState('all');
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
-  const filteredDocuments = mockDocuments.filter(doc => {
-    const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterType === 'all' || doc.type === filterType;
-    return matchesSearch && matchesFilter;
-  });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'processed': return { color: '#10b981', bg: '#d1fae5' };
-      case 'pending': return { color: '#f59e0b', bg: '#fef3c7' };
-      case 'error': return { color: '#ef4444', bg: '#fee2e2' };
-      default: return { color: '#6b7280', bg: '#f3f4f6' };
-    }
+  // Mock self-audit data
+  const auditStats = {
+    totalAudits: 8,
+    activeAudits: 2,
+    completedAudits: 6,
+    totalValueAudited: 1500000000, // 1.5B TZS
+    averageAuditTime: '3 days',
+    complianceRate: 96.2,
+    costSavings: 25000000 // 25M TZS saved vs traditional firms
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'receipt': return <Receipt size={16} />;
-      case 'invoice': return <FileText size={16} />;
-      case 'statement': return <Building size={16} />;
-      case 'transaction': return <DollarSign size={16} />;
-      default: return <FileText size={16} />;
+  const clients = [
+  {
+    id: '1',
+      name: 'ABC Trading Company',
+      type: 'retail',
+      status: 'active',
+      auditProgress: 75,
+      lastAudit: '2024-01-15',
+      nextAudit: '2024-04-15',
+      valueAudited: 150000000,
+      complianceScore: 92
+  },
+  {
+    id: '2',
+      name: 'XYZ Manufacturing Ltd',
+      type: 'manufacturing',
+      status: 'completed',
+      auditProgress: 100,
+      lastAudit: '2024-01-10',
+      nextAudit: '2024-07-10',
+      valueAudited: 300000000,
+      complianceScore: 96
+  },
+  {
+    id: '3',
+      name: 'City Real Estate Group',
+      type: 'real-estate',
+    status: 'pending',
+      auditProgress: 0,
+      lastAudit: '2023-12-20',
+      nextAudit: '2024-02-20',
+      valueAudited: 500000000,
+      complianceScore: 88
     }
-  };
+  ];
 
-  return (
-    <div style={{ padding: '24px', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
-      {/* Header */}
-      <div style={{ marginBottom: '32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+  const auditServices = [
+  {
+    id: '1',
+      title: 'Financial Statement Audit',
+      description: 'Comprehensive review of financial statements for accuracy and compliance',
+      price: 'From 500,000 TZS',
+      duration: '7-14 days',
+      features: ['Balance Sheet Review', 'Income Statement Analysis', 'Cash Flow Verification', 'Compliance Check'],
+      icon: <BarChart3 size={24} />
+  },
+  {
+    id: '2',
+      title: 'Tax Compliance Audit',
+      description: 'Review tax returns and ensure compliance with Tanzanian tax regulations',
+      price: 'From 300,000 TZS',
+      duration: '5-10 days',
+      features: ['Tax Return Review', 'Deduction Verification', 'Compliance Assessment', 'Penalty Avoidance'],
+      icon: <FileText size={24} />
+  },
+  {
+    id: '3',
+      title: 'Inventory Audit',
+      description: 'Physical count and valuation of inventory assets',
+      price: 'From 200,000 TZS',
+      duration: '3-7 days',
+      features: ['Physical Count', 'Valuation Check', 'Discrepancy Analysis', 'Stock Management'],
+      icon: <Building size={24} />
+    },
+    {
+      id: '4',
+      title: 'Internal Controls Review',
+      description: 'Assessment of internal control systems and risk management',
+      price: 'From 400,000 TZS',
+      duration: '10-15 days',
+      features: ['Control Testing', 'Risk Assessment', 'Process Review', 'Recommendations'],
+      icon: <Shield size={24} />
+    },
+    {
+      id: '5',
+      title: 'Payroll Audit',
+      description: 'Review of payroll processes and employee compensation',
+      price: 'From 150,000 TZS',
+      duration: '3-5 days',
+      features: ['Payroll Verification', 'Tax Deduction Check', 'Benefits Review', 'Compliance Check'],
+      icon: <Users size={24} />
+    },
+    {
+      id: '6',
+      title: 'Due Diligence Audit',
+      description: 'Comprehensive business evaluation for acquisitions or investments',
+      price: 'From 1,000,000 TZS',
+      duration: '15-30 days',
+      features: ['Financial Analysis', 'Asset Valuation', 'Risk Assessment', 'Investment Report'],
+      icon: <Target size={24} />
+    }
+  ];
+
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: <TrendingUp size={16} /> },
+    { id: 'my-audits', label: 'My Audits', icon: <FileText size={16} /> },
+    { id: 'tools', label: 'Audit Tools', icon: <Award size={16} /> },
+    { id: 'documents', label: 'Documents', icon: <FileText size={16} /> },
+    { id: 'reports', label: 'Reports', icon: <BarChart3 size={16} /> }
+  ];
+
+  const renderOverview = () => (
           <div>
-            <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', margin: '0 0 8px 0' }}>
-              Financial Audit & Intelligence
-            </h1>
-            <p style={{ fontSize: '16px', color: '#6b7280', margin: 0 }}>
-              Upload documents, generate financial statements, and get AI-powered business insights
-            </p>
-          </div>
-          <button
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '12px 24px',
-              backgroundColor: '#0f172a',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-            }}
-          >
-            <Upload size={20} />
-            Upload Documents
-          </button>
-        </div>
-
         {/* Stats Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <FileText size={20} color="#0f172a" />
-              <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Documents</span>
-            </div>
-            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              {mockDocuments.length}
-            </div>
-          </div>
-
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <CheckCircle size={20} color="#10b981" />
-              <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Processed</span>
-            </div>
-            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              {mockDocuments.filter(d => d.status === 'processed').length}
-            </div>
-          </div>
-
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <BarChart3 size={20} color="#f59e0b" />
-              <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Statements</span>
-            </div>
-            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              {mockStatements.length}
-            </div>
-          </div>
-
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <DollarSign size={20} color="#8b5cf6" />
-              <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Value</span>
-            </div>
-            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              ${mockDocuments.reduce((sum, d) => sum + d.amount, 0).toLocaleString()}
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-          {[
-            { id: 'documents', label: 'Documents', icon: <FileText size={16} /> },
-            { id: 'statements', label: 'Financial Statements', icon: <BarChart3 size={16} /> },
-            { id: 'analysis', label: 'AI Analysis', icon: <TrendingUp size={16} /> }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '12px 20px',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                backgroundColor: activeTab === tab.id ? '#0f172a' : 'white',
-                color: activeTab === tab.id ? 'white' : '#6b7280',
-                boxShadow: activeTab === tab.id ? '0 2px 4px rgba(59, 130, 246, 0.3)' : '0 1px 3px rgba(0,0,0,0.1)'
-              }}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Filters */}
-        {activeTab === 'documents' && (
           <div style={{
-            position: 'relative',
-            height: '40px',
-            marginBottom: '24px'
-          }}>
-            {/* Search Bar - positioned from right */}
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+        gap: '24px',
+        marginBottom: '32px'
+      }}>
             <div style={{ 
-              position: 'absolute',
-              right: '290px',
-              top: '0px',
-              width: '400px'
-            }}>
-              <Search style={{
-                position: 'absolute',
-                left: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: '#9ca3af',
-                width: '16px',
-                height: '20px'
-              }} />
-              <input
-                type="text"
-                placeholder="Search documents..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%',
-                  paddingLeft: '40px',
-                  paddingRight: '16px',
-                  paddingTop: '12px',
-                  paddingBottom: '12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '20px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-            
-            {/* Type Filter - positioned from right */}
-            <div style={{
-              position: 'absolute',
-              right: '50px',
-              top: '0px'
-            }}>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                style={{
-                  padding: '12px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '20px',
-                  fontSize: '14px',
-                  background: 'white',
-                  width: '180px'
-                }}
-              >
-                <option value="all">All Types</option>
-                <option value="receipt">Receipts</option>
-                <option value="invoice">Invoices</option>
-                <option value="statement">Statements</option>
-                <option value="transaction">Transactions</option>
-              </select>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      {activeTab === 'documents' && (
-        <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-          <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-              Uploaded Documents ({filteredDocuments.length})
-            </h3>
-          </div>
-          
-          <div style={{ padding: '20px' }}>
-            {filteredDocuments.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-                <FileText size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
-                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#374151', margin: '0 0 8px 0' }}>No documents found</h3>
-                <p style={{ fontSize: '14px', margin: 0 }}>Upload your first document to get started with financial auditing.</p>
-              </div>
-            ) : (
-              <div style={{ display: 'grid', gap: '12px' }}>
-                {filteredDocuments.map((doc) => (
-                  <div key={doc.id} style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '16px', 
-                    padding: '16px', 
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '24px',
                     border: '1px solid #e5e7eb', 
-                    borderRadius: '8px',
-                    backgroundColor: '#f9fafb'
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
                   }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                     <div style={{ 
+              backgroundColor: '#dbeafe',
+              borderRadius: '8px',
+              padding: '12px',
                       display: 'flex', 
                       alignItems: 'center', 
-                      justifyContent: 'center',
-                      width: '40px', 
-                      height: '40px', 
-                      borderRadius: '8px',
-                      backgroundColor: '#e0f2fe',
-                      color: '#0f172a'
-                    }}>
-                      {getTypeIcon(doc.type)}
+              justifyContent: 'center'
+            }}>
+              <Users size={24} color="#3b82f6" />
                     </div>
-                    
-                    <div style={{ flex: 1 }}>
-                      <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', margin: '0 0 4px 0' }}>
-                        {doc.name}
-                      </h4>
-                      <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#6b7280' }}>
-                        <span>Date: {doc.date}</span>
-                        <span>Amount: ${doc.amount.toLocaleString()}</span>
-                        <span>Uploaded: {doc.uploadedAt}</span>
+            <div style={{ fontSize: '12px', color: '#10b981', fontWeight: '500' }}>
+              +5 this month
                       </div>
                     </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{
-                        padding: '4px 8px',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        ...getStatusColor(doc.status)
-                      }}>
-                        {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
-                      </span>
-                      
-                      <button style={{ padding: '6px', border: 'none', borderRadius: '6px', background: '#f3f4f6', color: '#6b7280', cursor: 'pointer' }}>
-                        <Eye size={16} />
-                      </button>
-                      <button style={{ padding: '6px', border: 'none', borderRadius: '6px', background: '#f3f4f6', color: '#6b7280', cursor: 'pointer' }}>
-                        <Download size={16} />
-                      </button>
+          <div style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', marginBottom: '4px' }}>
+            {auditStats.totalAudits}
+                    </div>
+          <div style={{ fontSize: '14px', color: '#6b7280' }}>Self Audits Completed</div>
+                  </div>
+
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+                  border: '1px solid #e5e7eb', 
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+                }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <div style={{ 
+              backgroundColor: '#dcfce7',
+              borderRadius: '8px',
+              padding: '12px',
+                    display: 'flex', 
+                    alignItems: 'center', 
+              justifyContent: 'center'
+            }}>
+              <CheckCircle size={24} color="#10b981" />
+                  </div>
+            <div style={{ fontSize: '12px', color: '#10b981', fontWeight: '500' }}>
+              {auditStats.completedAudits} completed
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+          <div style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', marginBottom: '4px' }}>
+            {auditStats.activeAudits}
+                  </div>
+          <div style={{ fontSize: '14px', color: '#6b7280' }}>Active Self Audits</div>
+                </div>
 
-      {activeTab === 'statements' && (
-        <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-          <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-              Generated Financial Statements
-            </h3>
+          <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+          border: '1px solid #e5e7eb',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ 
+              backgroundColor: '#fef3c7',
+              borderRadius: '8px',
+              padding: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <DollarSign size={24} color="#f59e0b" />
+            </div>
+            <div style={{ fontSize: '12px', color: '#f59e0b', fontWeight: '500' }}>
+              {(auditStats.totalValueAudited / 1000000000).toFixed(1)}B TZS
+            </div>
+          </div>
+          <div style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', marginBottom: '4px' }}>
+            {auditStats.complianceRate}%
+      </div>
+          <div style={{ fontSize: '14px', color: '#6b7280' }}>Compliance Rate</div>
           </div>
           
-          <div style={{ padding: '20px' }}>
-            <div style={{ display: 'grid', gap: '16px' }}>
-              {mockStatements.map((statement) => (
-                <div key={statement.id} style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '16px', 
-                  padding: '20px', 
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+                    border: '1px solid #e5e7eb', 
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+                  }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                    <div style={{ 
+              backgroundColor: '#f0fdf4',
+              borderRadius: '8px',
+              padding: '12px',
+                      display: 'flex', 
+                      alignItems: 'center', 
+              justifyContent: 'center'
+            }}>
+              <Zap size={24} color="#10b981" />
+                    </div>
+            <div style={{ fontSize: '12px', color: '#10b981', fontWeight: '500' }}>
+              {(auditStats.costSavings / 1000000).toFixed(0)}M TZS saved
+                      </div>
+                    </div>
+          <div style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', marginBottom: '4px' }}>
+            {auditStats.averageAuditTime}
+                    </div>
+          <div style={{ fontSize: '14px', color: '#6b7280' }}>Average Audit Time</div>
+                  </div>
+              </div>
+
+      {/* Value Proposition */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
                   border: '1px solid #e5e7eb', 
-                  borderRadius: '8px',
-                  backgroundColor: '#f9fafb'
+        padding: '24px',
+        marginBottom: '32px'
                 }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
+          Why Self-Audit with Our System?
+        </h3>
                   <div style={{ 
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '24px'
+        }}>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{
+              backgroundColor: '#dbeafe',
+              borderRadius: '8px',
+              padding: '12px',
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
                     width: '48px', 
-                    height: '48px', 
-                    borderRadius: '8px',
-                    backgroundColor: statement.status === 'ready' ? '#d1fae5' : statement.status === 'processing' ? '#fef3c7' : '#fee2e2',
-                    color: statement.status === 'ready' ? '#10b981' : statement.status === 'processing' ? '#f59e0b' : '#ef4444'
+              height: '48px'
                   }}>
-                    {statement.status === 'ready' ? <CheckCircle size={24} /> : 
-                     statement.status === 'processing' ? <BarChart3 size={24} /> : 
-                     <AlertCircle size={24} />}
+              <DollarSign size={24} color="#3b82f6" />
                   </div>
-                  
-                  <div style={{ flex: 1 }}>
-                    <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0 0 4px 0' }}>
-                      {statement.name}
+            <div>
+              <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>
+                Cost Effective
                     </h4>
-                    <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#6b7280' }}>
-                      <span>Period: {statement.period}</span>
-                      <span>Generated: {statement.generatedAt}</span>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
+                Save up to 60% compared to traditional audit firms by auditing your own business using our integrated platform.
+              </p>
                     </div>
                   </div>
                   
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      backgroundColor: statement.status === 'ready' ? '#d1fae5' : statement.status === 'processing' ? '#fef3c7' : '#fee2e2',
-                      color: statement.status === 'ready' ? '#10b981' : statement.status === 'processing' ? '#f59e0b' : '#ef4444'
-                    }}>
-                      {statement.status.charAt(0).toUpperCase() + statement.status.slice(1)}
-                    </span>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{
+              backgroundColor: '#dcfce7',
+              borderRadius: '8px',
+              padding: '12px',
+                display: 'flex',
+                alignItems: 'center',
+              justifyContent: 'center',
+              width: '48px',
+              height: '48px'
+            }}>
+              <Clock size={24} color="#10b981" />
+            </div>
+            <div>
+              <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>
+                Fast Turnaround
+              </h4>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
+                Complete self-audits in 3-7 days using our automated tools and integrated business data.
+              </p>
+            </div>
+      </div>
+
+          <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ 
+              backgroundColor: '#fef3c7',
+              borderRadius: '8px',
+              padding: '12px',
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+              width: '48px',
+              height: '48px'
+            }}>
+              <Shield size={24} color="#f59e0b" />
+                    </div>
+            <div>
+              <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>
+                Compliance Focused
+                      </h4>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
+                Ensure full compliance with Tanzanian regulations using our built-in compliance checker.
+              </p>
+                      </div>
+                    </div>
                     
-                    {statement.status === 'ready' && (
-                      <button style={{ 
-                        padding: '8px 16px', 
-                        border: 'none', 
-                        borderRadius: '6px', 
-                        background: '#0f172a', 
-                        color: 'white', 
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '500'
-                      }}>
-                        Download
-                      </button>
-                    )}
+          <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ 
+              backgroundColor: '#f0fdf4',
+              borderRadius: '8px',
+              padding: '12px',
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    width: '48px', 
+              height: '48px'
+                  }}>
+              <TrendingUp size={24} color="#10b981" />
+                  </div>
+            <div>
+              <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>
+                AI-Powered Insights
+                    </h4>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
+                Get detailed analytics and recommendations based on your integrated business data.
+              </p>
+                    </div>
+                  </div>
                   </div>
                 </div>
+    </div>
+  );
+
+  const renderServices = () => (
+    <div>
+      <div style={{
+                display: 'flex',
+        justifyContent: 'space-between',
+                alignItems: 'center',
+        marginBottom: '24px'
+      }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
+          Self-Audit Tools
+        </h3>
+        <button
+          onClick={() => setShowUploadModal(true)}
+          style={{
+            backgroundColor: '#0f172a',
+            color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+            padding: '12px 20px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <Plus size={16} />
+          Start Self Audit
+            </button>
+        </div>
+
+          <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+        gap: '24px'
+      }}>
+        {auditServices.map((service) => (
+          <div key={service.id} style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+                    border: '1px solid #e5e7eb', 
+            padding: '24px',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+                  }}>
+                    <div style={{ 
+              backgroundColor: '#f3f4f6',
+              borderRadius: '8px',
+              padding: '12px',
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+              width: '48px',
+              height: '48px',
+              marginBottom: '16px'
+            }}>
+              {service.icon}
+                    </div>
+            <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '8px' }}>
+              {service.title}
+                      </h4>
+            <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
+              {service.description}
+            </p>
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '12px', color: '#6b7280' }}>Price:</span>
+                <span style={{ fontSize: '12px', fontWeight: '600', color: '#1f2937' }}>{service.price}</span>
+                      </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '12px', color: '#6b7280' }}>Duration:</span>
+                <span style={{ fontSize: '12px', fontWeight: '600', color: '#1f2937' }}>{service.duration}</span>
+                    </div>
+            </div>
+            <ul style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px', paddingLeft: '16px' }}>
+              {service.features.map((feature, index) => (
+                <li key={index}>{feature}</li>
+              ))}
+            </ul>
+            <button
+              style={{
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                        borderRadius: '6px',
+                padding: '8px 16px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                cursor: 'pointer',
+                width: '100%'
+              }}
+            >
+              Request Quote
+                      </button>
+                  </div>
+                ))}
+              </div>
+          </div>
+  );
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return renderOverview();
+      case 'tools':
+        return renderServices();
+      default:
+        return (
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            border: '1px solid #e5e7eb',
+            padding: '24px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚧</div>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '8px' }}>
+              {activeTab === 'my-audits' ? 'My Audits' : 
+               activeTab === 'documents' ? 'Documents' : 
+               activeTab === 'reports' ? 'Reports' : 
+               activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Coming Soon
+            </h3>
+            <p style={{ fontSize: '14px', color: '#6b7280' }}>
+              This section is under development and will be available soon.
+            </p>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div style={{ padding: '32px', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '32px' }}>
+        <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', margin: '0 0 8px 0' }}>
+          Self Audit
+        </h1>
+        <p style={{ fontSize: '16px', color: '#6b7280', margin: 0 }}>
+          Audit your own business using our integrated system - no need for expensive audit firms
+        </p>
+      </div>
+
+      {/* Tab Navigation */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+                  border: '1px solid #e5e7eb', 
+        overflow: 'hidden',
+        marginBottom: '32px'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+          borderBottom: '1px solid #e5e7eb'
+        }}>
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                flex: 1,
+                padding: '16px 20px',
+                backgroundColor: activeTab === tab.id ? '#0f172a' : 'transparent',
+                color: activeTab === tab.id ? 'white' : '#6b7280',
+                        border: 'none', 
+                        fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+            >
+              {tab.icon}
+              {tab.label}
+                      </button>
               ))}
             </div>
           </div>
-        </div>
-      )}
 
-      {activeTab === 'analysis' && (
-        <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '20px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0 0 20px 0' }}>
-            AI-Powered Financial Analysis
-          </h3>
-          <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-            <PieChart size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
-            <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#374151', margin: '0 0 8px 0' }}>AI Analysis Coming Soon</h4>
-            <p style={{ fontSize: '14px', margin: 0 }}>Upload more documents to enable AI-powered financial insights and recommendations.</p>
-          </div>
-        </div>
-      )}
+      {/* Tab Content */}
+      {renderTabContent()}
     </div>
   );
 }
-

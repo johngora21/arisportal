@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { 
   CreditCard, Search, ArrowLeft, DollarSign, Plus, Edit, Eye, 
   CheckCircle, Clock, AlertCircle, Building, User, Calendar, 
