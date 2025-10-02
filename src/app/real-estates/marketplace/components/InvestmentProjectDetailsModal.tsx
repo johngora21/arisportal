@@ -178,7 +178,6 @@ export default function InvestmentProjectDetailsModal({ isOpen, onClose, project
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <DollarSign size={16} color="#6b7280" />
                 <span style={{ fontSize: '14px', color: '#6b7280' }}>Total Project Value:</span>
                 <span style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>{formatPrice(project.totalValue)}</span>
               </div>
@@ -322,7 +321,7 @@ export default function InvestmentProjectDetailsModal({ isOpen, onClose, project
           <div style={{ textAlign: 'right' }}>
             <button style={{
               padding: '12px 32px',
-              backgroundColor: '#0f172a',
+              backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',

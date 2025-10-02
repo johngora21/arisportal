@@ -673,7 +673,7 @@ export default function ListPropertyModal({ isOpen, onClose }: ListPropertyModal
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',
-                backgroundColor: '#0f172a',
+                backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 display: 'flex',
                 alignItems: 'center',

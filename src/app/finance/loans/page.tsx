@@ -273,7 +273,7 @@ export default function LoansPage() {
                   }}
                   style={{
                     padding: '8px 16px',
-                    backgroundColor: '#0f172a',
+                    backgroundColor: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -323,7 +323,7 @@ export default function LoansPage() {
             onClick={() => setActiveTab('apply')}
             style={{
               padding: '12px 24px',
-              backgroundColor: '#0f172a',
+              backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -541,7 +541,7 @@ export default function LoansPage() {
 
         <button style={{
           padding: '10px 20px',
-          backgroundColor: '#0f172a',
+          backgroundColor: 'var(--mc-sidebar-bg)',
           color: 'white',
           border: 'none',
           borderRadius: '6px',
@@ -578,7 +578,7 @@ export default function LoansPage() {
               }}
               style={{
                 padding: '12px 24px',
-                backgroundColor: '#0f172a',
+                backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -591,10 +591,10 @@ export default function LoansPage() {
                 transition: 'all 0.2s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#1e293b';
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#0f172a';
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
               }}
             >
               <Plus size={16} />
@@ -742,7 +742,7 @@ export default function LoansPage() {
               style={{
                 flex: 1,
                 padding: '16px 20px',
-                backgroundColor: activeTab === tab.id ? '#0f172a' : 'transparent',
+                backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
                 color: activeTab === tab.id ? 'white' : '#6b7280',
                 border: 'none',
                 fontSize: '14px',
@@ -994,7 +994,7 @@ export default function LoansPage() {
                   type="submit"
                   style={{
                     padding: '12px 24px',
-                    backgroundColor: '#0f172a',
+                    backgroundColor: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',

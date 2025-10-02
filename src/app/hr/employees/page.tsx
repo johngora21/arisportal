@@ -167,7 +167,7 @@ export default function HREmployeesPage() {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '12px 24px',
-                backgroundColor: '#0f172a',
+                backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -284,7 +284,7 @@ export default function HREmployeesPage() {
                 <div style={{
                   width: '56px',
                   height: '56px',
-                  background: 'linear-gradient(135deg, #0f172a, #8b5cf6)',
+                  background: 'linear-gradient(135deg, var(--mc-sidebar-bg), #8b5cf6)',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -299,7 +299,7 @@ export default function HREmployeesPage() {
                   <h3 style={{ 
                     fontSize: '18px', 
                     fontWeight: '700', 
-                    color: '#111827', 
+                    color: 'var(--mc-sidebar-bg)', 
                     margin: '0 0 4px 0', 
                     lineHeight: '1.2'
                   }}>
@@ -390,7 +390,7 @@ export default function HREmployeesPage() {
               </div>
               <button 
                 style={{
-                  background: '#0f172a',
+                  background: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   padding: '8px 16px',
                   borderRadius: '6px',
@@ -405,10 +405,10 @@ export default function HREmployeesPage() {
                   // Handle contact action
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#1e293b';
+                  e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#0f172a';
+                  e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
                 }}
               >
                 Contact
@@ -501,7 +501,7 @@ export default function HREmployeesPage() {
                     onClick={() => setActiveTab(tab.id)}
                     style={{
                       padding: '12px 8px',
-                      backgroundColor: activeTab === tab.id ? '#0f172a' : 'transparent',
+                      backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
                       color: activeTab === tab.id ? 'white' : '#6b7280',
                       border: 'none',
                       borderRadius: '6px',
@@ -896,7 +896,7 @@ export default function HREmployeesPage() {
               </button>
               <button style={{
                 padding: '12px 24px',
-                backgroundColor: '#0f172a',
+                backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -906,10 +906,10 @@ export default function HREmployeesPage() {
                 transition: 'background-color 0.2s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#1e293b';
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#0f172a';
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
               }}>
                 Edit Profile
               </button>

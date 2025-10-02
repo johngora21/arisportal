@@ -58,7 +58,7 @@ export default function FinanceDashboardPage() {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <DollarSign size={24} color="#0f172a" />
+              <DollarSign size={24} color="var(--mc-sidebar-bg)" />
             </div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>TZS 2.4M</div>
           </div>

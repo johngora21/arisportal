@@ -98,7 +98,7 @@ export default function EscrowPage() {
         
         <button style={{
           padding: '12px 16px',
-          backgroundColor: '#0f172a',
+          backgroundColor: 'var(--mc-sidebar-bg)',
           color: 'white',
           border: 'none',
           borderRadius: '8px',
@@ -130,7 +130,7 @@ export default function EscrowPage() {
             style={{
               flex: 1,
               padding: '16px 20px',
-              backgroundColor: '#0f172a',
+              backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
               fontSize: '14px',
@@ -225,7 +225,7 @@ export default function EscrowPage() {
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '24px', marginBottom: '8px' }}>
-            <Lock size={24} color="#0f172a" />
+            <Lock size={24} color="var(--mc-sidebar-bg)" />
           </div>
           <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>3</div>
           <div style={{ fontSize: '14px', color: '#6b7280' }}>Active Accounts</div>

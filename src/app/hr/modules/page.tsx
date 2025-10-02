@@ -24,8 +24,8 @@ export default function HRPayrollPage() {
       id: "benefits-management",
       title: "Benefits Management",
       description: "Manage employee benefits and allowances",
-      icon: <Award size={32} color="#0f172a" />,
-      color: "#0f172a",
+      icon: <Award size={32} color="var(--mc-sidebar-bg)" />,
+      color: "var(--mc-sidebar-bg)",
       onClick: () => {
         window.location.href = '/hr/modules/benefits-management';
       }
@@ -117,7 +117,7 @@ export default function HRPayrollPage() {
               }}
               onClick={module.onClick}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#0f172a';
+                e.currentTarget.style.borderColor = 'var(--mc-sidebar-bg)';
                 e.currentTarget.style.backgroundColor = '#f8fafc';
               }}
               onMouseLeave={(e) => {
@@ -157,7 +157,7 @@ export default function HRPayrollPage() {
                 </div>
               </div>
               <button style={{
-                backgroundColor: '#0f172a',
+                backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 padding: '8px 16px',
                 borderRadius: '6px',
@@ -168,10 +168,10 @@ export default function HRPayrollPage() {
                 transition: 'background-color 0.2s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#1e293b';
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#0f172a';
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
               }}>
                 Open Module
               </button>

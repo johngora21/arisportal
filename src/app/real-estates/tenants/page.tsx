@@ -373,7 +373,7 @@ export default function TenantsPage() {
                     style={{
                   flex: 1,
                   padding: '16px 20px',
-                  backgroundColor: activeTab === tab.id ? '#0f172a' : 'transparent',
+                  backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
                   color: activeTab === tab.id ? 'white' : '#6b7280',
                       border: 'none',
                       fontSize: '14px',

@@ -152,7 +152,7 @@ export default function TendersPage() {
   const getSectorColor = (sector: string) => {
     const colorMap = {
       'Infrastructure': '#f97316',         // Orange
-      'Technology': '#0f172a',             // Blue
+      'Technology': 'var(--mc-sidebar-bg)',             // Blue
       'Healthcare': '#ef4444',              // Red
       'default': '#64748b'                  // Gray
     }
@@ -210,7 +210,7 @@ export default function TendersPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '12px 24px',
-              backgroundColor: '#0f172a',
+              backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -229,7 +229,7 @@ export default function TendersPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
           <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <FileText size={20} color="#0f172a" />
+              <FileText size={20} color="var(--mc-sidebar-bg)" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Active Tenders</span>
             </div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
@@ -359,7 +359,7 @@ export default function TendersPage() {
                   position: 'absolute',
                   top: '-6px',
                   right: '-6px',
-                  backgroundColor: '#0f172a',
+                  backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   borderRadius: '10px',
                   width: '20px',
@@ -465,7 +465,7 @@ export default function TendersPage() {
                       <span style={{
                         fontSize: '10px',
                         color: 'white',
-                        backgroundColor: '#0f172a',
+                        backgroundColor: 'var(--mc-sidebar-bg)',
                         padding: '4px 8px',
                         borderRadius: '6px',
                         fontWeight: '700',
@@ -603,7 +603,7 @@ export default function TendersPage() {
                     }}
                     disabled={tender.isDeadlineExpired}
                     style={{
-                      backgroundColor: tender.isDeadlineExpired ? '#6b7280' : '#0f172a',
+                      backgroundColor: tender.isDeadlineExpired ? '#6b7280' : 'var(--mc-sidebar-bg)',
                       color: 'white',
                       border: 'none',
                       padding: '8px 16px',
@@ -616,12 +616,12 @@ export default function TendersPage() {
                     }}
                     onMouseOver={(e) => {
                       if (!tender.isDeadlineExpired) {
-                        (e.target as HTMLElement).style.backgroundColor = '#1e293b'
+                        (e.target as HTMLElement).style.backgroundColor = 'var(--mc-sidebar-bg-hover)'
                       }
                     }}
                     onMouseOut={(e) => {
                       if (!tender.isDeadlineExpired) {
-                        (e.target as HTMLElement).style.backgroundColor = '#0f172a'
+                        (e.target as HTMLElement).style.backgroundColor = 'var(--mc-sidebar-bg)'
                       }
                     }}
                   >
@@ -746,8 +746,8 @@ export default function TendersPage() {
                         height: '20px',
                         borderRadius: '4px',
                         border: '2px solid #e2e8f0',
-                        backgroundColor: filters.sector.includes(sector) ? '#0f172a' : 'transparent',
-                        borderColor: filters.sector.includes(sector) ? '#0f172a' : '#e2e8f0',
+                        backgroundColor: filters.sector.includes(sector) ? 'var(--mc-sidebar-bg)' : 'transparent',
+                        borderColor: filters.sector.includes(sector) ? 'var(--mc-sidebar-bg)' : '#e2e8f0',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -808,7 +808,7 @@ export default function TendersPage() {
                       transition: 'border-color 0.2s ease-in-out'
                     }}
                     onFocus={(e) => {
-                      e.target.style.borderColor = '#0f172a'
+                      e.target.style.borderColor = 'var(--mc-sidebar-bg)'
                     }}
                     onBlur={(e) => {
                       e.target.style.borderColor = '#e2e8f0'
@@ -851,7 +851,7 @@ export default function TendersPage() {
                         transition: 'border-color 0.2s ease-in-out'
                       }}
                       onFocus={(e) => {
-                        e.target.style.borderColor = '#0f172a'
+                        e.target.style.borderColor = 'var(--mc-sidebar-bg)'
                       }}
                       onBlur={(e) => {
                         e.target.style.borderColor = '#e2e8f0'
@@ -886,7 +886,7 @@ export default function TendersPage() {
                         transition: 'border-color 0.2s ease-in-out'
                       }}
                       onFocus={(e) => {
-                        e.target.style.borderColor = '#0f172a'
+                        e.target.style.borderColor = 'var(--mc-sidebar-bg)'
                       }}
                       onBlur={(e) => {
                         e.target.style.borderColor = '#e2e8f0'
@@ -907,7 +907,7 @@ export default function TendersPage() {
                 onClick={() => setShowFilters(false)}
                 style={{
                   minWidth: '200px',
-                  backgroundColor: '#0f172a',
+                  backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
                   padding: '12px 24px',
@@ -918,10 +918,10 @@ export default function TendersPage() {
                   transition: 'all 0.2s ease-in-out'
                 }}
                 onMouseEnter={(e) => {
-                  (e.target as HTMLElement).style.backgroundColor = '#1e293b'
+                  (e.target as HTMLElement).style.backgroundColor = 'var(--mc-sidebar-bg-hover)'
                 }}
                 onMouseLeave={(e) => {
-                  (e.target as HTMLElement).style.backgroundColor = '#0f172a'
+                  (e.target as HTMLElement).style.backgroundColor = 'var(--mc-sidebar-bg)'
                 }}
               >
                 Apply Filters ({getActiveFilterCount()})

@@ -179,7 +179,7 @@ export default function SalaryProcessingPage() {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '10px 16px',
-                backgroundColor: '#0f172a',
+                backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
@@ -375,9 +375,9 @@ export default function SalaryProcessingPage() {
                   setShowProcessModal(false);
                   // Handle salary processing
                 }}
-                style={{
-                  padding: '10px 16px',
-                  backgroundColor: '#0f172a',
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',

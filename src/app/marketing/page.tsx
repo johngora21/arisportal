@@ -803,7 +803,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                     alignItems: 'center',
                     gap: '12px',
                     padding: '16px',
-                    border: formData.platforms.includes(platform) ? '2px solid #0f172a' : '1px solid #e5e7eb',
+                    border: formData.platforms.includes(platform) ? '2px solid var(--mc-sidebar-bg)' : '1px solid #e5e7eb',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     backgroundColor: formData.platforms.includes(platform) ? '#eff6ff' : 'white'
@@ -852,7 +852,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                     alignItems: 'center',
                     gap: '12px',
                     padding: '16px',
-                    border: formData.objective === objective.id ? '2px solid #0f172a' : '1px solid #e5e7eb',
+                    border: formData.objective === objective.id ? '2px solid var(--mc-sidebar-bg)' : '1px solid #e5e7eb',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     backgroundColor: formData.objective === objective.id ? '#eff6ff' : 'white'
@@ -1105,7 +1105,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 style={{
                   flex: 1,
                   height: '4px',
-                  backgroundColor: step.id <= currentStep ? '#0f172a' : '#e5e7eb',
+                  backgroundColor: step.id <= currentStep ? 'var(--mc-sidebar-bg)' : '#e5e7eb',
                   borderRadius: '2px'
                 }}
               />
@@ -1162,7 +1162,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                   padding: '8px 16px',
                   border: 'none',
                   borderRadius: '6px',
-                  backgroundColor: '#0f172a',
+                  backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   cursor: 'pointer'
                 }}
@@ -1176,7 +1176,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                   padding: '8px 16px',
                   border: 'none',
                   borderRadius: '6px',
-                  backgroundColor: '#0f172a',
+                  backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   cursor: 'pointer'
                 }}
@@ -1265,7 +1265,7 @@ export default function MarketingPage() {
           <button
             onClick={() => setShowCreateModal(true)}
             style={{
-              background: '#0f172a',
+              background: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
               padding: '12px 24px',
@@ -1298,7 +1298,7 @@ export default function MarketingPage() {
 
           <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <TrendingUp size={20} color="#0f172a" />
+              <TrendingUp size={20} color="var(--mc-sidebar-bg)" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Spent</span>
             </div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
@@ -1412,7 +1412,7 @@ export default function MarketingPage() {
                 overflow: 'hidden',
                 transition: 'all 0.2s',
                 cursor: 'pointer',
-                border: selectedCampaign?.id === campaign.id ? '2px solid #0f172a' : '1px solid #e5e7eb'
+                border: selectedCampaign?.id === campaign.id ? '2px solid var(--mc-sidebar-bg)' : '1px solid #e5e7eb'
               }}
               onClick={() => setSelectedCampaign(campaign)}
             >
@@ -1571,7 +1571,7 @@ export default function MarketingPage() {
           <button
             onClick={() => setShowCreateModal(true)}
             style={{
-              background: '#0f172a',
+              background: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
               padding: '12px 24px',

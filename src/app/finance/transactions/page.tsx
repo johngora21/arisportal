@@ -154,7 +154,7 @@ export default function TransactionsPage() {
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
             style={{
-              padding: '10px 14px', backgroundColor: 'white', color: '#0f172a',
+              padding: '10px 14px', backgroundColor: 'white', color: 'var(--mc-sidebar-bg)',
               border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer'
             }}
           >
@@ -163,7 +163,7 @@ export default function TransactionsPage() {
           </button>
           <button
             style={{
-              padding: '10px 14px', backgroundColor: '#0f172a', color: 'white',
+              padding: '10px 14px', backgroundColor: 'var(--mc-sidebar-bg)', color: 'white',
               border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer'
             }}
           >
@@ -188,7 +188,7 @@ export default function TransactionsPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '100%' }}>
               <div>
                 <div style={{ fontSize: '13px', color: '#6b7280' }}>{k.label}</div>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: '#111827', marginTop: '8px' }}>{formatPrice(0)}</div>
+                <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--mc-sidebar-bg)', marginTop: '8px' }}>{formatPrice(0)}</div>
               </div>
               <div style={{ backgroundColor: k.bg, color: k.color, borderRadius: '10px', padding: '12px 14px', fontWeight: 700, minWidth: '40px', textAlign: 'center' }}>{k.icon}</div>
             </div>
@@ -211,7 +211,7 @@ export default function TransactionsPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               style={{
-                padding: '14px 12px', backgroundColor: activeTab === (tab.id as any) ? '#0f172a' : 'transparent',
+                padding: '14px 12px', backgroundColor: activeTab === (tab.id as any) ? 'var(--mc-sidebar-bg)' : 'transparent',
                 color: activeTab === (tab.id as any) ? 'white' : '#6b7280', border: 'none', fontSize: '14px', fontWeight: 600,
                 cursor: 'pointer', transition: 'all 0.2s'
               }}

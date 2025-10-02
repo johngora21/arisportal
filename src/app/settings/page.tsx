@@ -108,7 +108,7 @@ export default function SettingsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
           <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <Smartphone size={20} color="#0f172a" />
+              <Smartphone size={20} color="var(--mc-sidebar-bg)" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>SMS Provider</span>
             </div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
@@ -152,7 +152,7 @@ export default function SettingsPage() {
                 gap: '8px',
                 padding: '16px 24px',
                 border: 'none',
-                backgroundColor: activeTab === tab.id ? '#0f172a' : 'transparent',
+                backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
                 color: activeTab === tab.id ? 'white' : '#6b7280',
                 cursor: 'pointer',
                 fontSize: '14px',
@@ -734,7 +734,7 @@ export default function SettingsPage() {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '12px 24px',
-                backgroundColor: '#0f172a',
+                backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',

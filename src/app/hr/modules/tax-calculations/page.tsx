@@ -189,7 +189,7 @@ export default function TaxCalculationsPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '10px 16px',
-              backgroundColor: '#0f172a',
+              backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -453,7 +453,7 @@ export default function TaxCalculationsPage() {
                 }}
                 style={{
                   padding: '10px 16px',
-                  backgroundColor: '#0f172a',
+                  backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',

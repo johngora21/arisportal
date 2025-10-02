@@ -13,8 +13,8 @@ export default function HRReportsPage() {
       id: "employee",
       title: "Employee Report",
       description: "Comprehensive employee data report",
-      icon: <BarChart3 size={24} color="#0f172a" />,
-      color: "#0f172a",
+      icon: <BarChart3 size={24} color="var(--mc-sidebar-bg)" />,
+      color: "var(--mc-sidebar-bg)",
       lastGenerated: "2024-01-15",
       records: 156
     },
@@ -250,7 +250,7 @@ export default function HRReportsPage() {
             backgroundColor: '#f9fafb'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <FileText size={20} color="#0f172a" />
+              <FileText size={20} color="var(--mc-sidebar-bg)" />
               <div>
                 <p style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', margin: '0 0 4px 0' }}>
                   Employee Report - January 2024
@@ -262,7 +262,7 @@ export default function HRReportsPage() {
             </div>
             <button style={{
               padding: '8px 16px',
-              backgroundColor: '#0f172a',
+              backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
               borderRadius: '6px',

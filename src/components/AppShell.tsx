@@ -22,7 +22,7 @@ import {
   Wrench,
   Settings,
   Package,
-  Building,
+  Landmark,
   MapPin,
   Home,
   Key,
@@ -91,8 +91,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
           { id: 'finance-invoicing', label: 'Invoicing', href: '/finance/invoicing', icon: <FileText size={16} /> },
           { id: 'finance-escrow', label: 'Escrow', href: '/finance/escrow', icon: <Shield size={16} /> },
           { id: 'finance-insurance', label: 'Insurance', href: '/finance/insurance', icon: <ShieldCheck size={16} /> },
-          { id: 'finance-loans', label: 'Loans', href: '/finance/loans', icon: <Banknote size={16} /> },
-          { id: 'finance-audit', label: 'Audit', href: '/finance/audit', icon: <SearchCheck size={16} /> }
+          { id: 'finance-loans', label: 'Loans', href: '/finance/loans', icon: <Banknote size={16} /> }
         ]
       },
       { id: 'crm', label: 'CRM', href: '/crm', icon: <UserCheck size={20} /> },
@@ -139,7 +138,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
           { id: 'inventory-modules', label: 'Modules', href: '/inventory/modules', icon: <Database size={16} /> }
         ]
       },
-      { id: 'real-estates', label: 'Real Estates', href: '/real-estates', icon: <Building size={20} /> },
+      { id: 'real-estates', label: 'Real Estates', href: '/real-estates', icon: <Landmark size={20} /> },
       { id: 'portfolios', label: 'Portifolio', href: '/portfolios', icon: <Globe size={20} /> },
       { id: 'compliance', label: 'Compliance & Security', href: '/compliance', icon: <ShieldCheck size={20} /> },
       { id: 'settings', label: 'Settings', href: '/settings', icon: <Settings size={20} /> },
@@ -155,7 +154,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
     return (
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        minHeight: '100vh', background: '#0f172a', color: '#e2e8f0',
+        minHeight: '100vh', background: 'var(--mc-sidebar-bg)', color: '#e2e8f0',
         textAlign: 'center', padding: 24
       }}>
         <div>

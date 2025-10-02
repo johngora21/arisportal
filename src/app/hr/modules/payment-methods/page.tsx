@@ -28,7 +28,7 @@ export default function PaymentMethodsPage() {
       type: "Bank Transfer",
       description: "Direct deposit to NMB bank accounts",
       status: "Active",
-      icon: <Building size={20} color="#0f172a" />
+      icon: <Building size={20} color="var(--mc-sidebar-bg)" />
     },
     {
       id: 3,
@@ -212,7 +212,7 @@ export default function PaymentMethodsPage() {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '10px 16px',
-                backgroundColor: '#0f172a',
+                backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
@@ -299,7 +299,7 @@ export default function PaymentMethodsPage() {
               <button style={{
                 flex: 1,
                 padding: '8px 12px',
-                backgroundColor: '#0f172a',
+                backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
@@ -506,7 +506,7 @@ export default function PaymentMethodsPage() {
                 }}
                 style={{
                   padding: '10px 16px',
-                  backgroundColor: '#0f172a',
+                  backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
@@ -627,7 +627,7 @@ export default function PaymentMethodsPage() {
                 onClick={() => setShowAddMethodModal(false)}
                 style={{
                   padding: '10px 16px',
-                  backgroundColor: '#0f172a',
+                  backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',

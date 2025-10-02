@@ -422,7 +422,7 @@ export default function AssetsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '24px' }}>
             <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                <Home size={20} color="#0f172a" />
+                <Home size={20} color="var(--mc-sidebar-bg)" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Properties</span>
               </div>
               <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
@@ -491,7 +491,7 @@ export default function AssetsPage() {
                   justifyContent: 'center',
                   gap: '8px',
                   padding: '16px 12px',
-                  backgroundColor: activeTab === tab.id ? '#0f172a' : 'transparent',
+                  backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
                   color: activeTab === tab.id ? 'white' : '#6b7280',
                   border: 'none',
                   cursor: 'pointer',
@@ -499,7 +499,7 @@ export default function AssetsPage() {
                   fontWeight: '500',
                   borderRadius: activeTab === tab.id ? '12px 12px 0 0' : '0',
                   transition: 'all 0.2s ease',
-                  borderBottom: activeTab === tab.id ? '2px solid #0f172a' : '2px solid transparent',
+                  borderBottom: activeTab === tab.id ? '2px solid var(--mc-sidebar-bg)' : '2px solid transparent',
                   flex: 1,
                   minWidth: 0
                 }}
@@ -545,7 +545,7 @@ export default function AssetsPage() {
                   alignItems: 'center',
                   gap: '8px',
                   padding: '12px 24px',
-                  backgroundColor: '#0f172a',
+                  backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -965,7 +965,7 @@ export default function AssetsPage() {
                   </div>
                   <button style={{
                     padding: '8px 16px',
-                    backgroundColor: '#0f172a',
+                    backgroundColor: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
@@ -1023,7 +1023,7 @@ export default function AssetsPage() {
                   alignItems: 'center',
                   gap: '8px',
                   padding: '12px 24px',
-                  backgroundColor: '#0f172a',
+                  backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -1737,7 +1737,7 @@ export default function AssetsPage() {
                             alignItems: 'center',
                             gap: '6px',
                             padding: '8px 16px',
-                            backgroundColor: '#0f172a',
+                            backgroundColor: 'var(--mc-sidebar-bg)',
                             color: 'white',
                             border: 'none',
                             borderRadius: '6px',
@@ -1903,7 +1903,7 @@ export default function AssetsPage() {
                       alignItems: 'center',
                       gap: '8px',
                       padding: '10px 20px',
-                      backgroundColor: '#0f172a',
+                      backgroundColor: 'var(--mc-sidebar-bg)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',
@@ -2005,7 +2005,7 @@ export default function AssetsPage() {
                     onClick={() => setActivePropertyTab(tab.id)}
                     style={{
                       padding: '12px 8px',
-                      backgroundColor: activePropertyTab === tab.id ? '#0f172a' : 'transparent',
+                      backgroundColor: activePropertyTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
                       color: activePropertyTab === tab.id ? 'white' : '#6b7280',
                       border: 'none',
                       borderRadius: '6px',
@@ -2208,7 +2208,7 @@ export default function AssetsPage() {
                       alignItems: 'center',
                       gap: '8px',
                       padding: '8px 16px',
-                      backgroundColor: '#0f172a',
+                      backgroundColor: 'var(--mc-sidebar-bg)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',
@@ -2293,7 +2293,7 @@ export default function AssetsPage() {
                           <button style={{
                             flex: 1,
                             padding: '8px 12px',
-                            backgroundColor: '#0f172a',
+                            backgroundColor: 'var(--mc-sidebar-bg)',
                             color: 'white',
                             border: 'none',
                             borderRadius: '6px',
@@ -2631,7 +2631,7 @@ export default function AssetsPage() {
                       }}
                       style={{
                         padding: '6px 12px',
-                        backgroundColor: '#0f172a',
+                        backgroundColor: 'var(--mc-sidebar-bg)',
                         color: 'white',
                         border: 'none',
                         borderRadius: '6px',
@@ -2668,7 +2668,7 @@ export default function AssetsPage() {
                       }}
                       style={{
                         padding: '6px 12px',
-                        backgroundColor: '#0f172a',
+                        backgroundColor: 'var(--mc-sidebar-bg)',
                         color: 'white',
                         border: 'none',
                         borderRadius: '6px',
@@ -2771,7 +2771,7 @@ export default function AssetsPage() {
                   justifyContent: 'center', 
                   fontSize: '16px', 
                   fontWeight: '600', 
-                  color: '#0f172a' 
+                  color: 'var(--mc-sidebar-bg)' 
                 }}>
                   {messageTenant.name.charAt(0)}
                 </div>
@@ -2936,7 +2936,7 @@ export default function AssetsPage() {
                     padding: '12px 20px',
                     border: 'none',
                     borderRadius: '8px',
-                    background: '#0f172a',
+                    background: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     fontSize: '14px',
                     fontWeight: '500',
@@ -3498,7 +3498,7 @@ export default function AssetsPage() {
                     alignItems: 'center',
                     gap: '8px',
                     padding: '12px 24px',
-                    backgroundColor: '#0f172a',
+                    backgroundColor: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',

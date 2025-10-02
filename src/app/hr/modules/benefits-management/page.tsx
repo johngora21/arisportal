@@ -43,7 +43,7 @@ export default function BenefitsManagementPage() {
       employeeContribution: 0,
       companyContribution: 50000,
       status: "Active",
-      icon: <Shield size={20} color="#0f172a" />
+      icon: <Shield size={20} color="var(--mc-sidebar-bg)" />
     },
     {
       id: 4,
@@ -128,7 +128,7 @@ export default function BenefitsManagementPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '10px 16px',
-              backgroundColor: '#0f172a',
+              backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -486,7 +486,7 @@ export default function BenefitsManagementPage() {
                 onClick={() => setShowAddBenefit(false)}
                 style={{
                   padding: '10px 16px',
-                  backgroundColor: '#0f172a',
+                  backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',

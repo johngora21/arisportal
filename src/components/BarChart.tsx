@@ -37,7 +37,7 @@ export const BarChart: React.FC<BarChartProps> = ({ labels, values, height = 220
         const y = 8 + innerHeight - h;
         return (
           <g key={i}>
-            <rect x={x} y={y} width={barWidth} height={h} rx={8} ry={8} fill="#0f172a" />
+            <rect x={x} y={y} width={barWidth} height={h} rx={8} ry={8} fill="var(--mc-sidebar-bg)" />
           </g>
         );
       })}
@@ -47,7 +47,7 @@ export const BarChart: React.FC<BarChartProps> = ({ labels, values, height = 220
         const x = paddingLeft + i * (barWidth + barGap) + barWidth / 2;
         const y = 8 + innerHeight + 16;
         return (
-          <text key={label} x={x} y={y} textAnchor="middle" fontSize={12} fill="#0f172a">{label}</text>
+          <text key={label} x={x} y={y} textAnchor="middle" fontSize={12} fill="var(--mc-sidebar-bg)">{label}</text>
         );
       })}
     </svg>

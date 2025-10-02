@@ -148,7 +148,7 @@ export default function MarketplacePage() {
         <button
           onClick={() => setShowListPropertyModal(true)}
           style={{
-            backgroundColor: '#0f172a',
+            backgroundColor: 'var(--mc-sidebar-bg)',
             color: 'white',
             border: 'none',
               borderRadius: '8px',
@@ -162,10 +162,10 @@ export default function MarketplacePage() {
             transition: 'background-color 0.2s'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#1e293b';
+            e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#0f172a';
+            e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
           }}
         >
           <Plus size={16} />
@@ -196,7 +196,7 @@ export default function MarketplacePage() {
               style={{
                 flex: 1,
                 padding: '16px 20px',
-                backgroundColor: activeTab === tab.id ? '#0f172a' : 'transparent',
+                backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
                 color: activeTab === tab.id ? 'white' : '#6b7280',
                 border: 'none',
                 fontSize: '14px',

@@ -56,7 +56,7 @@ export default function AuthenticationSignupEntrepreneur() {
         form { display: grid; gap: 8px; }
         label { font-size: 12px; color: #374151; font-weight: 600; }
         input { height: 44px; border-radius: 12px; border: 1px solid #d1d5db; padding: 0 14px; }
-        button { height: 44px; border-radius: 12px; background: #111827; color: #fff; border: 1px solid #111827; font-weight: 800; }
+        button { height: 44px; border-radius: 12px; background: var(--mc-sidebar-bg); color: #fff; border: 1px solid var(--mc-sidebar-bg); font-weight: 800; }
         .alert { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; border-radius: 12px; padding: 12px; font-size: 14px; }
         .actions { margin-top: 10px; }
       `}</style>

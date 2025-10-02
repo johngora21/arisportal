@@ -1,22 +1,19 @@
 'use client';
 
-import React from 'react';
-import { MapPin, DollarSign, Users, TrendingUp, Calendar } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { MapPin, DollarSign, Users, TrendingUp, Calendar, X } from 'lucide-react';
+import { InvestmentProject } from '../models';
 
-interface InvestmentProject {
-  id: string;
-  title: string;
-  location: string;
-  totalValue: number;
-  minimumInvestment: number;
-  currentInvestors: number;
-  targetInvestors: number;
-  fundingProgress: number;
-  expectedROI: number;
-  projectDuration: string;
-  image: string;
-  description: string;
-  status: 'active' | 'funded' | 'completed';
+// Declare Leaflet types
+declare global {
+  namespace L {
+    interface Map {
+      eachLayer(callback: (layer: any) => void): void;
+    }
+    interface TileLayer {
+      addTo(map: Map): TileLayer;
+    }
+  }
 }
 
 interface InvestmentProjectsTabProps {
@@ -25,12 +22,115 @@ interface InvestmentProjectsTabProps {
 }
 
 export default function InvestmentProjectsTab({ projects = [], onProjectClick }: InvestmentProjectsTabProps) {
+  const [showMapView, setShowMapView] = useState(false);
+  const [selectedProjectForMap, setSelectedProjectForMap] = useState<InvestmentProject | null>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-TZ', {
       style: 'currency',
       currency: 'TZS',
       minimumFractionDigits: 0
     }).format(price);
+  };
+
+  const handleViewOnMap = (project: InvestmentProject, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    setSelectedProjectForMap(project);
+    setShowMapView(true);
+  };
+
+  // Initialize map when map view is shown
+  useEffect(() => {
+    if (showMapView && mapRef.current && !mapInstanceRef.current && selectedProjectForMap?.coordinates) {
+      // Initialize Leaflet map
+      const map = L.map(mapRef.current).setView(
+        [selectedProjectForMap.coordinates.lat, selectedProjectForMap.coordinates.lng], 
+        18
+      );
+
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Add satellite tiles
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri'
+      }).addTo(map);
+
+      mapInstanceRef.current = map;
+
+      // Add marker for the selected project
+      const marker = L.marker([selectedProjectForMap.coordinates.lat, selectedProjectForMap.coordinates.lng], {
+        title: selectedProjectForMap.title
+      }).addTo(map);
+
+      markerRef.current = marker;
+
+      // Add popup with project info
+      marker.bindPopup(`
+        <div style="padding: 8px; font-family: 'Poppins', sans-serif; min-width: 200px;">
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">
+            ${selectedProjectForMap.title}
+          </h3>
+          <p style="margin: 0 0 4px 0; font-size: 14px; color: #6b7280;">
+            ${selectedProjectForMap.location}
+          </p>
+          <p style="margin: 0; font-size: 14px; color: #059669; font-weight: 600;">
+            Min Investment: ${formatPrice(selectedProjectForMap.minimumInvestment)}
+          </p>
+        </div>
+      `).openPopup();
+    }
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.off();
+        mapInstanceRef.current = null;
+      }
+      markerRef.current = null;
+    };
+  }, [showMapView, selectedProjectForMap]);
+
+  const switchMapType = (mapType: string) => {
+    if (mapInstanceRef.current) {
+      // Remove all existing layers
+      mapInstanceRef.current.eachLayer((layer) => {
+        if (layer instanceof L.TileLayer) {
+          mapInstanceRef.current?.removeLayer(layer);
+        }
+      });
+
+      // Add new layer based on map type
+      switch (mapType) {
+        case 'satellite':
+          L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri'
+          }).addTo(mapInstanceRef.current);
+          break;
+        case 'roadmap':
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+          }).addTo(mapInstanceRef.current);
+          break;
+        case 'hybrid':
+          L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri'
+          }).addTo(mapInstanceRef.current);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            opacity: 0.3
+          }).addTo(mapInstanceRef.current);
+          break;
+        case 'terrain':
+          L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenTopoMap contributors'
+          }).addTo(mapInstanceRef.current);
+          break;
+      }
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -162,48 +262,191 @@ export default function InvestmentProjectsTab({ projects = [], onProjectClick }:
               <div style={{
                 padding: '16px 20px',
                 borderTop: '1px solid #e5e7eb',
-                backgroundColor: '#f9fafb'
+                backgroundColor: '#f9fafb',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
               }}>
-                {/* Funding Progress */}
-                <div style={{ marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '12px', color: '#6b7280' }}>Funding Progress</span>
-                    <span style={{ fontSize: '12px', color: '#6b7280' }}>{project.fundingProgress}%</span>
-                  </div>
-                  <div style={{
-                    width: '100%',
-                    height: '6px',
-                    backgroundColor: '#e5e7eb',
-                    borderRadius: '3px',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{
-                      width: `${project.fundingProgress}%`,
-                      height: '100%',
-                      backgroundColor: '#10b981',
-                      transition: 'width 0.3s ease'
-                    }} />
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>
+                      Min Investment:
+                    </div>
+                    <div style={{ fontSize: '16px', fontWeight: '600', color: '#059669' }}>
+                      TZS {formatPrice(project.minimumInvestment).replace('TZS', '').trim()}
+                    </div>
                   </div>
                 </div>
-
-                {/* Investment Details */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ fontSize: '12px', color: '#6b7280', marginRight: '6px' }}>Min:</span>
-                    <span style={{ fontSize: '14px', fontWeight: '600', color: '#059669' }}>
-                      {formatPrice(project.minimumInvestment)}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ fontSize: '12px', color: '#6b7280', marginRight: '6px' }}>Total:</span>
-                    <span style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>
-                      {formatPrice(project.totalValue)}
-                    </span>
-                  </div>
-                </div>
+                <button
+                  style={{
+                    backgroundColor: 'var(--mc-sidebar-bg)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 16px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+                  }}
+                  onClick={(e) => handleViewOnMap(project, e)}
+                >
+                  <MapPin size={14} />
+                  View on Map
+                </button>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Embedded Map View */}
+      {showMapView && selectedProjectForMap && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '10px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            width: '98vw',
+            height: '98vh',
+            overflow: 'hidden',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: '20px 24px',
+              borderBottom: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: 'white'
+            }}>
+              <div>
+                <h3 style={{
+                  fontSize: '20px',
+                  fontWeight: '600',
+                  color: '#1f2937',
+                  margin: '0 0 4px 0'
+                }}>
+                  {selectedProjectForMap.title}
+                </h3>
+                <p style={{
+                  fontSize: '14px',
+                  color: '#6b7280',
+                  margin: 0,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  <MapPin size={14} style={{ marginRight: '6px' }} />
+                  {selectedProjectForMap.location}
+                </p>
+              </div>
+              
+              {/* Map Controls */}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button
+                  onClick={() => switchMapType('satellite')}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#f3f4f6',
+                    color: '#374151',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Satellite
+                </button>
+                <button
+                  onClick={() => switchMapType('roadmap')}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#f3f4f6',
+                    color: '#374151',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Road
+                </button>
+                <button
+                  onClick={() => switchMapType('hybrid')}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#f3f4f6',
+                    color: '#374151',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Hybrid
+                </button>
+                <button
+                  onClick={() => setShowMapView(false)}
+                  style={{
+                    padding: '8px',
+                    backgroundColor: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Map Container */}
+            <div style={{
+              flex: 1,
+              height: 'calc(98vh - 100px)',
+              backgroundColor: '#e5e7eb',
+              position: 'relative'
+            }}>
+              <div
+                ref={mapRef}
+                style={{
+                  width: '100%',
+                  height: '100%'
+                }}
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -431,7 +431,7 @@ export default function CommunicationsPage() {
             <h1 style={{ 
               fontSize: '20px', 
               fontWeight: '600', 
-              color: '#111827', 
+              color: 'var(--mc-sidebar-bg)', 
               margin: 0 
             }}>💬 Chats</h1>
           </div>
@@ -494,7 +494,7 @@ export default function CommunicationsPage() {
                     fontWeight: '500',
                     cursor: 'pointer',
                     background: selectedChannel === channel ? 'white' : 'none',
-                    color: selectedChannel === channel ? '#1e293b' : '#6b7280',
+                    color: selectedChannel === channel ? 'var(--mc-sidebar-bg-hover)' : '#6b7280',
                     border: 'none',
                     boxShadow: selectedChannel === channel ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none'
                   }}
@@ -532,7 +532,7 @@ export default function CommunicationsPage() {
                   borderBottom: '1px solid #f3f4f6',
                   cursor: 'pointer',
                   background: isSelected ? '#eff6ff' : 'transparent',
-                  borderLeft: isSelected ? '4px solid #1e293b' : 'none'
+                  borderLeft: isSelected ? '4px solid var(--mc-sidebar-bg-hover)' : 'none'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
@@ -540,7 +540,7 @@ export default function CommunicationsPage() {
                     <div style={{
                       width: '40px',
                       height: '40px',
-                      background: 'linear-gradient(135deg, #0f172a, #8b5cf6)',
+                      background: 'linear-gradient(135deg, var(--mc-sidebar-bg), #8b5cf6)',
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
@@ -557,7 +557,7 @@ export default function CommunicationsPage() {
                       right: '-2px',
                       width: '16px',
                       height: '16px',
-                      background: '#0f172a',
+                      background: 'var(--mc-sidebar-bg)',
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
@@ -576,7 +576,7 @@ export default function CommunicationsPage() {
                     }}>
                       <h3 style={{
                         fontWeight: '500',
-                        color: '#111827',
+                        color: 'var(--mc-sidebar-bg)',
                         margin: 0,
                         fontSize: '14px',
                         whiteSpace: 'nowrap',
@@ -608,7 +608,7 @@ export default function CommunicationsPage() {
                         marginTop: '8px'
                       }}>
                         <span style={{
-                          background: '#0f172a',
+                          background: 'var(--mc-sidebar-bg)',
                           color: 'white',
                           fontSize: '12px',
                           borderRadius: '12px',
@@ -652,7 +652,7 @@ export default function CommunicationsPage() {
                   <div style={{
                     width: '40px',
                     height: '40px',
-                    background: 'linear-gradient(135deg, #0f172a, #8b5cf6)',
+                    background: 'linear-gradient(135deg, var(--mc-sidebar-bg), #8b5cf6)',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
@@ -666,7 +666,7 @@ export default function CommunicationsPage() {
                   <div>
                     <h2 style={{ 
                       fontWeight: '600', 
-                      color: '#111827', 
+                      color: 'var(--mc-sidebar-bg)', 
                       margin: 0, 
                       fontSize: '16px' 
                     }}>
@@ -782,8 +782,8 @@ export default function CommunicationsPage() {
                       padding: '12px 16px',
                       borderRadius: '12px',
                       fontSize: '14px',
-                      background: isUser ? '#0f172a' : '#f3f4f6',
-                      color: isUser ? 'white' : '#111827'
+                      background: isUser ? 'var(--mc-sidebar-bg)' : '#f3f4f6',
+                      color: isUser ? 'white' : 'var(--mc-sidebar-bg)'
                     }}>
                       <p style={{ margin: 0 }}>{message.content}</p>
                       
@@ -889,7 +889,7 @@ export default function CommunicationsPage() {
                       >
                         <div style={{ 
                           fontWeight: '500', 
-                          color: '#111827', 
+                          color: 'var(--mc-sidebar-bg)', 
                           fontSize: '14px' 
                         }}>{template.name}</div>
                         <div style={{ 
@@ -990,7 +990,7 @@ export default function CommunicationsPage() {
                     top: '50%',
                     transform: 'translateY(-50%)',
                     padding: '8px',
-                    background: newMessage.trim() ? '#0f172a' : '#e2e8f0',
+                    background: newMessage.trim() ? 'var(--mc-sidebar-bg)' : '#e2e8f0',
                     color: newMessage.trim() ? 'white' : '#94a3b8',
                     border: 'none',
                     borderRadius: '50%',
@@ -1025,7 +1025,7 @@ export default function CommunicationsPage() {
               <h3 style={{ 
                 fontSize: '18px', 
                 fontWeight: '500', 
-                color: '#111827', 
+                color: 'var(--mc-sidebar-bg)', 
                 margin: '0 0 8px 0' 
               }}>
                 Select a conversation

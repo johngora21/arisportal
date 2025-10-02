@@ -37,9 +37,10 @@ interface PropertyDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   property: PropertyDetails | null;
+  isSelfOwned?: boolean;
 }
 
-export default function PropertyDetailsModal({ isOpen, onClose, property }: PropertyDetailsModalProps) {
+export default function PropertyDetailsModal({ isOpen, onClose, property, isSelfOwned = false }: PropertyDetailsModalProps) {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-TZ', {
       style: 'currency',
@@ -499,20 +500,49 @@ export default function PropertyDetailsModal({ isOpen, onClose, property }: Prop
               </div>
             )}
 
-            {/* Send Offer Button */}
+            {/* Action Buttons */}
             <div style={{ textAlign: 'right' }}>
-              <button style={{
-                padding: '12px 32px',
-                backgroundColor: '#0f172a',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer'
-              }}>
-                Send Offer
-              </button>
+              {isSelfOwned ? (
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                  <button style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#f3f4f6',
+                    color: '#374151',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}>
+                    List for Sale
+                  </button>
+                  <button style={{
+                    padding: '12px 24px',
+                    backgroundColor: 'var(--mc-sidebar-bg)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}>
+                    Get Valuation
+                  </button>
+                </div>
+              ) : (
+                <button style={{
+                  padding: '12px 32px',
+                  backgroundColor: 'var(--mc-sidebar-bg)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}>
+                  Send Offer
+                </button>
+              )}
             </div>
           </div>
         </div>

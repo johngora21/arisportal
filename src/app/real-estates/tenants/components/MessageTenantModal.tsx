@@ -71,7 +71,7 @@ export default function MessageTenantModal({
               justifyContent: 'center', 
               fontSize: '16px', 
               fontWeight: '600', 
-              color: '#0f172a' 
+              color: 'var(--mc-sidebar-bg)' 
             }}>
               {tenant.name.charAt(0)}
             </div>
@@ -232,7 +232,7 @@ export default function MessageTenantModal({
                 padding: '12px 20px',
                 border: 'none',
                 borderRadius: '8px',
-                background: messageContent.trim() ? '#0f172a' : '#d1d5db',
+                background: messageContent.trim() ? 'var(--mc-sidebar-bg)' : '#d1d5db',
                 color: 'white',
                 fontSize: '14px',
                 fontWeight: '500',

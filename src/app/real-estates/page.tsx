@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Building, Plus, Eye, MapPin, Home, List, TrendingUp } from 'lucide-react';
-import { Property } from './marketplace/types';
+import { Building, Plus, Eye, MapPin, Home, List, TrendingUp, Warehouse } from 'lucide-react';
+import { Property, InvestmentProject, UserProperty } from './marketplace/models';
 import LandTab from './marketplace/components/LandTab';
 import HouseTab from './marketplace/components/HouseTab';
 import InvestmentProjectsTab from './marketplace/components/InvestmentProjectsTab';
@@ -11,6 +11,7 @@ import MyPropertiesTab from './marketplace/components/MyPropertiesTab';
 import ListPropertyModal from './marketplace/components/ListPropertyModal';
 import PropertyDetailsModal from './marketplace/components/PropertyDetailsModal';
 import InvestmentProjectDetailsModal from './marketplace/components/InvestmentProjectDetailsModal';
+import { landProperties, buildingProperties, userProperties } from './marketplace/data/mockData';
 
 export default function RealEstatesPage() {
   const [activeTab, setActiveTab] = useState('land');
@@ -21,22 +22,28 @@ export default function RealEstatesPage() {
   const [showInvestmentProjectModal, setShowInvestmentProjectModal] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [isSelfOwnedProperty, setIsSelfOwnedProperty] = useState(false);
 
   const handleProjectClick = (project: any) => {
     setSelectedProject(project);
     setShowInvestmentProjectModal(true);
   };
 
-  const handlePropertyClick = (property: any) => {
+  const handlePropertyClick = (property: any, isSelfOwned = false) => {
     // Convert Property to PropertyDetails format
     const propertyDetails = {
       ...property,
       images: property.images || [property.image],
       features: property.features || ['Modern Design', 'Prime Location', 'Good Investment'],
       amenities: property.amenities || ['Parking', 'Security', 'Utilities'],
-      seller: {
+      seller: property.seller ? {
         ...property.seller,
         role: property.seller.role || 'Property Owner'
+      } : {
+        name: 'Property Owner',
+        phone: 'N/A',
+        email: 'N/A',
+        role: 'Property Owner'
       },
       verificationStatus: property.verificationStatus || 'verified',
       documents: {
@@ -46,6 +53,7 @@ export default function RealEstatesPage() {
       }
     };
     setSelectedProperty(propertyDetails);
+    setIsSelfOwnedProperty(isSelfOwned);
     setShowPropertyDetailsModal(true);
   };
 
@@ -64,7 +72,11 @@ export default function RealEstatesPage() {
       projectDuration: '24 months',
       image: '/api/placeholder/400/300',
       description: 'Modern commercial complex with retail spaces, offices, and parking facilities in prime Masaki location.',
-      status: 'active' as const
+      status: 'active' as const,
+      coordinates: {
+        lat: -6.7789,
+        lng: 39.2567
+      }
     },
     {
       id: '2',
@@ -79,7 +91,11 @@ export default function RealEstatesPage() {
       projectDuration: '18 months',
       image: '/api/placeholder/400/300',
       description: 'Affordable housing development with 50 units targeting middle-income families.',
-      status: 'active' as const
+      status: 'active' as const,
+      coordinates: {
+        lat: -6.7924,
+        lng: 39.2083
+      }
     },
     {
       id: '3',
@@ -94,7 +110,11 @@ export default function RealEstatesPage() {
       projectDuration: '36 months',
       image: '/api/placeholder/400/300',
       description: 'Premium office tower with modern amenities and prime CBD location.',
-      status: 'active' as const
+      status: 'active' as const,
+      coordinates: {
+        lat: -6.7924,
+        lng: 39.2083
+      }
     },
     {
       id: '4',
@@ -109,7 +129,11 @@ export default function RealEstatesPage() {
       projectDuration: '20 months',
       image: '/api/placeholder/400/300',
       description: 'Mixed-use development with residential and commercial components.',
-      status: 'funded' as const
+      status: 'funded' as const,
+      coordinates: {
+        lat: -6.8234,
+        lng: 39.3456
+      }
     }
   ];
 
@@ -175,63 +199,8 @@ export default function RealEstatesPage() {
     }
   ];
 
-  // Mock properties data
-  const properties: Property[] = [
-    {
-      id: '1',
-      title: 'Prime Land in Masaki',
-      type: 'land',
-      location: 'Masaki, Dar es Salaam',
-      price: 150000000,
-      size: '500 sqm',
-      image: '/api/placeholder/400/300',
-      description: 'Prime commercial land in Masaki with excellent road access and utilities.',
-      seller: {
-        name: 'John Mwalimu',
-        phone: '+255 123 456 789',
-        email: 'john@example.com'
-      },
-      listedDate: '2024-01-15',
-      status: 'available'
-    },
-    {
-      id: '2',
-      title: 'Modern Apartment',
-      type: 'apartment',
-      location: 'Kinondoni, Dar es Salaam',
-      price: 85000000,
-      size: '120 sqm',
-      bedrooms: 3,
-      bathrooms: 2,
-      kitchen: 1,
-      image: '/api/placeholder/400/300',
-      description: 'Furnished 3-bedroom apartment with modern amenities.',
-      seller: {
-        name: 'Sarah Kimaro',
-        phone: '+255 987 654 321',
-        email: 'sarah@example.com'
-      },
-      listedDate: '2024-01-10',
-      status: 'available'
-    },
-    {
-      id: '3',
-      title: 'Commercial Building',
-      type: 'commercial',
-      location: 'CBD, Dar es Salaam',
-      price: 250000000,
-      size: '300 sqm',
-      image: '/api/placeholder/400/300',
-      description: 'Office building in central business district.',
-      seller: {
-        name: 'Ahmed Hassan',
-        phone: '+255 555 123 456',
-        email: 'ahmed@example.com'
-      },
-      listedDate: '2024-01-05',
-      status: 'available'
-    }
-  ];
+  // Use mock data for properties
+  const properties: Property[] = [...landProperties, ...buildingProperties];
 
   const filteredProperties = useMemo(() => {
     return properties.filter(property => {
@@ -290,6 +259,7 @@ export default function RealEstatesPage() {
         return (
           <MyPropertiesTab
             properties={userProperties}
+            onPropertyClick={(property) => handlePropertyClick(property, true)}
           />
         );
       default:
@@ -321,7 +291,7 @@ export default function RealEstatesPage() {
         <button
           onClick={() => setShowListPropertyModal(true)}
           style={{
-            backgroundColor: '#0f172a',
+            backgroundColor: 'var(--mc-sidebar-bg)',
             color: 'white',
             border: 'none',
               borderRadius: '8px',
@@ -335,10 +305,10 @@ export default function RealEstatesPage() {
             transition: 'background-color 0.2s'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#1e293b';
+            e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#0f172a';
+            e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
           }}
         >
           <Plus size={16} />
@@ -360,7 +330,7 @@ export default function RealEstatesPage() {
         }}>
           {[
             { id: 'land', label: 'Plots', icon: <MapPin size={16} /> },
-            { id: 'buildings', label: 'Buildings', icon: <Home size={16} /> },
+            { id: 'buildings', label: 'Structures', icon: <Warehouse size={16} /> },
             { id: 'investment-projects', label: 'Investment Projects', icon: <TrendingUp size={16} /> },
             { id: 'my-listings', label: 'My Listings', icon: <List size={16} /> },
             { id: 'my-properties', label: 'My Properties', icon: <Building size={16} /> }
@@ -371,7 +341,7 @@ export default function RealEstatesPage() {
               style={{
                 flex: 1,
                 padding: '16px 20px',
-                backgroundColor: activeTab === tab.id ? '#0f172a' : 'transparent',
+                backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
                 color: activeTab === tab.id ? 'white' : '#6b7280',
                 border: 'none',
                 fontSize: '14px',
@@ -405,6 +375,7 @@ export default function RealEstatesPage() {
         isOpen={showPropertyDetailsModal}
         onClose={() => setShowPropertyDetailsModal(false)}
         property={selectedProperty}
+        isSelfOwned={isSelfOwnedProperty}
       />
 
       {/* Investment Project Details Modal */}

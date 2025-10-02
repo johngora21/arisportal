@@ -22,9 +22,10 @@ interface Property {
 
 interface MyPropertiesTabProps {
   properties?: Property[];
+  onPropertyClick?: (property: Property) => void;
 }
 
-export default function MyPropertiesTab({ properties = [] }: MyPropertiesTabProps) {
+export default function MyPropertiesTab({ properties = [], onPropertyClick }: MyPropertiesTabProps) {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-TZ', {
       style: 'currency',
@@ -158,6 +159,7 @@ export default function MyPropertiesTab({ properties = [] }: MyPropertiesTabProp
                 e.currentTarget.style.transform = 'translateY(0)';
                 e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
               }}
+              onClick={() => onPropertyClick?.(property)}
             >
               <div style={{
                 width: '100%',

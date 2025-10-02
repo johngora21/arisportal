@@ -330,7 +330,7 @@ export default function DepartmentsPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '12px 24px',
-              backgroundColor: '#0f172a',
+              backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -350,7 +350,7 @@ export default function DepartmentsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
             <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                <Building size={20} color="#0f172a" />
+                <Building size={20} color="var(--mc-sidebar-bg)" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Departments</span>
               </div>
               <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
@@ -820,7 +820,7 @@ export default function DepartmentsPage() {
                 disabled={formLoading || !newDepartmentForm.name || !newDepartmentForm.code || !newDepartmentForm.description}
                 style={{
                   padding: '12px 24px',
-                  backgroundColor: '#0f172a',
+                  backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',

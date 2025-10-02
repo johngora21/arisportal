@@ -16,7 +16,7 @@ export default function TenderToolsPage() {
       id: "tender-analysis",
       title: "Tender Analysis",
       description: "Analyze tender requirements, competition, and success probability",
-      icon: <BarChart3 size={32} color="#0f172a" />,
+      icon: <BarChart3 size={32} color="var(--mc-sidebar-bg)" />,
       color: "#dbeafe",
       features: ["Competitor Analysis", "Success Probability", "Risk Assessment"]
     },
@@ -106,7 +106,7 @@ export default function TenderToolsPage() {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)';
-                e.currentTarget.style.borderColor = '#0f172a';
+                e.currentTarget.style.borderColor = 'var(--mc-sidebar-bg)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
@@ -171,7 +171,7 @@ export default function TenderToolsPage() {
               <button style={{
                 width: '100%',
                 padding: '10px 16px',
-                backgroundColor: '#0f172a',
+                backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -181,10 +181,10 @@ export default function TenderToolsPage() {
                 transition: 'background-color 0.2s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#1e293b';
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#0f172a';
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
               }}>
                 Open Tool
               </button>

@@ -74,7 +74,7 @@ export default function HRPage() {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '12px 24px',
-                backgroundColor: '#0f172a',
+                backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -264,7 +264,7 @@ export default function HRPage() {
                     alignItems: 'center', 
                     justifyContent: 'center' 
                   }}>
-                    <span style={{ fontSize: '12px', fontWeight: '500', color: '#0f172a' }}>
+                    <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--mc-sidebar-bg)' }}>
                       {month.month}
                     </span>
                   </div>
@@ -316,7 +316,7 @@ export default function HRPage() {
                 <div style={{
                   width: '40px',
                   height: '40px',
-                  background: 'linear-gradient(135deg, #0f172a, #8b5cf6)',
+                  background: 'linear-gradient(135deg, var(--mc-sidebar-bg), #8b5cf6)',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -377,14 +377,14 @@ export default function HRPage() {
             color: 'inherit'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#0f172a';
+            e.currentTarget.style.borderColor = 'var(--mc-sidebar-bg)';
             e.currentTarget.style.backgroundColor = '#f8fafc';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.borderColor = '#e5e7eb';
             e.currentTarget.style.backgroundColor = 'white';
           }}>
-            <Users size={32} color="#0f172a" style={{ marginBottom: '8px' }} />
+            <Users size={32} color="var(--mc-sidebar-bg)" style={{ marginBottom: '8px' }} />
             <h4 style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', margin: '0 0 4px 0' }}>
               Employee Management
             </h4>

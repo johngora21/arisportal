@@ -82,7 +82,7 @@ export default function InventoryModulesPage() {
               onClick={() => setActiveTab(t.id as any)}
               style={{
                 padding: '14px 12px',
-                backgroundColor: activeTab === (t.id as any) ? '#0f172a' : 'transparent',
+                backgroundColor: activeTab === (t.id as any) ? 'var(--mc-sidebar-bg)' : 'transparent',
                 color: activeTab === (t.id as any) ? 'white' : '#6b7280',
                 border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer'
               }}>
@@ -98,7 +98,7 @@ export default function InventoryModulesPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginTop: 24 }}>
             {/* Sales by Category Pie Chart */}
             <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 20 }}>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 16 }}>Sales by Category</h4>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--mc-sidebar-bg)', marginBottom: 16 }}>Sales by Category</h4>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
                 <div style={{ position: 'relative', width: 150, height: 150 }}>
                   {/* Pie Chart SVG */}
@@ -112,7 +112,7 @@ export default function InventoryModulesPage() {
                       strokeDasharray={`${2 * Math.PI * 60 * 0.20} ${2 * Math.PI * 60}`} strokeDashoffset={`-${2 * Math.PI * 60 * 0.8}`}/>
                   </svg>
                   <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>28</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--mc-sidebar-bg)' }}>28</div>
                     <div style={{ fontSize: 12, color: '#6b7280' }}>Units</div>
                   </div>
                 </div>
@@ -135,7 +135,7 @@ export default function InventoryModulesPage() {
 
             {/* Top Products Bar Chart */}
             <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 20 }}>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 16 }}>Top Products (by revenue)</h4>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--mc-sidebar-bg)', marginBottom: 16 }}>Top Products (by revenue)</h4>
               <div style={{ height: 200, position: 'relative' }}>
                 <svg width="100%" height="100%" style={{ overflow: 'visible' }}>
                   {/* Bar Chart */}
@@ -151,10 +151,10 @@ export default function InventoryModulesPage() {
                   <text x="290" y="175" fontSize="12" fill="#6b7280" textAnchor="middle">Desk Lamp</text>
                   
                   {/* Revenue Labels */}
-                  <text x="50" y="30" fontSize="12" fill="#111827" textAnchor="middle" fontWeight="600">TZS 800</text>
-                  <text x="130" y="70" fontSize="12" fill="#111827" textAnchor="middle" fontWeight="600">TZS 300</text>
-                  <text x="210" y="90" fontSize="12" fill="#111827" textAnchor="middle" fontWeight="600">TZS 250</text>
-                  <text x="290" y="130" fontSize="12" fill="#111827" textAnchor="middle" fontWeight="600">TZS 125</text>
+                  <text x="50" y="30" fontSize="12" fill="var(--mc-sidebar-bg)" textAnchor="middle" fontWeight="600">TZS 800</text>
+                  <text x="130" y="70" fontSize="12" fill="var(--mc-sidebar-bg)" textAnchor="middle" fontWeight="600">TZS 300</text>
+                  <text x="210" y="90" fontSize="12" fill="var(--mc-sidebar-bg)" textAnchor="middle" fontWeight="600">TZS 250</text>
+                  <text x="290" y="130" fontSize="12" fill="var(--mc-sidebar-bg)" textAnchor="middle" fontWeight="600">TZS 125</text>
                   
                   {/* Y-axis */}
                   <line x1="15" y1="20" x2="15" y2="160" stroke="#e5e7eb" strokeWidth="2"/>
@@ -168,22 +168,22 @@ export default function InventoryModulesPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginTop: 24 }}>
             <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>Best Seller</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginTop: 4 }}>Office Chair</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--mc-sidebar-bg)', marginTop: 4 }}>Office Chair</div>
               <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>28 units sold</div>
             </div>
             <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>Avg Order Value</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginTop: 4 }}>TZS 369</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--mc-sidebar-bg)', marginTop: 4 }}>TZS 369</div>
               <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Per transaction</div>
             </div>
             <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>Stock Turnover</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginTop: 4 }}>0.28</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--mc-sidebar-bg)', marginTop: 4 }}>0.28</div>
               <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Monthly rate</div>
             </div>
             <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>Total Revenue</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginTop: 4 }}>TZS 1,475</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--mc-sidebar-bg)', marginTop: 4 }}>TZS 1,475</div>
               <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>This period</div>
             </div>
           </div>
@@ -192,7 +192,7 @@ export default function InventoryModulesPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginTop: 24 }}>
             {/* Trending Products */}
             <div>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 12 }}>Trending Products (Market)</h4>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--mc-sidebar-bg)', marginBottom: 12 }}>Trending Products (Market)</h4>
               <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
                 <div style={{ display: 'grid', gap: 8 }}>
                   {[
@@ -218,7 +218,7 @@ export default function InventoryModulesPage() {
 
             {/* Competitor Pricing */}
             <div>
-              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 12 }}>Competitor Pricing</h4>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--mc-sidebar-bg)', marginBottom: 12 }}>Competitor Pricing</h4>
               <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
                 <div style={{ display: 'grid', gap: 8 }}>
                   {[
@@ -250,7 +250,7 @@ export default function InventoryModulesPage() {
 
       {activeTab === 'sales' && (
         <div style={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: 24 }}>
-          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#111827' }}>Record Sale (Buyer Details)</h3>
+          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--mc-sidebar-bg)' }}>Record Sale (Buyer Details)</h3>
           <p style={{ color: '#6b7280', marginTop: 8 }}>Capture buyer identity and demographics with each sale for analytics.</p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
@@ -302,7 +302,7 @@ export default function InventoryModulesPage() {
               <input type="number" step="0.01" onChange={(e) => { const v = parseFloat(e.target.value || '0'); formRef.price = v; setSalePrice(isNaN(v) ? 0 : v); }}
                 style={{ width: '100%', padding: 12, border: '1px solid #d1d5db', borderRadius: 8, boxSizing: 'border-box', marginRight: 8 }} />
               <div style={{ marginTop: 6, fontSize: 12, color: '#6b7280' }}>
-                Total Amount: <span style={{ fontWeight: 700, color: '#111827' }}>TZS {(Math.max(0, saleQty) * Math.max(0, salePrice)).toLocaleString()}</span>
+                Total Amount: <span style={{ fontWeight: 700, color: 'var(--mc-sidebar-bg)' }}>TZS {(Math.max(0, saleQty) * Math.max(0, salePrice)).toLocaleString()}</span>
               </div>
             </div>
             <div>
@@ -378,7 +378,7 @@ export default function InventoryModulesPage() {
                 formRef.ageRange = '';
                 setActiveTab('reports');
               }}
-              style={{ padding: '10px 16px', backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}
+              style={{ padding: '10px 16px', backgroundColor: 'var(--mc-sidebar-bg)', color: 'white', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}
             >
               Save Sale
             </button>
@@ -388,11 +388,11 @@ export default function InventoryModulesPage() {
 
       {activeTab === 'suppliers' && (
         <div style={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: 24 }}>
-          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#111827' }}>Suppliers</h3>
+          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--mc-sidebar-bg)' }}>Suppliers</h3>
           <p style={{ color: '#6b7280', marginTop: 8 }}>Benchmark suppliers and track landed costs (local-only for now).</p>
 
           <div style={{ marginTop: 24 }}>
-            <h4 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 12 }}>Supplier Intelligence</h4>
+            <h4 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--mc-sidebar-bg)', marginBottom: 12 }}>Supplier Intelligence</h4>
             <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
                 {[
@@ -429,7 +429,7 @@ export default function InventoryModulesPage() {
 
       {activeTab === 'pooling' && (
         <div style={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: 24 }}>
-          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#111827' }}>Pooled Bulk Orders</h3>
+          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--mc-sidebar-bg)' }}>Pooled Bulk Orders</h3>
           <p style={{ color: '#6b7280', marginTop: 8 }}>Create order pools so multiple sellers can commit and buy cheaper.</p>
         </div>
       )}

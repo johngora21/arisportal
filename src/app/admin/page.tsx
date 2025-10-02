@@ -398,7 +398,7 @@ export default function AdminSystemPage() {
           display: flex; justify-content: space-between; align-items: center; 
           padding-bottom: 16px; border-bottom: 1px solid #e5e7eb; 
         }
-        .admin-title h1 { margin: 0; font-size: 28px; font-weight: 800; color: #111827; }
+        .admin-title h1 { margin: 0; font-size: 28px; font-weight: 800; color: var(--mc-sidebar-bg); }
         .admin-title p { margin: 4px 0 0; color: #6b7280; font-size: 14px; }
         .admin-actions { display: flex; gap: 12px; }
         
@@ -411,8 +411,8 @@ export default function AdminSystemPage() {
           font-weight: 600; color: #6b7280; cursor: pointer;
           border-bottom: 2px solid transparent; transition: all 0.2s;
         }
-        .admin-tab.active { color: #111827; border-bottom-color: #111827; }
-        .admin-tab:hover { color: #111827; }
+        .admin-tab.active { color: var(--mc-sidebar-bg); border-bottom-color: var(--mc-sidebar-bg); }
+        .admin-tab:hover { color: var(--mc-sidebar-bg); }
         
         .stats-grid { 
           display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
@@ -423,7 +423,7 @@ export default function AdminSystemPage() {
           padding: 20px; display: flex; align-items: center; gap: 16px; 
         }
         .stat-icon { font-size: 32px; }
-        .stat-number { font-size: 24px; font-weight: 800; color: #111827; }
+        .stat-number { font-size: 24px; font-weight: 800; color: var(--mc-sidebar-bg); }
         .stat-label { color: #6b7280; font-size: 14px; }
         
         .role-breakdown { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; }
@@ -431,7 +431,7 @@ export default function AdminSystemPage() {
         .role-stats { display: flex; gap: 24px; }
         .role-stat { display: flex; flex-direction: column; align-items: center; }
         .role-label { color: #6b7280; font-size: 14px; }
-        .role-count { font-size: 20px; font-weight: 700; color: #111827; }
+        .role-count { font-size: 20px; font-weight: 700; color: var(--mc-sidebar-bg); }
         
         .users-controls { margin-bottom: 20px; }
         .search-filters { 
@@ -465,17 +465,17 @@ export default function AdminSystemPage() {
         .user-info { display: flex; align-items: center; gap: 12px; }
         .user-avatar { 
           width: 40px; height: 40px; border-radius: 10px; 
-          background: #111827; color: #fff; display: flex; 
+          background: var(--mc-sidebar-bg); color: #fff; display: flex; 
           align-items: center; justify-content: center; font-weight: 700; 
         }
-        .user-name { font-weight: 600; color: #111827; }
+        .user-name { font-weight: 600; color: var(--mc-sidebar-bg); }
         .user-email { color: #6b7280; font-size: 12px; }
         
         .role-badge { 
           padding: 4px 8px; border-radius: 6px; font-size: 12px; 
           font-weight: 600; text-transform: capitalize; 
         }
-        .role-admin { background: #111827; color: #fff; }
+        .role-admin { background: var(--mc-sidebar-bg); color: #fff; }
         .role-mentor { background: #0b1220; color: #a5b4fc; }
         .role-investor { background: #f0fdf4; color: #065f46; }
         .role-entrepreneur { background: #eff6ff; color: #1d4ed8; }
@@ -492,7 +492,7 @@ export default function AdminSystemPage() {
           padding: 4px 8px; border: none; border-radius: 6px; 
           font-size: 12px; font-weight: 600; cursor: pointer; 
         }
-        .btn-primary { background: #111827; color: #fff; }
+        .btn-primary { background: var(--mc-sidebar-bg); color: #fff; }
         .btn-success { background: #10b981; color: #fff; }
         .btn-warning { background: #f59e0b; color: #fff; }
         .btn-danger { background: #ef4444; color: #fff; }
@@ -512,7 +512,7 @@ export default function AdminSystemPage() {
           padding: 10px 20px; border: none; border-radius: 8px; 
           font-weight: 600; cursor: pointer; 
         }
-        .btn-primary { background: #111827; color: #fff; }
+        .btn-primary { background: var(--mc-sidebar-bg); color: #fff; }
         .btn-secondary { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
         
         .loading, .error, .coming-soon { 

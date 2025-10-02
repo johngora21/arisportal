@@ -302,7 +302,7 @@ export default function CRMPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '12px 24px',
-              backgroundColor: '#0f172a',
+              backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -321,7 +321,7 @@ export default function CRMPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
           <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <Users size={20} color="#0f172a" />
+              <Users size={20} color="var(--mc-sidebar-bg)" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Contacts</span>
             </div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
@@ -380,7 +380,7 @@ export default function CRMPage() {
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',
-                backgroundColor: activeTab === tab.id ? '#0f172a' : 'white',
+                backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'white',
                 color: activeTab === tab.id ? 'white' : '#6b7280',
                 boxShadow: activeTab === tab.id ? '0 2px 4px rgba(59, 130, 246, 0.3)' : '0 1px 3px rgba(0,0,0,0.1)'
               }}
@@ -551,7 +551,7 @@ export default function CRMPage() {
                           }} 
                           onMouseOver={(e) => {
                             e.currentTarget.style.background = '#dbeafe';
-                            e.currentTarget.style.color = '#0f172a';
+                            e.currentTarget.style.color = 'var(--mc-sidebar-bg)';
                           }}
                           onMouseOut={(e) => {
                             e.currentTarget.style.background = '#f3f4f6';
@@ -741,7 +741,7 @@ export default function CRMPage() {
                     transition: 'all 0.2s'
                   }}
                   onMouseOver={(e) => {
-                    e.currentTarget.style.borderColor = '#0f172a';
+                    e.currentTarget.style.borderColor = 'var(--mc-sidebar-bg)';
                     e.currentTarget.style.backgroundColor = '#f8fafc';
                   }}
                   onMouseOut={(e) => {
@@ -749,7 +749,7 @@ export default function CRMPage() {
                     e.currentTarget.style.backgroundColor = 'white';
                   }}
                 >
-                  <UserPlus size={32} color="#0f172a" />
+                  <UserPlus size={32} color="var(--mc-sidebar-bg)" />
                   <span style={{ fontSize: '16px', fontWeight: '500', color: '#374151' }}>Manual Entry</span>
                   <span style={{ fontSize: '14px', color: '#6b7280', textAlign: 'center' }}>Add contact details one by one</span>
                 </button>
@@ -770,7 +770,7 @@ export default function CRMPage() {
                     transition: 'all 0.2s'
                   }}
                   onMouseOver={(e) => {
-                    e.currentTarget.style.borderColor = '#0f172a';
+                    e.currentTarget.style.borderColor = 'var(--mc-sidebar-bg)';
                     e.currentTarget.style.backgroundColor = '#f8fafc';
                   }}
                   onMouseOut={(e) => {
@@ -778,7 +778,7 @@ export default function CRMPage() {
                     e.currentTarget.style.backgroundColor = 'white';
                   }}
                 >
-                  <FileText size={32} color="#0f172a" />
+                  <FileText size={32} color="var(--mc-sidebar-bg)" />
                   <span style={{ fontSize: '16px', fontWeight: '500', color: '#374151' }}>Import CSV</span>
                   <span style={{ fontSize: '14px', color: '#6b7280', textAlign: 'center' }}>Upload a CSV file with contacts</span>
                 </button>
@@ -963,7 +963,7 @@ export default function CRMPage() {
                       padding: '10px 20px',
                       border: 'none',
                       borderRadius: '8px',
-                      background: '#0f172a',
+                      background: 'var(--mc-sidebar-bg)',
                       color: 'white',
                       fontSize: '14px',
                       fontWeight: '500',
@@ -976,7 +976,7 @@ export default function CRMPage() {
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '20px' }}>
-                <FileText size={48} color="#0f172a" style={{ marginBottom: '16px' }} />
+                <FileText size={48} color="var(--mc-sidebar-bg)" style={{ marginBottom: '16px' }} />
                 <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0 0 8px 0' }}>
                   Import Contacts from CSV
                 </h3>
@@ -996,7 +996,7 @@ export default function CRMPage() {
                   style={{
                     display: 'inline-block',
                     padding: '12px 24px',
-                    backgroundColor: '#0f172a',
+                    backgroundColor: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     borderRadius: '8px',
                     cursor: 'pointer',
@@ -1086,7 +1086,7 @@ export default function CRMPage() {
                   justifyContent: 'center', 
                   fontSize: '24px', 
                   fontWeight: '600', 
-                  color: '#0f172a' 
+                  color: 'var(--mc-sidebar-bg)' 
                 }}>
                   {selectedContact.name.charAt(0)}
                 </div>
@@ -1234,7 +1234,7 @@ export default function CRMPage() {
                   justifyContent: 'center', 
                   fontSize: '16px', 
                   fontWeight: '600', 
-                  color: '#0f172a' 
+                  color: 'var(--mc-sidebar-bg)' 
                 }}>
                   {selectedContact.name.charAt(0)}
                 </div>
@@ -1389,7 +1389,7 @@ export default function CRMPage() {
                     padding: '12px 20px',
                     border: 'none',
                     borderRadius: '8px',
-                    background: '#0f172a',
+                    background: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     fontSize: '14px',
                     fontWeight: '500',
