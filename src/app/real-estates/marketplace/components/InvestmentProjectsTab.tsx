@@ -5,16 +5,7 @@ import { MapPin, DollarSign, Users, TrendingUp, Calendar, X } from 'lucide-react
 import { InvestmentProject } from '../models';
 
 // Declare Leaflet types
-declare global {
-  namespace L {
-    interface Map {
-      eachLayer(callback: (layer: any) => void): void;
-    }
-    interface TileLayer {
-      addTo(map: Map): TileLayer;
-    }
-  }
-}
+declare const L: any;
 
 interface InvestmentProjectsTabProps {
   projects?: InvestmentProject[];
@@ -25,8 +16,8 @@ export default function InvestmentProjectsTab({ projects = [], onProjectClick }:
   const [showMapView, setShowMapView] = useState(false);
   const [selectedProjectForMap, setSelectedProjectForMap] = useState<InvestmentProject | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const markerRef = useRef<L.Marker | null>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-TZ', {
       style: 'currency',
@@ -97,7 +88,7 @@ export default function InvestmentProjectsTab({ projects = [], onProjectClick }:
   const switchMapType = (mapType: string) => {
     if (mapInstanceRef.current) {
       // Remove all existing layers
-      mapInstanceRef.current.eachLayer((layer) => {
+      mapInstanceRef.current.eachLayer((layer: any) => {
         if (layer instanceof L.TileLayer) {
           mapInstanceRef.current?.removeLayer(layer);
         }

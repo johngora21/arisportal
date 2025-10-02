@@ -1,25 +1,15 @@
 'use client';
 
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { DollarSign, BarChart3, Package, Star, MapPin, Clock, TrendingUp, CheckCircle, Phone, Mail, Calendar, Users, Award, Shield, Truck, CreditCard, Globe, Plus } from 'lucide-react';
-import Link from 'next/link';
-import { SalesModule } from '../sales/page';
-import { ReportsModule } from '../reports/page';
-import { SuppliersModule } from '../suppliers/page';
-import { BulkOrdersModule } from '../bulk-orders/page';
+import React, { useState, useEffect, useRef } from 'react';
+import { MapPin, CheckCircle, Phone, Mail, Globe, Star } from 'lucide-react';
 
 // Declare Leaflet types
 declare const L: any;
 
-export default function InventoryModulesPage() {
-  const [activeTab, setActiveTab] = useState<'sales'|'reports'|'suppliers'|'bulk-orders'>('sales');
-  const [productQuery, setProductQuery] = useState('');
-  const [saleQty, setSaleQty] = useState<number>(0);
-  const [salePrice, setSalePrice] = useState<number>(0);
-  const [showProductDropdown, setShowProductDropdown] = useState(false);
+export function SuppliersModule() {
+  const [supplierCountryFilter, setSupplierCountryFilter] = useState('');
   const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
-  const [supplierCountryFilter, setSupplierCountryFilter] = useState('');
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
 
@@ -45,46 +35,6 @@ export default function InventoryModulesPage() {
     'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States', 'Uruguay', 'Uzbekistan', 'Vanuatu', 'Vatican City', 'Venezuela', 'Vietnam',
     'Yemen', 'Zambia', 'Zimbabwe'
   ];
-
-  const products = useMemo(() => ([
-    { id: 'p1', name: 'Office Chair', category: 'Furniture', unitPrice: 150 },
-    { id: 'p2', name: 'Laptop 15"', category: 'Electronics', unitPrice: 800 },
-    { id: 'p3', name: 'A4 Paper Ream', category: 'Office Supplies', unitPrice: 12.5 },
-    { id: 'p4', name: 'Desk Lamp', category: 'Electronics', unitPrice: 25 },
-  ]), []);
-  const visibleProducts = useMemo(() => {
-    const q = productQuery.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
-  }, [products, productQuery]);
-  const [sales, setSales] = useState<Array<{ id: string; productId: string; qty: number; price: number; date: string; buyerName: string; buyerCity?: string; buyerPhone?: string; buyerEmail?: string; gender?: string; ageRange?: string }>>([
-    { id: 's1', productId: 'p1', qty: 2, price: 150, date: '2025-09-01', buyerName: 'John D', buyerCity: 'Dar es Salaam', gender: 'Male', ageRange: '25-34', buyerPhone: '+255700000001' },
-    { id: 's2', productId: 'p2', qty: 1, price: 800, date: '2025-09-03', buyerName: 'Asha K', buyerCity: 'Dodoma', gender: 'Female', ageRange: '25-34', buyerEmail: 'asha@example.com' },
-    { id: 's3', productId: 'p3', qty: 20, price: 12.5, date: '2025-09-05', buyerName: 'Kito Ltd', buyerCity: 'Arusha', buyerPhone: '+255700000003' },
-    { id: 's4', productId: 'p4', qty: 5, price: 25, date: '2025-09-06', buyerName: 'Mariam M', buyerCity: 'Mwanza', gender: 'Female', ageRange: '18-24' },
-  ]);
-  const [filters, setFilters] = useState<{ category: string; from?: string; to?: string }>({ category: 'all' });
-
-  const filteredSales = useMemo(() => {
-    return sales.filter(s => {
-      const prod = products.find(p => p.id === s.productId);
-      if (!prod) return false;
-      const inCat = filters.category === 'all' || prod.category === filters.category;
-      const d = new Date(s.date).getTime();
-      const inFrom = !filters.from || d >= new Date(filters.from).getTime();
-      const inTo = !filters.to || d <= new Date(filters.to).getTime();
-      return inCat && inFrom && inTo;
-    });
-  }, [sales, products, filters]);
-
-  const kpis = useMemo(() => {
-    const totalRevenue = filteredSales.reduce((sum, s) => sum + s.qty * s.price, 0);
-    const unitsSold = filteredSales.reduce((sum, s) => sum + s.qty, 0);
-    const orders = filteredSales.length;
-    const aov = orders ? totalRevenue / orders : 0;
-    const stockTurnover = unitsSold / 100;
-    return { totalRevenue, unitsSold, orders, aov, stockTurnover };
-  }, [filteredSales]);
 
   // Initialize map when supplier modal opens
   useEffect(() => {
@@ -124,147 +74,421 @@ export default function InventoryModulesPage() {
     };
   }, [showSupplierModal, selectedSupplier]);
 
-  const topProducts = useMemo(() => {
-    const map: Record<string, number> = {};
-    filteredSales.forEach(s => { map[s.productId] = (map[s.productId] || 0) + s.qty * s.price; });
-    return Object.entries(map)
-      .map(([productId, revenue]) => ({ productId, revenue, name: products.find(p => p.id === productId)?.name || productId }))
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5);
-  }, [filteredSales, products]);
-
-  const formRef: Partial<{ productId: string; qty: number; price: number; date: string; buyerName: string; buyerCity: string; buyerPhone: string; buyerEmail: string; gender: string; ageRange: string }> = {};
-
   return (
     <div style={{ padding: '24px', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
-      <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: 700, color: '#1f2937', margin: '0 0 8px 0' }}>
-          Inventory Modules
-        </h1>
-        <p style={{ fontSize: '16px', color: '#6b7280', margin: 0 }}>
-          Comprehensive inventory management tools for sales, reports, suppliers, and bulk orders.
-        </p>
-      </div>
+      
 
-      {/* Quick Stats Overview */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-        <div style={{
-          backgroundColor: 'white',
-          border: '1px solid #e5e7eb',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-            <div style={{ padding: '8px', backgroundColor: 'transparent', borderRadius: '8px', color: '#3b82f6' }}>
-              <DollarSign size={20} />
-            </div>
-        <div>
-              <div style={{ fontSize: '14px', color: '#6b7280' }}>Total Revenue</div>
-              <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>TZS 1,475</div>
-            </div>
-          </div>
-          <div style={{ fontSize: '12px', color: '#10b981', fontWeight: '500' }}>
-            <TrendingUp size={12} style={{ display: 'inline', marginRight: '4px' }} />
-            +12% from last month
-        </div>
-      </div>
-
-        <div style={{
-          backgroundColor: 'white',
-          border: '1px solid #e5e7eb',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-            <div style={{ padding: '8px', backgroundColor: 'transparent', borderRadius: '8px', color: '#10b981' }}>
-              <Package size={20} />
-        </div>
-        <div>
-              <div style={{ fontSize: '14px', color: '#6b7280' }}>Active Suppliers</div>
-              <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>4</div>
-            </div>
-          </div>
-          <div style={{ fontSize: '12px', color: '#10b981', fontWeight: '500' }}>
-            <TrendingUp size={12} style={{ display: 'inline', marginRight: '4px' }} />
-            +2 new this month
+      {/* Search Bar and Filters */}
+      <div style={{ marginBottom: '16px', marginTop: '48px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '16px' }}>
+        <div style={{ position: 'relative', flex: '0 0 auto' }}>
+          <input
+            type="text"
+            placeholder="Search suppliers..."
+            style={{
+              width: '300px',
+              padding: '12px 16px 12px 44px',
+              border: '1px solid #e5e7eb',
+              borderRadius: '24px',
+              fontSize: '14px',
+              backgroundColor: 'white',
+              outline: 'none',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = 'var(--mc-sidebar-bg)';
+              e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = '#e5e7eb';
+              e.target.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            }}
+          />
+          <div style={{
+            position: 'absolute',
+            left: '16px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: '#9ca3af'
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
           </div>
         </div>
-
-        <div style={{
-          backgroundColor: 'white',
-          border: '1px solid #e5e7eb',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-            <div style={{ padding: '8px', backgroundColor: 'transparent', borderRadius: '8px', color: '#f59e0b' }}>
-              <Users size={20} />
-            </div>
-            <div>
-              <div style={{ fontSize: '14px', color: '#6b7280' }}>Bulk Orders</div>
-              <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>3 Active</div>
-            </div>
-          </div>
-          <div style={{ fontSize: '12px', color: '#10b981', fontWeight: '500' }}>
-            <TrendingUp size={12} style={{ display: 'inline', marginRight: '4px' }} />
-            +1 new pool
-        </div>
-      </div>
-
-        <div style={{
-          backgroundColor: 'white',
-          border: '1px solid #e5e7eb',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-            <div style={{ padding: '8px', backgroundColor: 'transparent', borderRadius: '8px', color: '#ec4899' }}>
-              <BarChart3 size={20} />
-            </div>
-            <div>
-              <div style={{ fontSize: '14px', color: '#6b7280' }}>Growth Rate</div>
-              <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>+28%</div>
-            </div>
-          </div>
-          <div style={{ fontSize: '12px', color: '#10b981', fontWeight: '500' }}>
-            <TrendingUp size={12} style={{ display: 'inline', marginRight: '4px' }} />
-            +5% from last month
-          </div>
-        </div>
-      </div>
-
-      <div style={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', overflow: 'hidden', marginBottom: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
-          {[
-            { id: 'sales', label: 'Sales', icon: <DollarSign size={16} /> },
-            { id: 'suppliers', label: 'Suppliers', icon: <Package size={16} /> },
-            { id: 'bulk-orders', label: 'Bulk Orders', icon: <Users size={16} /> },
-            { id: 'reports', label: 'Reports', icon: <BarChart3 size={16} /> }
-          ].map(t => (
-            <button key={t.id}
-              onClick={() => setActiveTab(t.id as any)}
-              style={{
-                padding: '14px 12px',
-                backgroundColor: activeTab === (t.id as any) ? 'var(--mc-sidebar-bg)' : 'transparent',
-                color: activeTab === (t.id as any) ? 'white' : '#6b7280',
-                border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer'
-              }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>{t.icon}{t.label}</span>
-            </button>
+        
+        <select
+          value={supplierCountryFilter}
+          onChange={(e) => setSupplierCountryFilter(e.target.value)}
+          style={{
+            padding: '12px 16px',
+            border: '1px solid #e5e7eb',
+            borderRadius: '24px',
+            fontSize: '14px',
+            backgroundColor: 'white',
+            outline: 'none',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            flex: '0 0 auto',
+            cursor: 'pointer'
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = 'var(--mc-sidebar-bg)';
+            e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = '#e5e7eb';
+            e.target.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+          }}
+        >
+          <option value="">All Countries</option>
+          {countries.map((country) => (
+            <option key={country} value={country}>{country}</option>
           ))}
-        </div>
+        </select>
       </div>
 
-      {activeTab === 'sales' && <SalesModule />}
+      {/* Supplier Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+        {[
+          { 
+            name: 'TechHub Ltd', 
+            category: 'Electronics', 
+            minOrder: '50 units', 
+            leadTime: '7 days', 
+            rating: '4.8/5', 
+            location: 'Dar es Salaam',
+            country: 'Tanzania',
+            priceRange: 'TZS 45,000 - 120,000',
+            bulkDiscount: '10% off 100+ units',
+            tags: ['Laptops', 'Phones', 'Tablets', 'Accessories'],
+            // Extended details
+            contact: {
+              phone: '+255 22 123 4567',
+              email: 'sales@techhub.co.tz',
+              website: 'www.techhub.co.tz',
+              address: '123 Tech Street, Masaki, Dar es Salaam'
+            },
+            coordinates: { lat: -6.7789, lng: 39.2567 },
+            established: '2018',
+            employees: '51-200',
+            certifications: ['ISO 9001', 'CE Marking', 'FCC Certified'],
+            paymentMethods: ['Bank Transfer', 'Mobile Money', 'Credit Card', 'Cash'],
+            deliveryAreas: ['Dar es Salaam', 'Arusha', 'Mwanza', 'Dodoma'],
+            warranty: '2 years',
+            returnPolicy: '30 days',
+            customerReviews: [
+              { name: 'John M.', rating: 5, comment: 'Excellent service and quality products' },
+              { name: 'Sarah K.', rating: 4, comment: 'Fast delivery and good prices' },
+              { name: 'Ahmed H.', rating: 5, comment: 'Professional team, highly recommended' }
+            ],
+            specialties: ['Custom Electronics', 'Bulk Orders', 'Technical Support', 'Warranty Service'],
+            languages: ['English', 'Swahili', 'French']
+          },
+          { 
+            name: 'OfficePro', 
+            category: 'Furniture', 
+            minOrder: '20 units', 
+            leadTime: '14 days', 
+            rating: '4.6/5', 
+            location: 'Arusha',
+            country: 'Tanzania',
+            priceRange: 'TZS 85,000 - 250,000',
+            bulkDiscount: '15% off 50+ units',
+            tags: ['Desks', 'Chairs', 'Storage', 'Office Supplies'],
+            // Extended details
+            contact: {
+              phone: '+255 27 234 5678',
+              email: 'info@officepro.co.tz',
+              website: 'www.officepro.co.tz',
+              address: '456 Business Avenue, Arusha'
+            },
+            coordinates: { lat: -3.3869, lng: 36.6830 },
+            established: '2020',
+            employees: '11-50',
+            certifications: ['ISO 14001', 'FSC Certified'],
+            paymentMethods: ['Bank Transfer', 'Mobile Money', 'Cash'],
+            deliveryAreas: ['Arusha', 'Kilimanjaro', 'Manyara'],
+            warranty: '1 year',
+            returnPolicy: '14 days',
+            customerReviews: [
+              { name: 'Maria L.', rating: 4, comment: 'Good quality furniture at reasonable prices' },
+              { name: 'Peter W.', rating: 5, comment: 'Great customer service and delivery' }
+            ],
+            specialties: ['Custom Furniture', 'Office Design', 'Installation Service'],
+            languages: ['English', 'Swahili']
+          },
+          { 
+            name: 'SoundMax', 
+            category: 'Electronics', 
+            minOrder: '100 units', 
+            leadTime: '5 days', 
+            rating: '4.9/5', 
+            location: 'Mwanza',
+            country: 'Tanzania',
+            priceRange: 'TZS 35,000 - 95,000',
+            bulkDiscount: '12% off 200+ units',
+            tags: ['Speakers', 'Headphones', 'Audio Systems', 'Microphones'],
+            // Extended details
+            contact: {
+              phone: '+255 28 345 6789',
+              email: 'contact@soundmax.co.tz',
+              website: 'www.soundmax.co.tz',
+              address: '789 Audio Lane, Mwanza'
+            },
+            coordinates: { lat: -2.5164, lng: 32.9178 },
+            established: '2019',
+            employees: '51-200',
+            certifications: ['ISO 9001', 'THX Certified', 'Dolby Atmos'],
+            paymentMethods: ['Bank Transfer', 'Mobile Money', 'Credit Card'],
+            deliveryAreas: ['Mwanza', 'Shinyanga', 'Geita', 'Simiyu'],
+            warranty: '3 years',
+            returnPolicy: '45 days',
+            customerReviews: [
+              { name: 'David K.', rating: 5, comment: 'Best audio equipment in the region' },
+              { name: 'Grace M.', rating: 5, comment: 'Professional installation and support' },
+              { name: 'James R.', rating: 4, comment: 'High quality products, fast delivery' }
+            ],
+            specialties: ['Professional Audio', 'Custom Installations', 'Technical Support'],
+            languages: ['English', 'Swahili', 'French']
+          },
+          { 
+            name: 'ComfortZone', 
+            category: 'Furniture', 
+            minOrder: '15 units', 
+            leadTime: '21 days', 
+            rating: '4.7/5', 
+            location: 'Dodoma',
+            country: 'Tanzania',
+            priceRange: 'TZS 95,000 - 280,000',
+            bulkDiscount: '8% off 30+ units',
+            tags: ['Sofas', 'Tables', 'Beds', 'Wardrobes'],
+            // Extended details
+            contact: {
+              phone: '+255 26 456 7890',
+              email: 'hello@comfortzone.co.tz',
+              website: 'www.comfortzone.co.tz',
+              address: '321 Comfort Road, Dodoma'
+            },
+            coordinates: { lat: -6.1630, lng: 35.7516 },
+            established: '2017',
+            employees: '11-50',
+            certifications: ['ISO 9001', 'OEKO-TEX Standard'],
+            paymentMethods: ['Bank Transfer', 'Mobile Money', 'Cash'],
+            deliveryAreas: ['Dodoma', 'Singida', 'Tabora'],
+            warranty: '2 years',
+            returnPolicy: '21 days',
+            customerReviews: [
+              { name: 'Anna S.', rating: 5, comment: 'Beautiful furniture, excellent craftsmanship' },
+              { name: 'Michael T.', rating: 4, comment: 'Good value for money' }
+            ],
+            specialties: ['Custom Furniture', 'Interior Design', 'Assembly Service'],
+            languages: ['English', 'Swahili']
+          }
+        ].filter(supplier => 
+          !supplierCountryFilter || supplier.country === supplierCountryFilter
+        ).map((supplier, i) => (
+          <div 
+            key={i} 
+            style={{ 
+              background: 'white', 
+              border: '1px solid #e5e7eb', 
+              borderRadius: '8px', 
+              padding: '16px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s ease',
+              cursor: 'pointer',
+              position: 'relative'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            }}
+            onClick={() => {
+              setSelectedSupplier(supplier);
+              setShowSupplierModal(true);
+            }}
+          >
+            {/* Verification Badge */}
+            <div style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              backgroundColor: '#10b981',
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '12px',
+              fontSize: '10px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              zIndex: 1
+            }}>
+              <CheckCircle size={10} />
+              Verified
+            </div>
+            {/* Company Name */}
+            <h3 style={{ 
+              fontSize: '16px', 
+              fontWeight: '600', 
+              color: '#1f2937', 
+              margin: '0 0 8px 0'
+            }}>
+              {supplier.name}
+            </h3>
 
+            {/* Category (location moved to footer) */}
+            <div style={{ 
+              fontSize: '13px', 
+              color: '#6b7280',
+              marginBottom: '8px'
+            }}>
+              {supplier.category}
+            </div>
 
-      {activeTab === 'suppliers' && <SuppliersModule />}
+            {/* Pricing Info */}
+            <div style={{ 
+              marginBottom: '12px',
+              fontSize: '12px'
+            }}>
+              <div style={{ color: '#6b7280', marginBottom: '2px' }}>Price Range</div>
+              <div style={{ fontWeight: '600', color: '#059669', fontSize: '14px' }}>{supplier.priceRange}</div>
+              <div style={{ color: '#f59e0b', fontSize: '11px', marginTop: '2px' }}>{supplier.bulkDiscount}</div>
+            </div>
 
-      {activeTab === 'bulk-orders' && <BulkOrdersModule />}
+            {/* Key Info Grid */}
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: '1fr 1fr', 
+              gap: '12px',
+              marginBottom: '16px',
+              fontSize: '12px'
+            }}>
+              <div>
+                <div style={{ color: '#6b7280', marginBottom: '2px' }}>Min Order</div>
+                <div style={{ fontWeight: '500', color: '#1f2937' }}>{supplier.minOrder}</div>
+              </div>
+              <div>
+                <div style={{ color: '#6b7280', marginBottom: '2px' }}>Lead Time</div>
+                <div style={{ fontWeight: '500', color: '#1f2937' }}>{supplier.leadTime}</div>
+              </div>
+            </div>
+
+            {/* Product Tags */}
+            <div style={{ 
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '6px',
+              marginBottom: '12px'
+            }}>
+              {supplier.tags.slice(0, 3).map((tag, index) => (
+                <span
+                  key={index}
+                  style={{
+                    backgroundColor: '#f9fafb',
+                    color: '#6b7280',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: '500',
+                    border: '1px solid #e5e7eb'
+                  }}
+                >
+                  {tag}
+                </span>
+              ))}
+              {supplier.tags.length > 3 && (
+                <span
+                  style={{
+                    backgroundColor: '#f3f4f6',
+                    color: '#6b7280',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    border: '1px solid #d1d5db'
+                  }}
+                >
+                  +{supplier.tags.length - 3}
+                </span>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              padding: '6px 16px',
+              borderTop: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div style={{ 
+                fontSize: '12px', 
+                color: '#6b7280',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                <MapPin size={12} />
+                {supplier.location}
+              </div>
+              
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button style={{
+                  backgroundColor: 'transparent',
+                  color: 'var(--mc-sidebar-bg)',
+                  border: '1px solid var(--mc-sidebar-bg)',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+                  e.currentTarget.style.color = 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--mc-sidebar-bg)';
+                }}
+                >
+                  Portfolio
+                </button>
+                
+                <button style={{
+                  backgroundColor: 'var(--mc-sidebar-bg)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+                }}
+                >
+                  Contact
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Supplier Details Modal */}
       {showSupplierModal && selectedSupplier && (
         <div style={{
@@ -454,7 +678,6 @@ export default function InventoryModulesPage() {
               </div>
             </div>
 
-
             {/* Customer Reviews */}
             <div style={{ marginBottom: '32px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
@@ -538,9 +761,14 @@ export default function InventoryModulesPage() {
           </div>
         </div>
       )}
-      
     </div>
   );
 }
 
-
+export default function SuppliersPage() {
+  return (
+    <div style={{ padding: '24px', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
+      <SuppliersModule />
+    </div>
+  );
+}

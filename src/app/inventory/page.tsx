@@ -511,27 +511,6 @@ export default function InventoryPage() {
                   <td style={{ padding: '16px' }}>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
-                        onClick={() => setSelectedItem(item)}
-                        style={{
-                          padding: '6px',
-                          backgroundColor: 'transparent',
-                          border: 'none',
-                          cursor: 'pointer',
-                          borderRadius: '4px',
-                          color: '#6b7280'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#f3f4f6';
-                          e.currentTarget.style.color = '#374151';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.color = '#6b7280';
-                        }}
-                      >
-                        <Eye size={16} />
-                      </button>
-                      <button
                         style={{
                           padding: '6px',
                           backgroundColor: 'transparent',
@@ -866,6 +845,204 @@ export default function InventoryPage() {
               >
                 {formLoading ? 'Adding...' : 'Add Item'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Categories Modal */}
+      {showCategories && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            width: 'min(600px, 90vw)',
+            maxHeight: '90vh',
+            borderRadius: '12px',
+            padding: '32px',
+            overflowY: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
+                Manage Categories
+              </h2>
+              <button
+                onClick={() => setShowCategories(false)}
+                style={{
+                  padding: '8px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  color: '#6b7280'
+                }}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Add New Category Form */}
+            <div style={{ marginBottom: '32px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
+                Add New Category
+              </h3>
+              <div style={{ display: 'grid', gap: '16px', maxWidth: '400px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+                    Category Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={categoryForm.name}
+                    onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., Electronics, Furniture"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+                    Description
+                  </label>
+                  <textarea
+                    value={categoryForm.description}
+                    onChange={(e) => setCategoryForm(prev => ({ ...prev, description: e.target.value }))}
+                    rows={2}
+                    placeholder="Brief description of this category"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => {
+                      if (categoryForm.name.trim()) {
+                        const newCategory: InventoryCategory = {
+                          id: Date.now().toString(),
+                          name: categoryForm.name.trim(),
+                          description: categoryForm.description.trim(),
+                          itemCount: 0
+                        };
+                        setCategories(prev => [...prev, newCategory]);
+                        setCategoryForm({ name: '', description: '' });
+                      }
+                    }}
+                    disabled={categoryLoading || !categoryForm.name.trim()}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: 'var(--mc-sidebar-bg)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: categoryLoading ? 'not-allowed' : 'pointer',
+                      opacity: categoryLoading ? 0.6 : 1
+                    }}
+                  >
+                    {categoryLoading ? 'Adding...' : 'Add Category'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Categories List */}
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
+                Existing Categories
+              </h3>
+              {categories.length === 0 ? (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px',
+                  backgroundColor: '#f9fafb',
+                  borderRadius: '8px',
+                  border: '2px dashed #d1d5db'
+                }}>
+                  <Database size={48} color="#9ca3af" />
+                  <p style={{ fontSize: '16px', color: '#6b7280', margin: '16px 0 0 0' }}>
+                    No categories found. Add your first category above.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {categories.map((category) => (
+                    <div
+                      key={category.id}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '16px',
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      <div>
+                        <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', margin: '0 0 4px 0' }}>
+                          {category.name}
+                        </h4>
+                        <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>
+                          {category.description || 'No description provided'}
+                        </p>
+                        <span style={{ fontSize: '12px', color: '#9ca3af' }}>
+                          {category.itemCount} item{category.itemCount !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Are you sure you want to delete the category "${category.name}"? This action cannot be undone.`)) {
+                              setCategories(prev => prev.filter(c => c.id !== category.id));
+                              // Also remove items in this category
+                              setInventoryItems(prev => prev.filter(item => item.category !== category.name));
+                            }
+                          }}
+                          style={{
+                            padding: '8px',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            borderRadius: '4px',
+                            color: '#ef4444'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#fef2f2';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
