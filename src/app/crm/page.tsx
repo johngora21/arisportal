@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   Plus, 
@@ -27,168 +27,77 @@ import {
   FileText,
   Send
 } from 'lucide-react';
+import { Contact, ContactService, Deal, DealService } from './models';
 
-interface Contact {
-  id: string;
-  name: string;
-  location: string;
-  email: string;
-  phone: string;
-  whatsapp: string;
-  status: 'lead' | 'prospect' | 'customer' | 'inactive';
-  lastContact: Date;
-  value: number;
-  tags: string[];
-  notes: string;
-}
+// Data loading hook
+const useContacts = () => {
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(true);
 
-interface Deal {
-  id: string;
-  productName: string;
-  productCategory: string;
-  buyerName: string;
-  address: string;
-  email: string;
-  phone: string;
-  orderDate: Date;
-  quantity: number;
-  unitPrice: number;
-}
+  useEffect(() => {
+    const loadContacts = async () => {
+      try {
+        const data = await ContactService.fetchContacts();
+        setContacts(data);
+      } catch (error) {
+        console.error('Failed to load contacts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-const mockContacts: Contact[] = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    location: 'San Francisco, CA',
-    email: 'sarah.johnson@techcorp.com',
-    phone: '+1 (555) 123-4567',
-    whatsapp: '+1 (555) 123-4567',
-    status: 'customer',
-    lastContact: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    value: 50000,
-    tags: ['enterprise', 'tech', 'high-value'],
-    notes: 'Interested in our enterprise solution. Very responsive to emails.'
-  },
-  {
-    id: '2',
-    name: 'Michael Chen',
-    location: 'Austin, TX',
-    email: 'm.chen@startupxyz.com',
-    phone: '+1 (555) 987-6543',
-    whatsapp: '+1 (555) 987-6543',
-    status: 'prospect',
-    lastContact: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    value: 15000,
-    tags: ['startup', 'referral', 'budget-conscious'],
-    notes: 'Looking for cost-effective solutions. Mentioned budget constraints.'
-  },
-  {
-    id: '3',
-    name: 'Dr. Emily Rodriguez',
-    location: 'Boston, MA',
-    email: 'emily.r@healthplus.com',
-    phone: '+1 (555) 456-7890',
-    whatsapp: '+1 (555) 456-7890',
-    status: 'lead',
-    lastContact: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    value: 25000,
-    tags: ['healthcare', 'linkedin', 'decision-maker'],
-    notes: 'Very interested in our compliance features. Scheduled demo for next week.'
-  },
-  {
-    id: '4',
-    name: 'James Wilson',
-    location: 'New York, NY',
-    email: 'j.wilson@financegroup.com',
-    phone: '+1 (555) 321-0987',
-    whatsapp: '+1 (555) 321-0987',
-    status: 'customer',
-    lastContact: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    value: 75000,
-    tags: ['finance', 'enterprise', 'long-term'],
-    notes: 'Long-term customer. Very satisfied with our services. Potential for expansion.'
-  },
-  {
-    id: '5',
-    name: 'Lisa Thompson',
-    location: 'Chicago, IL',
-    email: 'lisa.t@retailco.com',
-    phone: '+1 (555) 654-3210',
-    whatsapp: '+1 (555) 654-3210',
-    status: 'inactive',
-    lastContact: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    value: 5000,
-    tags: ['retail', 'marketing', 'unresponsive'],
-    notes: 'Was interested but went silent after initial contact. Follow up needed.'
-  }
-];
+    loadContacts();
+  }, []);
 
-const mockDeals: Deal[] = [
-  {
-    id: '1',
-    productName: 'Dell Latitude 5520 Laptop',
-    productCategory: 'Electronics',
-    buyerName: 'Sarah Johnson',
-    address: 'San Francisco, CA',
-    email: 'sarah.johnson@techcorp.com',
-    phone: '+1 (555) 123-4567',
-    orderDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-    quantity: 25,
-    unitPrice: 1200
-  },
-  {
-    id: '2',
-    productName: 'Office Furniture Set',
-    productCategory: 'Furniture',
-    buyerName: 'Michael Chen',
-    address: 'Austin, TX',
-    email: 'm.chen@startupxyz.com',
-    phone: '+1 (555) 987-6543',
-    orderDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    quantity: 15,
-    unitPrice: 800
-  },
-  {
-    id: '3',
-    productName: 'Medical Equipment Package',
-    productCategory: 'Healthcare',
-    buyerName: 'Dr. Emily Rodriguez',
-    address: 'Boston, MA',
-    email: 'emily.r@healthplus.com',
-    phone: '+1 (555) 456-7890',
-    orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    quantity: 8,
-    unitPrice: 2500
-  },
-  {
-    id: '4',
-    productName: 'Financial Software License',
-    productCategory: 'Software',
-    buyerName: 'James Wilson',
-    address: 'New York, NY',
-    email: 'j.wilson@financegroup.com',
-    phone: '+1 (555) 321-0987',
-    orderDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    quantity: 1,
-    unitPrice: 50000
-  },
-  {
-    id: '5',
-    productName: 'Retail POS System',
-    productCategory: 'Electronics',
-    buyerName: 'Lisa Thompson',
-    address: 'Chicago, IL',
-    email: 'lisa.t@retailco.com',
-    phone: '+1 (555) 654-3210',
-    orderDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-    quantity: 3,
-    unitPrice: 1500
-  }
-];
+  const addContact = async (contactData: any) => {
+    try {
+      const newContact = await ContactService.createContact(contactData);
+      setContacts(prev => [...prev, newContact]);
+      return newContact;
+    } catch (error) {
+      console.error('Failed to create contact:', error);
+      throw error;
+    }
+  };
+
+  const deleteContact = async (id: string) => {
+    try {
+      await ContactService.deleteContact(id);
+      setContacts(prev => prev.filter(c => c.id !== id));
+    } catch (error) {
+      console.error('Failed to delete contact:', error);
+      throw error;
+    }
+  };
+
+  return { contacts, loading, addContact, deleteContact };
+};
+
+const useDeals = () => {
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadDeals = async () => {
+      try {
+        const data = await DealService.fetchDeals();
+        setDeals(data);
+      } catch (error) {
+        console.error('Failed to load deals:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDeals();
+  }, []);
+
+  return { deals, loading };
+};
 
 export default function CRMPage() {
-  const [contacts, setContacts] = useState<Contact[]>(mockContacts);
-  const [deals, setDeals] = useState<Deal[]>(mockDeals);
+  const { contacts, loading: contactsLoading, addContact, deleteContact } = useContacts();
+  const { deals, loading: dealsLoading } = useDeals();
   const [contactsSearchQuery, setContactsSearchQuery] = useState('');
   const [salesSearchQuery, setSalesSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -272,25 +181,26 @@ export default function CRMPage() {
   const completedDeals = deals.filter(deal => deal.id); // All deals are considered completed orders
   const activeDeals = deals.filter(deal => deal.id); // All deals are active
 
-  const handleAddContact = () => {
+  const handleAddContact = async () => {
     if (newContact.name && newContact.location) {
-      const contact: Contact = {
-        id: Date.now().toString(),
+      try {
+        await addContact({
         name: newContact.name,
         location: newContact.location,
         email: newContact.email,
         phone: newContact.phone,
-        whatsapp: newContact.whatsapp,
+          whatsapp: newContact.whatsapp,
         status: newContact.status,
-        lastContact: new Date(),
         value: newContact.value,
-        tags: [],
         notes: newContact.notes
-      };
-      setContacts([...contacts, contact]);
-      setNewContact({ name: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
+        });
+        setNewContact({ name: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
       setShowAddModal(false);
       setAddMode(null);
+      } catch (error) {
+        console.error('Failed to add contact:', error);
+        // Handle error (show notification, etc.)
+      }
     }
   };
 
@@ -313,9 +223,14 @@ export default function CRMPage() {
     setShowChatModal(true);
   };
 
-  const handleDeleteContact = (contactId: string) => {
+  const handleDeleteContact = async (contactId: string) => {
     if (confirm('Are you sure you want to delete this contact?')) {
-      setContacts(contacts.filter(contact => contact.id !== contactId));
+      try {
+        await deleteContact(contactId);
+      } catch (error) {
+        console.error('Failed to delete contact:', error);
+        // Handle error (show notification, etc.)
+      }
     }
   };
 
@@ -1068,7 +983,7 @@ export default function CRMPage() {
                 onClick={() => {
                   setShowAddModal(false);
                   setAddMode(null);
-                  setNewContact({ name: '', location: '', email: '', phone: '', status: 'lead', value: 0, notes: '' });
+                  setNewContact({ name: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
                 }}
                 style={{
                   background: 'none',
@@ -1299,7 +1214,7 @@ export default function CRMPage() {
                   <button
                   onClick={() => {
                     setAddMode(null);
-                    setNewContact({ name: '', location: '', email: '', phone: '', status: 'lead', value: 0, notes: '' });
+                    setNewContact({ name: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
                   }}
                     style={{
                       padding: '10px 20px',
