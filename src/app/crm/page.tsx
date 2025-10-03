@@ -34,6 +34,7 @@ interface Contact {
   location: string;
   email: string;
   phone: string;
+  whatsapp: string;
   status: 'lead' | 'prospect' | 'customer' | 'inactive';
   lastContact: Date;
   value: number;
@@ -43,13 +44,15 @@ interface Contact {
 
 interface Deal {
   id: string;
-  title: string;
-  contact: string;
-  value: number;
-  stage: 'prospecting' | 'qualification' | 'proposal' | 'negotiation' | 'closed-won' | 'closed-lost';
-  probability: number;
-  closeDate: Date;
-  owner: string;
+  productName: string;
+  productCategory: string;
+  buyerName: string;
+  address: string;
+  email: string;
+  phone: string;
+  orderDate: Date;
+  quantity: number;
+  unitPrice: number;
 }
 
 const mockContacts: Contact[] = [
@@ -59,6 +62,7 @@ const mockContacts: Contact[] = [
     location: 'San Francisco, CA',
     email: 'sarah.johnson@techcorp.com',
     phone: '+1 (555) 123-4567',
+    whatsapp: '+1 (555) 123-4567',
     status: 'customer',
     lastContact: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
     value: 50000,
@@ -71,6 +75,7 @@ const mockContacts: Contact[] = [
     location: 'Austin, TX',
     email: 'm.chen@startupxyz.com',
     phone: '+1 (555) 987-6543',
+    whatsapp: '+1 (555) 987-6543',
     status: 'prospect',
     lastContact: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
     value: 15000,
@@ -83,6 +88,7 @@ const mockContacts: Contact[] = [
     location: 'Boston, MA',
     email: 'emily.r@healthplus.com',
     phone: '+1 (555) 456-7890',
+    whatsapp: '+1 (555) 456-7890',
     status: 'lead',
     lastContact: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
     value: 25000,
@@ -95,6 +101,7 @@ const mockContacts: Contact[] = [
     location: 'New York, NY',
     email: 'j.wilson@financegroup.com',
     phone: '+1 (555) 321-0987',
+    whatsapp: '+1 (555) 321-0987',
     status: 'customer',
     lastContact: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
     value: 75000,
@@ -107,6 +114,7 @@ const mockContacts: Contact[] = [
     location: 'Chicago, IL',
     email: 'lisa.t@retailco.com',
     phone: '+1 (555) 654-3210',
+    whatsapp: '+1 (555) 654-3210',
     status: 'inactive',
     lastContact: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     value: 5000,
@@ -118,50 +126,71 @@ const mockContacts: Contact[] = [
 const mockDeals: Deal[] = [
   {
     id: '1',
-    title: 'Enterprise Software License',
-    contact: 'Sarah Johnson',
-    value: 50000,
-    stage: 'negotiation',
-    probability: 80,
-    closeDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-    owner: 'John Smith'
+    productName: 'Dell Latitude 5520 Laptop',
+    productCategory: 'Electronics',
+    buyerName: 'Sarah Johnson',
+    address: 'San Francisco, CA',
+    email: 'sarah.johnson@techcorp.com',
+    phone: '+1 (555) 123-4567',
+    orderDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+    quantity: 25,
+    unitPrice: 1200
   },
   {
     id: '2',
-    title: 'Startup Package Deal',
-    contact: 'Michael Chen',
-    value: 15000,
-    stage: 'proposal',
-    probability: 60,
-    closeDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000),
-    owner: 'Jane Doe'
+    productName: 'Office Furniture Set',
+    productCategory: 'Furniture',
+    buyerName: 'Michael Chen',
+    address: 'Austin, TX',
+    email: 'm.chen@startupxyz.com',
+    phone: '+1 (555) 987-6543',
+    orderDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+    quantity: 15,
+    unitPrice: 800
   },
   {
     id: '3',
-    title: 'Healthcare Compliance Solution',
-    contact: 'Dr. Emily Rodriguez',
-    value: 25000,
-    stage: 'qualification',
-    probability: 40,
-    closeDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    owner: 'Mike Johnson'
+    productName: 'Medical Equipment Package',
+    productCategory: 'Healthcare',
+    buyerName: 'Dr. Emily Rodriguez',
+    address: 'Boston, MA',
+    email: 'emily.r@healthplus.com',
+    phone: '+1 (555) 456-7890',
+    orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    quantity: 8,
+    unitPrice: 2500
   },
   {
     id: '4',
-    title: 'Financial Services Upgrade',
-    contact: 'James Wilson',
-    value: 75000,
-    stage: 'closed-won',
-    probability: 100,
-    closeDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    owner: 'Sarah Wilson'
+    productName: 'Financial Software License',
+    productCategory: 'Software',
+    buyerName: 'James Wilson',
+    address: 'New York, NY',
+    email: 'j.wilson@financegroup.com',
+    phone: '+1 (555) 321-0987',
+    orderDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+    quantity: 1,
+    unitPrice: 50000
+  },
+  {
+    id: '5',
+    productName: 'Retail POS System',
+    productCategory: 'Electronics',
+    buyerName: 'Lisa Thompson',
+    address: 'Chicago, IL',
+    email: 'lisa.t@retailco.com',
+    phone: '+1 (555) 654-3210',
+    orderDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+    quantity: 3,
+    unitPrice: 1500
   }
 ];
 
 export default function CRMPage() {
   const [contacts, setContacts] = useState<Contact[]>(mockContacts);
   const [deals, setDeals] = useState<Deal[]>(mockDeals);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [contactsSearchQuery, setContactsSearchQuery] = useState('');
+  const [salesSearchQuery, setSalesSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'contacts' | 'deals' | 'analytics'>('contacts');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -171,6 +200,7 @@ export default function CRMPage() {
     location: '',
     email: '',
     phone: '',
+    whatsapp: '',
     status: 'lead' as Contact['status'],
     value: 0,
     notes: ''
@@ -187,10 +217,17 @@ export default function CRMPage() {
   ];
 
   const filteredContacts = contacts.filter(contact => {
-    const matchesSearch = contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         contact.location.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = contact.name.toLowerCase().includes(contactsSearchQuery.toLowerCase()) ||
+                         contact.location.toLowerCase().includes(contactsSearchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || contact.status === statusFilter;
     return matchesSearch && matchesStatus;
+  });
+
+  const filteredDeals = deals.filter(deal => {
+    const matchesSearch = deal.productName.toLowerCase().includes(salesSearchQuery.toLowerCase()) ||
+                         deal.buyerName.toLowerCase().includes(salesSearchQuery.toLowerCase()) ||
+                         deal.address.toLowerCase().includes(salesSearchQuery.toLowerCase());
+    return matchesSearch;
   });
 
   const getStatusColor = (status: string) => {
@@ -203,14 +240,13 @@ export default function CRMPage() {
     }
   };
 
-  const getStageColor = (stage: string) => {
-    switch (stage) {
-      case 'prospecting': return 'bg-gray-100 text-gray-800';
-      case 'qualification': return 'bg-blue-100 text-blue-800';
-      case 'proposal': return 'bg-yellow-100 text-yellow-800';
-      case 'negotiation': return 'bg-orange-100 text-orange-800';
-      case 'closed-won': return 'bg-green-100 text-green-800';
-      case 'closed-lost': return 'bg-red-100 text-red-800';
+  const getOrderStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'confirmed': return 'bg-blue-100 text-blue-800';
+      case 'shipped': return 'bg-purple-100 text-purple-800';
+      case 'delivered': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -232,9 +268,9 @@ export default function CRMPage() {
     }).format(date);
   };
 
-  const totalValue = deals.reduce((sum, deal) => sum + deal.value, 0);
-  const wonDeals = deals.filter(deal => deal.stage === 'closed-won');
-  const activeDeals = deals.filter(deal => !deal.stage.includes('closed'));
+  const totalValue = deals.reduce((sum, deal) => sum + (deal.quantity * deal.unitPrice), 0);
+  const completedDeals = deals.filter(deal => deal.id); // All deals are considered completed orders
+  const activeDeals = deals.filter(deal => deal.id); // All deals are active
 
   const handleAddContact = () => {
     if (newContact.name && newContact.location) {
@@ -244,6 +280,7 @@ export default function CRMPage() {
         location: newContact.location,
         email: newContact.email,
         phone: newContact.phone,
+        whatsapp: newContact.whatsapp,
         status: newContact.status,
         lastContact: new Date(),
         value: newContact.value,
@@ -251,7 +288,7 @@ export default function CRMPage() {
         notes: newContact.notes
       };
       setContacts([...contacts, contact]);
-      setNewContact({ name: '', location: '', email: '', phone: '', status: 'lead', value: 0, notes: '' });
+      setNewContact({ name: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
       setShowAddModal(false);
       setAddMode(null);
     }
@@ -352,10 +389,10 @@ export default function CRMPage() {
           <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <TrendingUp size={20} color="#8b5cf6" />
-              <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Won Deals</span>
+              <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Completed Sales</span>
             </div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              {wonDeals.length}
+              {completedDeals.length}
             </div>
           </div>
         </div>
@@ -364,7 +401,7 @@ export default function CRMPage() {
         <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
           {[
             { id: 'contacts', label: 'Contacts', icon: <Users size={16} /> },
-            { id: 'deals', label: 'Deals', icon: <Target size={16} /> },
+            { id: 'deals', label: 'Sales', icon: <Target size={16} /> },
             { id: 'analytics', label: 'Analytics', icon: <TrendingUp size={16} /> }
           ].map((tab) => (
             <button
@@ -391,7 +428,8 @@ export default function CRMPage() {
           ))}
         </div>
 
-        {/* Filters */}
+        {/* Search Bar - Only for Contacts and Sales tabs */}
+        {(activeTab === 'contacts' || activeTab === 'deals') && (
         <div style={{
           position: 'relative',
           height: '40px',
@@ -400,7 +438,7 @@ export default function CRMPage() {
           {/* Search Bar - positioned from right */}
           <div style={{ 
             position: 'absolute',
-            right: '290px',
+              right: '60px',
             top: '0px',
             width: '400px'
           }}>
@@ -415,9 +453,9 @@ export default function CRMPage() {
             }} />
             <input
               type="text"
-              placeholder="Search contacts..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={activeTab === 'contacts' ? "Search contacts..." : "Search sales..."}
+                value={activeTab === 'contacts' ? contactsSearchQuery : salesSearchQuery}
+                onChange={(e) => activeTab === 'contacts' ? setContactsSearchQuery(e.target.value) : setSalesSearchQuery(e.target.value)}
               style={{
                 width: '100%',
                 paddingLeft: '40px',
@@ -430,33 +468,8 @@ export default function CRMPage() {
               }}
             />
           </div>
-          
-          {/* Status Filter - positioned from right */}
-          <div style={{
-            position: 'absolute',
-            right: '50px',
-            top: '0px'
-          }}>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              style={{
-                padding: '12px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '20px',
-                fontSize: '14px',
-                background: 'white',
-                width: '180px'
-              }}
-            >
-              <option value="all">All Status</option>
-              <option value="lead">Leads</option>
-              <option value="prospect">Prospects</option>
-              <option value="customer">Customers</option>
-              <option value="inactive">Inactive</option>
-            </select>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Content */}
@@ -595,68 +608,290 @@ export default function CRMPage() {
       )}
 
       {activeTab === 'deals' && (
-        <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-          <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-              Deals ({deals.length})
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
+          gap: '20px',
+          maxWidth: '1400px'
+        }}>
+          {filteredDeals.map((deal) => (
+            <div key={deal.id} style={{ 
+              background: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              overflow: 'hidden',
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+              cursor: 'pointer'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+            }}>
+              {/* Card Header */}
+              <div style={{ 
+                padding: '20px 20px 16px 20px',
+                borderBottom: '1px solid #f3f4f6'
+              }}>
+                <h3 style={{ 
+                  fontSize: '18px', 
+                  fontWeight: '600', 
+                  color: '#1f2937', 
+                  margin: 0,
+                  lineHeight: '1.3'
+                }}>
+                  {deal.productName}
             </h3>
           </div>
           
-          <div style={{ padding: '20px' }}>
-            <div style={{ display: 'grid', gap: '16px' }}>
-              {deals.map((deal) => (
-                <div key={deal.id} style={{ 
-                  padding: '20px', 
-                  border: '1px solid #e5e7eb', 
-                  borderRadius: '8px',
-                  backgroundColor: '#f9fafb'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                    <div>
-                      <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', margin: '0 0 4px 0' }}>
-                        {deal.title}
-                      </h4>
-                      <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
-                        {deal.contact} • {deal.owner}
-                      </p>
+              {/* Card Body */}
+              <div style={{ padding: '20px', flex: 1 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {/* Buyer Info */}
+                  <div>
+                    <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '8px' }}>
+                      {deal.buyerName}
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '18px', fontWeight: '700', color: '#1f2937', marginBottom: '4px' }}>
-                        {formatCurrency(deal.value)}
+                    
+                    {/* Contact Info */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Mail size={14} color="#6b7280" />
+                        <span style={{ fontSize: '13px', color: '#6b7280' }}>{deal.email}</span>
                       </div>
-                      <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                        {deal.probability}% probability
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Phone size={14} color="#6b7280" />
+                        <span style={{ fontSize: '13px', color: '#6b7280' }}>{deal.phone}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <MapPin size={14} color="#6b7280" />
+                        <span style={{ fontSize: '13px', color: '#6b7280' }}>{deal.address}</span>
                       </div>
                     </div>
                   </div>
                   
+                  {/* Sale Details */}
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '1fr 1fr', 
+                    gap: '20px'
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                        Sale Date
+                    </div>
+                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                        {formatDate(deal.orderDate)}
+                      </div>
+                      </div>
+                    <div>
+                      <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                        Quantity
+                      </div>
+                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                        {deal.quantity} units
+                      </div>
+                    </div>
+                  </div>
+                    </div>
+                  </div>
+                  
+              {/* Card Footer */}
+              <div style={{ 
+                padding: '16px 20px', 
+                borderTop: '1px solid #f3f4f6',
+                backgroundColor: '#f9fafb'
+              }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <span style={{
-                        padding: '4px 8px',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        ...getStageColor(deal.stage).split(' ').reduce((acc, className) => {
-                          if (className.startsWith('bg-')) acc.backgroundColor = className.replace('bg-', '');
-                          if (className.startsWith('text-')) acc.color = className.replace('text-', '');
-                          return acc;
-                        }, {} as any)
-                      }}>
-                        {deal.stage.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
+                    Total Price
                       </span>
-                      <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                        Close: {formatDate(deal.closeDate)}
+                  <span style={{ fontSize: '18px', fontWeight: '700', color: '#1f2937' }}>
+                    {formatCurrency(deal.quantity * deal.unitPrice)}
                       </span>
                     </div>
-                    
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button style={{ padding: '6px', border: 'none', borderRadius: '6px', background: '#f3f4f6', color: '#6b7280', cursor: 'pointer' }}>
-                        <Edit size={16} />
-                      </button>
-                      <button style={{ padding: '6px', border: 'none', borderRadius: '6px', background: '#f3f4f6', color: '#6b7280', cursor: 'pointer' }}>
-                        <MoreVertical size={16} />
-                      </button>
+                  </div>
+                </div>
+              ))}
+        </div>
+      )}
+
+      {activeTab === 'analytics' && (
+        <div style={{ display: 'grid', gap: '24px' }}>
+          {/* Locations Pie Chart */}
+          <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '24px' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: '0 0 24px 0' }}>
+              Sales by Location
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', alignItems: 'center' }}>
+              {/* Pie Chart */}
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                {(() => {
+                  const locationData = [
+                    { location: 'San Francisco, CA', count: deals.filter(d => d.address.includes('San Francisco')).length, color: '#8b5cf6' },
+                    { location: 'Austin, TX', count: deals.filter(d => d.address.includes('Austin')).length, color: '#06b6d4' },
+                    { location: 'Boston, MA', count: deals.filter(d => d.address.includes('Boston')).length, color: '#10b981' },
+                    { location: 'New York, NY', count: deals.filter(d => d.address.includes('New York')).length, color: '#f59e0b' },
+                    { location: 'Chicago, IL', count: deals.filter(d => d.address.includes('Chicago')).length, color: '#ef4444' }
+                  ].filter(item => item.count > 0);
+                  
+                  const total = locationData.reduce((sum, item) => sum + item.count, 0);
+                  let cumulativePercentage = 0;
+                  const radius = 80;
+                  const centerX = 100;
+                  const centerY = 100;
+                  
+                  return (
+                    <svg width="200" height="200" viewBox="0 0 200 200">
+                      {locationData.map((item, index) => {
+                        const percentage = (item.count / total) * 100;
+                        const angle = (percentage / 100) * 360;
+                        const startAngle = cumulativePercentage * 3.6;
+                        const endAngle = (cumulativePercentage + percentage) * 3.6;
+                        
+                        const x1 = centerX + radius * Math.cos((startAngle - 90) * Math.PI / 180);
+                        const y1 = centerY + radius * Math.sin((startAngle - 90) * Math.PI / 180);
+                        const x2 = centerX + radius * Math.cos((endAngle - 90) * Math.PI / 180);
+                        const y2 = centerY + radius * Math.sin((endAngle - 90) * Math.PI / 180);
+                        
+                        const largeArcFlag = percentage > 50 ? 1 : 0;
+                        const pathData = [
+                          `M ${centerX} ${centerY}`,
+                          `L ${x1} ${y1}`,
+                          `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                          'Z'
+                        ].join(' ');
+                        
+                        cumulativePercentage += percentage;
+                        
+                        return (
+                          <path
+                            key={index}
+                            d={pathData}
+                            fill={item.color}
+                            stroke="white"
+                            strokeWidth="2"
+                          />
+                        );
+                      })}
+                    </svg>
+                  );
+                })()}
+              </div>
+              
+              {/* Legend */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {[
+                  { location: 'San Francisco, CA', count: deals.filter(d => d.address.includes('San Francisco')).length, color: '#8b5cf6' },
+                  { location: 'Austin, TX', count: deals.filter(d => d.address.includes('Austin')).length, color: '#06b6d4' },
+                  { location: 'Boston, MA', count: deals.filter(d => d.address.includes('Boston')).length, color: '#10b981' },
+                  { location: 'New York, NY', count: deals.filter(d => d.address.includes('New York')).length, color: '#f59e0b' },
+                  { location: 'Chicago, IL', count: deals.filter(d => d.address.includes('Chicago')).length, color: '#ef4444' }
+                ].filter(item => item.count > 0).map((item) => {
+                  const percentage = (item.count / deals.length) * 100;
+                  return (
+                    <div key={item.location} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: item.color }}></div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                            {item.location}
+                          </span>
+                          <span style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>
+                            {item.count} ({percentage.toFixed(1)}%)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Top Sold Items/Services */}
+          <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '24px' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: '0 0 24px 0' }}>
+              Top Sold Items/Services
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', alignItems: 'center' }}>
+              {/* Bar Chart */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', height: '300px', justifyContent: 'space-between' }}>
+                {deals
+                  .map(deal => ({
+                    name: deal.productName,
+                    quantity: deal.quantity,
+                    total: deal.quantity * deal.unitPrice,
+                    color: '#3b82f6'
+                  }))
+                  .sort((a, b) => b.quantity - a.quantity)
+                  .slice(0, 5)
+                  .map((item, index) => {
+                    const maxQuantity = Math.max(...deals.map(d => d.quantity));
+                    const barHeight = (item.quantity / maxQuantity) * 100;
+                    return (
+                      <div key={item.name} style={{ display: 'flex', alignItems: 'end', gap: '12px', height: '50px' }}>
+                        <div style={{ 
+                          width: '20px', 
+                          height: `${barHeight}%`, 
+                          backgroundColor: item.color,
+                          borderRadius: '4px 4px 0 0',
+                          minHeight: '20px'
+                        }}></div>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'end' }}>
+                          <span style={{ fontSize: '12px', fontWeight: '500', color: '#374151' }}>
+                            {item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name}
+                          </span>
+                          <span style={{ fontSize: '11px', color: '#6b7280' }}>
+                            {item.quantity} units
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+              
+              {/* List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {deals
+                  .map(deal => ({
+                    name: deal.productName,
+                    quantity: deal.quantity,
+                    total: deal.quantity * deal.unitPrice,
+                    color: '#3b82f6'
+                  }))
+                  .sort((a, b) => b.quantity - a.quantity)
+                  .slice(0, 5)
+                  .map((item, index) => (
+                    <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ 
+                        width: '20px', 
+                        height: '20px', 
+                        borderRadius: '50%', 
+                        backgroundColor: '#f3f4f6',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: '#6b7280'
+                      }}>
+                        {index + 1}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                            {item.name}
+                      </span>
+                          <span style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>
+                            {item.quantity} units
+                      </span>
+                    </div>
+                        <div style={{ fontSize: '12px', color: '#6b7280', textAlign: 'right' }}>
+                          {formatCurrency(item.total)}
                     </div>
                   </div>
                 </div>
@@ -664,16 +899,140 @@ export default function CRMPage() {
             </div>
           </div>
         </div>
-      )}
 
-      {activeTab === 'analytics' && (
-        <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '20px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0 0 20px 0' }}>
-            CRM Analytics
+          {/* Top Customers */}
+          <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '24px' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: '0 0 24px 0' }}>
+              Top Customers
           </h3>
-          <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-            <TrendingUp size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
-            <p>Analytics dashboard coming soon...</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', alignItems: 'center' }}>
+              {/* Horizontal Bar Chart */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {deals
+                  .map(deal => ({
+                    name: deal.buyerName,
+                    value: deal.quantity * deal.unitPrice,
+                    color: '#6366f1'
+                  }))
+                  .reduce((acc, deal) => {
+                    const existing = acc.find(d => d.name === deal.name);
+                    if (existing) {
+                      existing.value += deal.value;
+                    } else {
+                      acc.push(deal);
+                    }
+                    return acc;
+                  }, [] as any[])
+                  .sort((a, b) => b.value - a.value)
+                  .slice(0, 5)
+                  .map((customer, index) => {
+                    const maxValue = Math.max(...deals.map(d => d.quantity * d.unitPrice));
+                    const percentage = (customer.value / maxValue) * 100;
+                    return (
+                      <div key={customer.name} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ 
+                          width: '20px', 
+                          height: '20px', 
+                          borderRadius: '50%', 
+                          backgroundColor: '#f3f4f6',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          color: '#6b7280'
+                        }}>
+                          {index + 1}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                              {customer.name}
+                            </span>
+                            <span style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>
+                              {formatCurrency(customer.value)}
+                            </span>
+                          </div>
+                          <div style={{ width: '100%', height: '8px', backgroundColor: '#f3f4f6', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ 
+                              width: `${percentage}%`, 
+                              height: '100%', 
+                              backgroundColor: customer.color,
+                              borderRadius: '4px',
+                              transition: 'width 0.3s ease'
+                            }}></div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+              
+              {/* Pie Chart for Customer Revenue */}
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                {(() => {
+                  const customerData = deals
+                    .map(deal => ({
+                      name: deal.buyerName,
+                      value: deal.quantity * deal.unitPrice,
+                      color: '#6366f1'
+                    }))
+                    .reduce((acc, deal) => {
+                      const existing = acc.find(d => d.name === deal.name);
+                      if (existing) {
+                        existing.value += deal.value;
+                      } else {
+                        acc.push(deal);
+                      }
+                      return acc;
+                    }, [] as any[])
+                    .sort((a, b) => b.value - a.value)
+                    .slice(0, 5);
+                  
+                  const total = customerData.reduce((sum, item) => sum + item.value, 0);
+                  let cumulativePercentage = 0;
+                  const radius = 80;
+                  const centerX = 100;
+                  const centerY = 100;
+                  const colors = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'];
+                  
+                  return (
+                    <svg width="200" height="200" viewBox="0 0 200 200">
+                      {customerData.map((customer, index) => {
+                        const percentage = (customer.value / total) * 100;
+                        const startAngle = cumulativePercentage * 3.6;
+                        const endAngle = (cumulativePercentage + percentage) * 3.6;
+                        
+                        const x1 = centerX + radius * Math.cos((startAngle - 90) * Math.PI / 180);
+                        const y1 = centerY + radius * Math.sin((startAngle - 90) * Math.PI / 180);
+                        const x2 = centerX + radius * Math.cos((endAngle - 90) * Math.PI / 180);
+                        const y2 = centerY + radius * Math.sin((endAngle - 90) * Math.PI / 180);
+                        
+                        const largeArcFlag = percentage > 50 ? 1 : 0;
+                        const pathData = [
+                          `M ${centerX} ${centerY}`,
+                          `L ${x1} ${y1}`,
+                          `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                          'Z'
+                        ].join(' ');
+                        
+                        cumulativePercentage += percentage;
+                        
+                        return (
+                          <path
+                            key={index}
+                            d={pathData}
+                            fill={colors[index % colors.length]}
+                            stroke="white"
+                            strokeWidth="2"
+                          />
+                        );
+                      })}
+                    </svg>
+                  );
+                })()}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -869,14 +1228,15 @@ export default function CRMPage() {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div>
                     <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                      Status
+                    WhatsApp
                     </label>
-                    <select
-                      value={newContact.status}
-                      onChange={(e) => setNewContact({...newContact, status: e.target.value as Contact['status']})}
+                  <input
+                    type="tel"
+                    value={newContact.whatsapp}
+                    onChange={(e) => setNewContact({...newContact, whatsapp: e.target.value})}
+                    placeholder="+1 (555) 123-4567"
                       style={{
                         width: '100%',
                         maxWidth: '100%',
@@ -886,13 +1246,10 @@ export default function CRMPage() {
                         fontSize: '14px',
                         boxSizing: 'border-box'
                       }}
-                    >
-                      <option value="lead">Lead</option>
-                      <option value="prospect">Prospect</option>
-                      <option value="customer">Customer</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
+                  />
                   </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
 
                   <div>
                     <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
@@ -1170,6 +1527,14 @@ export default function CRMPage() {
                       <div style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>{selectedContact.phone}</div>
                     </div>
                   </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                    <MessageSquare size={16} color="#6b7280" />
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>WhatsApp</div>
+                      <div style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>{selectedContact.whatsapp}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1298,7 +1663,7 @@ export default function CRMPage() {
                   </label>
                 )}
                 
-                {selectedContact.phone && (
+                {selectedContact.whatsapp && (
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                     <input
                       type="radio"
@@ -1311,82 +1676,35 @@ export default function CRMPage() {
                     <span style={{ fontSize: '14px', color: '#374151' }}>WhatsApp</span>
                   </label>
                 )}
-              </div>
-            </div>
-
-            {/* Chat Window */}
-            <div style={{ 
-              flex: 1, 
-              border: '1px solid #e5e7eb', 
-              borderRadius: '8px', 
-              marginBottom: '16px',
-              backgroundColor: 'white',
-              minHeight: '300px',
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
-              {/* Chat Header */}
-              <div style={{ 
-                padding: '12px 16px', 
-                borderBottom: '1px solid #e5e7eb', 
-                backgroundColor: '#f9fafb',
-                borderRadius: '8px 8px 0 0'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {selectedChannel === 'email' && <Mail size={16} color="#6b7280" />}
-                  {selectedChannel === 'sms' && <Phone size={16} color="#6b7280" />}
-                  {selectedChannel === 'whatsapp' && <MessageSquare size={16} color="#6b7280" />}
-                  <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                    {selectedChannel === 'email' && `Email: ${selectedContact.email}`}
-                    {selectedChannel === 'sms' && `SMS: ${selectedContact.phone}`}
-                    {selectedChannel === 'whatsapp' && `WhatsApp: ${selectedContact.phone}`}
-                  </span>
-                </div>
-              </div>
-
-              {/* Chat Messages Area */}
-              <div style={{ 
-                flex: 1, 
-                padding: '16px', 
-                overflowY: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '16px'
-              }}>
-                <MessageSquare size={48} color="#d1d5db" />
-                <div style={{ textAlign: 'center' }}>
-                  <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0 0 8px 0' }}>
-                    Start a conversation
-                  </h4>
-                  <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
-                    Send a message to {selectedContact.name} via {selectedChannel.toUpperCase()}
-                  </p>
                 </div>
               </div>
 
               {/* Message Input */}
-              <div style={{ 
-                padding: '16px', 
-                borderTop: '1px solid #e5e7eb',
-                display: 'flex',
-                gap: '12px'
-              }}>
-                <input
-                  type="text"
-                  placeholder={`Type your message...`}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '8px', display: 'block' }}>
+                Message to {selectedContact.name} via {selectedChannel.toUpperCase()}
+              </label>
+              <textarea
+                placeholder="Type your message here..."
+                rows={6}
                   style={{
-                    flex: 1,
+                  width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
                     borderRadius: '8px',
-                    fontSize: '14px'
+                  fontSize: '14px',
+                  resize: 'vertical',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box'
                   }}
                 />
+            </div>
+
+            {/* Send Button */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button
                   style={{
-                    padding: '12px 20px',
+                  padding: '12px 24px',
                     border: 'none',
                     borderRadius: '8px',
                     background: 'var(--mc-sidebar-bg)',
@@ -1400,9 +1718,8 @@ export default function CRMPage() {
                   }}
                 >
                   <Send size={16} />
-                  Send
+                Send Message
                 </button>
-              </div>
             </div>
 
           </div>
