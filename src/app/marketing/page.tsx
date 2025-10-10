@@ -460,7 +460,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
             
             <div style={{ display: 'grid', gap: '24px' }}>
               {/* Basic Demographics */}
-              <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
+              <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '20px', backgroundColor: '#f9fafb' }}>
                 <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>Basic Demographics</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
                   {/* Age Range */}
@@ -473,14 +473,14 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                         type="number"
                         value={formData.ageRange.min}
                         onChange={(e) => setFormData({...formData, ageRange: {...formData.ageRange, min: parseInt(e.target.value)}})}
-                        style={{ width: '80px', padding: '12px 8px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                        style={{ width: '80px', padding: '12px 8px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px' }}
                       />
                       <span style={{ color: '#6b7280' }}>to</span>
                       <input
                         type="number"
                         value={formData.ageRange.max}
                         onChange={(e) => setFormData({...formData, ageRange: {...formData.ageRange, max: parseInt(e.target.value)}})}
-                        style={{ width: '80px', padding: '12px 8px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                        style={{ width: '80px', padding: '12px 8px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px' }}
                       />
                     </div>
                   </div>
@@ -516,7 +516,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                       placeholder="Enter country, state, or city"
                       value={formData.location}
                       onChange={(e) => setFormData({...formData, location: e.target.value})}
-                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px' }}
                     />
                   </div>
 
@@ -528,7 +528,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                     <select
                       value={formData.education}
                       onChange={(e) => setFormData({...formData, education: e.target.value})}
-                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px' }}
                     >
                       <option value="">Select education level</option>
                       <option value="all">All Education Levels</option>
@@ -557,7 +557,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                         placeholder="Min income"
                         value={formData.incomeMin || ''}
                         onChange={(e) => setFormData({...formData, incomeMin: e.target.value})}
-                        style={{ width: '120px', padding: '12px 8px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                        style={{ width: '120px', padding: '12px 8px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px' }}
                       />
                       <span style={{ color: '#6b7280' }}>to</span>
                       <input
@@ -565,7 +565,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                         placeholder="Max income"
                         value={formData.incomeMax || ''}
                         onChange={(e) => setFormData({...formData, incomeMax: e.target.value})}
-                        style={{ width: '120px', padding: '12px 8px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                        style={{ width: '120px', padding: '12px 8px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px' }}
                       />
                     </div>
                   </div>
@@ -573,7 +573,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
               </div>
 
               {/* Interests */}
-              <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
+              <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '20px', backgroundColor: '#f9fafb' }}>
                 <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>Interests & Hobbies</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                   {[
@@ -669,7 +669,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
               </div>
 
               {/* Behaviors */}
-              <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
+              <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '20px', backgroundColor: '#f9fafb' }}>
                 <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>Behaviors & Purchase History</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                   {[
@@ -698,7 +698,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
               </div>
 
               {/* Life Events */}
-              <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
+              <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '20px', backgroundColor: '#f9fafb' }}>
                 <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>Life Events</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                   {[
@@ -726,7 +726,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
               </div>
 
               {/* Custom Audiences */}
-              <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
+              <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '20px', backgroundColor: '#f9fafb' }}>
                 <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>Custom Audiences</h4>
                 <div style={{ display: 'grid', gap: '12px' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px' }}>
@@ -757,7 +757,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
               </div>
 
               {/* Lookalike Audiences */}
-              <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
+              <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '20px', backgroundColor: '#f9fafb' }}>
                 <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>Lookalike Audiences</h4>
                 <div style={{ display: 'grid', gap: '8px' }}>
                   {[
@@ -804,7 +804,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                     gap: '12px',
                     padding: '16px',
                     border: formData.platforms.includes(platform) ? '2px solid var(--mc-sidebar-bg)' : '1px solid #e5e7eb',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     cursor: 'pointer',
                     backgroundColor: formData.platforms.includes(platform) ? '#eff6ff' : 'white'
                   }}
@@ -853,7 +853,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                     gap: '12px',
                     padding: '16px',
                     border: formData.objective === objective.id ? '2px solid var(--mc-sidebar-bg)' : '1px solid #e5e7eb',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     cursor: 'pointer',
                     backgroundColor: formData.objective === objective.id ? '#eff6ff' : 'white'
                   }}
@@ -914,7 +914,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                   placeholder="Enter budget amount"
                   value={formData.budgetAmount}
                   onChange={(e) => setFormData({...formData, budgetAmount: parseInt(e.target.value)})}
-                  style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px' }}
                 />
               </div>
 
@@ -926,7 +926,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 <select
                   value={formData.bidStrategy}
                   onChange={(e) => setFormData({...formData, bidStrategy: e.target.value})}
-                  style={{ width: '100%', maxWidth: '300px', padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                  style={{ width: '100%', maxWidth: '300px', padding: '12px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px' }}
                 >
                   <option value="lowest_cost">Lowest Cost</option>
                   <option value="cost_cap">Cost Cap</option>
@@ -953,7 +953,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 <select
                   value={formData.adType}
                   onChange={(e) => setFormData({...formData, adType: e.target.value})}
-                  style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px' }}
                 >
                   <option value="single_image">Single Image</option>
                   <option value="carousel">Carousel</option>
@@ -970,7 +970,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 <select
                   value={formData.cta}
                   onChange={(e) => setFormData({...formData, cta: e.target.value})}
-                  style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px' }}
                 >
                   <option value="Learn More">Learn More</option>
                   <option value="Shop Now">Shop Now</option>
@@ -990,7 +990,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                   placeholder="Enter headline"
                   value={formData.headline}
                   onChange={(e) => setFormData({...formData, headline: e.target.value})}
-                  style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px' }}
                 />
               </div>
 
@@ -1004,7 +1004,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                   placeholder="Enter description"
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px' }}
                 />
               </div>
 
@@ -1017,7 +1017,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                   placeholder="Enter your ad copy"
                   value={formData.primaryText}
                   onChange={(e) => setFormData({...formData, primaryText: e.target.value})}
-                  style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', minHeight: '100px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '20px', minHeight: '100px', fontSize: '14px' }}
                 />
               </div>
 
@@ -1030,7 +1030,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                   type="file"
                   accept="image/*,video/*"
                   onChange={(e) => setFormData({...formData, creativeFile: e.target.files?.[0] || null})}
-                  style={{ width: '100%', maxWidth: '400px', padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                  style={{ width: '100%', maxWidth: '400px', padding: '12px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px' }}
                 />
               </div>
             </div>
@@ -1059,7 +1059,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     }}>
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         width: '90%',
         maxWidth: '800px',
         maxHeight: '90vh',
@@ -1132,7 +1132,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
             style={{
               padding: '8px 16px',
               border: '1px solid #d1d5db',
-              borderRadius: '6px',
+              borderRadius: '20px',
               backgroundColor: 'white',
               color: currentStep === 1 ? '#9ca3af' : '#374151',
               cursor: currentStep === 1 ? 'not-allowed' : 'pointer'
@@ -1147,7 +1147,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
               style={{
                 padding: '8px 16px',
                 border: '1px solid #d1d5db',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 backgroundColor: 'white',
                 color: '#374151',
                 cursor: 'pointer'
@@ -1161,7 +1161,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 style={{
                   padding: '8px 16px',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   cursor: 'pointer'
@@ -1175,7 +1175,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 style={{
                   padding: '8px 16px',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   cursor: 'pointer'
@@ -1269,7 +1269,7 @@ export default function MarketingPage() {
               color: 'white',
               border: 'none',
               padding: '12px 24px',
-              borderRadius: '8px',
+              borderRadius: '20px',
               fontSize: '14px',
               fontWeight: '600',
               cursor: 'pointer',
@@ -1286,7 +1286,7 @@ export default function MarketingPage() {
 
         {/* Stats Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <DollarSign size={20} color="#10b981" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Budget</span>
@@ -1296,7 +1296,7 @@ export default function MarketingPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <TrendingUp size={20} color="var(--mc-sidebar-bg)" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Spent</span>
@@ -1306,7 +1306,7 @@ export default function MarketingPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <Users size={20} color="#8b5cf6" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Reach</span>
@@ -1316,7 +1316,7 @@ export default function MarketingPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <Target size={20} color="#f59e0b" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Conversions</span>
@@ -1407,7 +1407,7 @@ export default function MarketingPage() {
               key={campaign.id}
               style={{
                 background: 'white',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                 overflow: 'hidden',
                 transition: 'all 0.2s',
@@ -1423,7 +1423,7 @@ export default function MarketingPage() {
                     <div style={{ 
                       width: '40px', 
                       height: '40px', 
-                      borderRadius: '8px', 
+                      borderRadius: '20px', 
                       background: platformColor,
                       display: 'flex',
                       alignItems: 'center',
@@ -1450,7 +1450,7 @@ export default function MarketingPage() {
                       style={{
                         padding: '6px',
                         border: 'none',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         background: campaign.status === 'active' ? '#fef3c7' : '#dbeafe',
                         color: campaign.status === 'active' ? '#92400e' : '#1e40af',
                         cursor: 'pointer'
@@ -1463,7 +1463,7 @@ export default function MarketingPage() {
                       style={{
                         padding: '6px',
                         border: 'none',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         background: '#f3f4f6',
                         color: '#6b7280',
                         cursor: 'pointer'
@@ -1477,7 +1477,7 @@ export default function MarketingPage() {
                 <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
                   <span style={{ 
                     padding: '4px 8px', 
-                    borderRadius: '6px', 
+                    borderRadius: '20px', 
                     fontSize: '12px', 
                     fontWeight: '500',
                     ...getStatusColor(campaign.status).split(' ').reduce((acc, className) => {
@@ -1555,7 +1555,7 @@ export default function MarketingPage() {
           textAlign: 'center', 
           padding: '60px 20px',
           background: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
         }}>
           <Megaphone size={48} color="#d1d5db" style={{ marginBottom: '16px' }} />
@@ -1575,7 +1575,7 @@ export default function MarketingPage() {
               color: 'white',
               border: 'none',
               padding: '12px 24px',
-              borderRadius: '8px',
+              borderRadius: '20px',
               fontSize: '14px',
               fontWeight: '600',
               cursor: 'pointer'

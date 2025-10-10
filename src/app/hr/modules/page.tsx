@@ -75,7 +75,7 @@ export default function HRPayrollPage() {
                 backgroundColor: '#10b981',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '16px',
                 fontWeight: '500',
                 cursor: 'pointer',
@@ -92,7 +92,7 @@ export default function HRPayrollPage() {
       {/* Payroll Modules List */}
       <div style={{
         backgroundColor: '#ffffff',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
         marginBottom: '32px'
@@ -110,7 +110,7 @@ export default function HRPayrollPage() {
                 justifyContent: 'space-between',
                 padding: '20px',
                 border: '1px solid #e5e7eb',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 backgroundColor: 'white',
                 transition: 'all 0.2s',
                 cursor: 'pointer'
@@ -130,7 +130,7 @@ export default function HRPayrollPage() {
                   width: '48px',
                   height: '48px',
                   backgroundColor: '#f3f4f6',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -160,7 +160,7 @@ export default function HRPayrollPage() {
                 backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 padding: '8px 16px',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 border: 'none',

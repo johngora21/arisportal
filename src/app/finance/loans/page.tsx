@@ -177,7 +177,7 @@ export default function LoansPage() {
               key={property.id}
               style={{
                 backgroundColor: 'white',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 border: '1px solid #e5e7eb',
                 overflow: 'hidden',
                 boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
@@ -210,7 +210,7 @@ export default function LoansPage() {
                   backgroundColor: '#10b981',
                   color: 'white',
                   padding: '4px 8px',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '11px',
                   fontWeight: '500'
                 }}>
@@ -239,7 +239,7 @@ export default function LoansPage() {
                 <div style={{
                   padding: '12px',
                   backgroundColor: '#f0fdf4',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   marginBottom: '16px'
                 }}>
                   <div style={{ fontSize: '12px', fontWeight: '600', color: '#166534', marginBottom: '2px' }}>
@@ -276,7 +276,7 @@ export default function LoansPage() {
                     backgroundColor: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '13px',
                     fontWeight: '600',
                     cursor: 'pointer'
@@ -307,7 +307,7 @@ export default function LoansPage() {
       {myLoanApplications.length === 0 ? (
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           border: '1px solid #e5e7eb',
           padding: '40px',
           textAlign: 'center'
@@ -326,7 +326,7 @@ export default function LoansPage() {
               backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '20px',
               fontSize: '14px',
               fontWeight: '600',
               cursor: 'pointer'
@@ -342,7 +342,7 @@ export default function LoansPage() {
               key={application.id}
               style={{
                 backgroundColor: 'white',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 border: '1px solid #e5e7eb',
                 padding: '20px',
                 boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
@@ -362,7 +362,7 @@ export default function LoansPage() {
                   alignItems: 'center',
                   gap: '4px',
                   padding: '4px 8px',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   backgroundColor: getStatusColor(application.status) + '20',
                   color: getStatusColor(application.status),
                   fontSize: '11px',
@@ -407,7 +407,7 @@ export default function LoansPage() {
                 <div style={{
                   padding: '8px',
                   backgroundColor: '#f9fafb',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '12px',
                   color: '#6b7280'
                 }}>
@@ -434,7 +434,7 @@ export default function LoansPage() {
 
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         border: '1px solid #e5e7eb',
         padding: '24px'
       }}>
@@ -450,7 +450,7 @@ export default function LoansPage() {
                 width: '100%',
                 padding: '10px',
                 border: '1px solid #d1d5db',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '13px',
                 boxSizing: 'border-box'
               }}
@@ -468,7 +468,7 @@ export default function LoansPage() {
                 width: '100%',
                 padding: '10px',
                 border: '1px solid #d1d5db',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '13px',
                 boxSizing: 'border-box'
               }}
@@ -487,7 +487,7 @@ export default function LoansPage() {
                 width: '100%',
                 padding: '10px',
                 border: '1px solid #d1d5db',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '13px',
                 boxSizing: 'border-box'
               }}
@@ -505,7 +505,7 @@ export default function LoansPage() {
                 width: '100%',
                 padding: '10px',
                 border: '1px solid #d1d5db',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '13px',
                 boxSizing: 'border-box'
               }}
@@ -515,7 +515,7 @@ export default function LoansPage() {
 
         <div style={{
           backgroundColor: '#f9fafb',
-          borderRadius: '8px',
+          borderRadius: '20px',
           padding: '16px',
           marginBottom: '16px'
         }}>
@@ -544,7 +544,7 @@ export default function LoansPage() {
           backgroundColor: 'var(--mc-sidebar-bg)',
           color: 'white',
           border: 'none',
-          borderRadius: '6px',
+          borderRadius: '20px',
           fontSize: '13px',
           fontWeight: '600',
           cursor: 'pointer'
@@ -581,7 +581,7 @@ export default function LoansPage() {
                 backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '600',
                 cursor: 'pointer',
@@ -613,7 +613,7 @@ export default function LoansPage() {
       }}>
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           border: '1px solid #e5e7eb',
           padding: '20px',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
@@ -621,7 +621,7 @@ export default function LoansPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             <div style={{
               backgroundColor: '#dbeafe',
-              borderRadius: '8px',
+              borderRadius: '20px',
               padding: '8px',
               display: 'flex',
               alignItems: 'center',
@@ -650,7 +650,7 @@ export default function LoansPage() {
 
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           border: '1px solid #e5e7eb',
           padding: '20px',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
@@ -658,7 +658,7 @@ export default function LoansPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             <div style={{
               backgroundColor: '#dcfce7',
-              borderRadius: '8px',
+              borderRadius: '20px',
               padding: '8px',
               display: 'flex',
               alignItems: 'center',
@@ -687,7 +687,7 @@ export default function LoansPage() {
 
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           border: '1px solid #e5e7eb',
           padding: '20px',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
@@ -695,7 +695,7 @@ export default function LoansPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             <div style={{
               backgroundColor: '#fef3c7',
-              borderRadius: '8px',
+              borderRadius: '20px',
               padding: '8px',
               display: 'flex',
               alignItems: 'center',
@@ -726,7 +726,7 @@ export default function LoansPage() {
       {/* Tab Navigation */}
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         border: '1px solid #e5e7eb',
         overflow: 'hidden',
         marginBottom: '32px'
@@ -783,7 +783,7 @@ export default function LoansPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '32px',
             width: '90vw',
             maxWidth: '600px',
@@ -818,7 +818,7 @@ export default function LoansPage() {
               <div style={{
                 padding: '16px',
                 backgroundColor: '#f9fafb',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 marginBottom: '16px'
               }}>
                 <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>
@@ -849,7 +849,7 @@ export default function LoansPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     boxSizing: 'border-box'
                   }}
@@ -865,7 +865,7 @@ export default function LoansPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     boxSizing: 'border-box'
                   }}
@@ -890,7 +890,7 @@ export default function LoansPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     boxSizing: 'border-box'
                   }}
@@ -908,7 +908,7 @@ export default function LoansPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     boxSizing: 'border-box'
                   }}
@@ -926,7 +926,7 @@ export default function LoansPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     boxSizing: 'border-box'
                   }}
@@ -944,7 +944,7 @@ export default function LoansPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     boxSizing: 'border-box'
                   }}
@@ -962,7 +962,7 @@ export default function LoansPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     resize: 'vertical',
                     boxSizing: 'border-box'
@@ -982,7 +982,7 @@ export default function LoansPage() {
                     backgroundColor: '#6b7280',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     fontWeight: '600',
                     cursor: 'pointer'
@@ -997,7 +997,7 @@ export default function LoansPage() {
                     backgroundColor: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     fontWeight: '600',
                     cursor: 'pointer'

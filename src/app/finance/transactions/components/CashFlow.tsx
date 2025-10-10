@@ -81,7 +81,7 @@ export default function CashFlow({}: CashFlowProps) {
       {/* Cash Flow Chart */}
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         border: '1px solid #e5e7eb',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -173,7 +173,7 @@ export default function CashFlow({}: CashFlowProps) {
       {/* Cash Flow Categories */}
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         border: '1px solid #e5e7eb',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -210,14 +210,14 @@ export default function CashFlow({}: CashFlowProps) {
                 width: '100%',
                 height: '8px',
                 backgroundColor: '#f3f4f6',
-                borderRadius: '4px',
+                borderRadius: '20px',
                 overflow: 'hidden'
               }}>
                 <div style={{
                   width: `${Math.abs(category.percentage)}%`,
                   height: '100%',
                   backgroundColor: category.color,
-                  borderRadius: '4px'
+                  borderRadius: '20px'
                 }}></div>
               </div>
             </div>
@@ -228,7 +228,7 @@ export default function CashFlow({}: CashFlowProps) {
       {/* Cash Flow Forecast */}
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         border: '1px solid #e5e7eb',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -242,7 +242,7 @@ export default function CashFlow({}: CashFlowProps) {
             <div key={forecast.period} style={{
               padding: '16px',
               backgroundColor: '#f9fafb',
-              borderRadius: '8px',
+              borderRadius: '20px',
               border: '1px solid #f3f4f6'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -270,7 +270,7 @@ export default function CashFlow({}: CashFlowProps) {
       {/* Recent Cash Movements */}
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         border: '1px solid #e5e7eb',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -287,14 +287,14 @@ export default function CashFlow({}: CashFlowProps) {
               alignItems: 'center',
               padding: '12px 16px',
               backgroundColor: '#f9fafb',
-              borderRadius: '8px',
+              borderRadius: '20px',
               border: '1px solid #f3f4f6'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{
                   backgroundColor: movement.type === 'inflow' ? '#d1fae5' : '#fee2e2',
                   color: movement.type === 'inflow' ? '#10b981' : '#ef4444',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   padding: '6px',
                   display: 'flex',
                   alignItems: 'center',

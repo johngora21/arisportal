@@ -100,7 +100,7 @@ export default function PaymentMethodsPage() {
               padding: '8px 12px',
               backgroundColor: 'transparent',
               border: '1px solid #d1d5db',
-              borderRadius: '6px',
+              borderRadius: '20px',
               cursor: 'pointer',
               fontSize: '14px',
               color: '#6b7280',
@@ -196,7 +196,7 @@ export default function PaymentMethodsPage() {
                 backgroundColor: '#10b981',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer'
@@ -215,7 +215,7 @@ export default function PaymentMethodsPage() {
                 backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer'
@@ -238,7 +238,7 @@ export default function PaymentMethodsPage() {
         {paymentMethods.map((method) => (
           <div key={method.id} style={{
             backgroundColor: '#ffffff',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '24px',
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
           }}>
@@ -247,7 +247,7 @@ export default function PaymentMethodsPage() {
                 width: '48px',
                 height: '48px',
                 backgroundColor: '#f3f4f6',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -256,7 +256,7 @@ export default function PaymentMethodsPage() {
               </div>
               <span style={{
                 padding: '4px 8px',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '12px',
                 fontWeight: '500',
                 backgroundColor: method.status === 'Active' ? '#dcfce7' : '#fee2e2',
@@ -287,7 +287,7 @@ export default function PaymentMethodsPage() {
                 padding: '8px 12px',
                 backgroundColor: 'transparent',
                 border: '1px solid #d1d5db',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',
@@ -302,7 +302,7 @@ export default function PaymentMethodsPage() {
                 backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer'
@@ -318,7 +318,7 @@ export default function PaymentMethodsPage() {
       {/* Payment History */}
       <div style={{
         backgroundColor: '#ffffff',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
       }}>
@@ -390,7 +390,7 @@ export default function PaymentMethodsPage() {
                   <td style={{ padding: '12px', textAlign: 'center' }}>
                     <span style={{
                       padding: '4px 8px',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '12px',
                       fontWeight: '500',
                       backgroundColor: payment.status === 'Completed' ? '#dcfce7' : '#fef3c7',
@@ -409,7 +409,7 @@ export default function PaymentMethodsPage() {
                         height: '32px',
                         backgroundColor: 'transparent',
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: '20px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -422,7 +422,7 @@ export default function PaymentMethodsPage() {
                         height: '32px',
                         backgroundColor: 'transparent',
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: '20px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -456,7 +456,7 @@ export default function PaymentMethodsPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '24px',
             width: '90%',
             maxWidth: '500px'
@@ -471,7 +471,7 @@ export default function PaymentMethodsPage() {
             <div style={{ 
               backgroundColor: '#fef3c7', 
               border: '1px solid #f59e0b', 
-              borderRadius: '8px', 
+              borderRadius: '20px', 
               padding: '12px', 
               marginBottom: '24px' 
             }}>
@@ -491,7 +491,7 @@ export default function PaymentMethodsPage() {
                   backgroundColor: '#f3f4f6',
                   color: '#6b7280',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'
@@ -509,7 +509,7 @@ export default function PaymentMethodsPage() {
                   backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'
@@ -539,7 +539,7 @@ export default function PaymentMethodsPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '24px',
             width: '90%',
             maxWidth: '500px'
@@ -560,7 +560,7 @@ export default function PaymentMethodsPage() {
                     width: '100%',
                     padding: '10px 12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     outline: 'none'
                   }}
@@ -575,7 +575,7 @@ export default function PaymentMethodsPage() {
                   width: '100%',
                   padding: '10px 12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   outline: 'none'
@@ -598,7 +598,7 @@ export default function PaymentMethodsPage() {
                     width: '100%',
                     padding: '10px 12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     outline: 'none',
                     resize: 'vertical'
@@ -615,7 +615,7 @@ export default function PaymentMethodsPage() {
                   backgroundColor: '#f3f4f6',
                   color: '#6b7280',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'
@@ -630,7 +630,7 @@ export default function PaymentMethodsPage() {
                   backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'

@@ -213,7 +213,7 @@ export default function TendersPage() {
               backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '20px',
               fontSize: '16px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -227,7 +227,7 @@ export default function TendersPage() {
 
         {/* Stats Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <FileText size={20} color="var(--mc-sidebar-bg)" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Active Tenders</span>
@@ -237,7 +237,7 @@ export default function TendersPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <Award size={20} color="#10b981" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Won Tenders</span>
@@ -247,7 +247,7 @@ export default function TendersPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <DollarSign size={20} color="#f59e0b" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Value</span>
@@ -257,7 +257,7 @@ export default function TendersPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <Users size={20} color="#8b5cf6" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Bidders</span>
@@ -393,7 +393,7 @@ export default function TendersPage() {
           return (
             <div key={tender.id} style={{
               backgroundColor: 'white',
-              borderRadius: '12px',
+              borderRadius: '20px',
               overflow: 'hidden',
               boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
               border: '1px solid #f0f0f0',
@@ -455,7 +455,7 @@ export default function TendersPage() {
                       color: 'white',
                       backgroundColor: sectorColor,
                       padding: '4px 8px',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontWeight: '600',
                       backdropFilter: 'blur(10px)'
                     }}>
@@ -467,7 +467,7 @@ export default function TendersPage() {
                         color: 'white',
                         backgroundColor: 'var(--mc-sidebar-bg)',
                         padding: '4px 8px',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         fontWeight: '700',
                         letterSpacing: '0.5px',
                         display: 'inline-flex',
@@ -491,7 +491,7 @@ export default function TendersPage() {
                       border: '1px solid #e2e8f0',
                       padding: '8px',
                       cursor: 'pointer',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       flexShrink: 0,
                       marginLeft: '8px',
                       transition: 'all 0.2s ease-in-out'
@@ -607,7 +607,7 @@ export default function TendersPage() {
                       color: 'white',
                       border: 'none',
                       padding: '8px 16px',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       fontWeight: '600',
                       cursor: tender.isDeadlineExpired ? 'not-allowed' : 'pointer',
@@ -703,7 +703,7 @@ export default function TendersPage() {
                     border: 'none',
                     padding: '4px',
                     cursor: 'pointer',
-                    borderRadius: '4px'
+                    borderRadius: '20px'
                   }}
                 >
                   <X size={24} color="#64748b" />
@@ -744,7 +744,7 @@ export default function TendersPage() {
                       <div style={{
                         width: '20px',
                         height: '20px',
-                        borderRadius: '4px',
+                        borderRadius: '20px',
                         border: '2px solid #e2e8f0',
                         backgroundColor: filters.sector.includes(sector) ? 'var(--mc-sidebar-bg)' : 'transparent',
                         borderColor: filters.sector.includes(sector) ? 'var(--mc-sidebar-bg)' : '#e2e8f0',
@@ -799,7 +799,7 @@ export default function TendersPage() {
                     style={{
                       width: '100%',
                       padding: '10px',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       border: '1px solid #e2e8f0',
                       fontSize: '14px',
                       backgroundColor: 'white',
@@ -842,7 +842,7 @@ export default function TendersPage() {
                       style={{
                         width: '100%',
                         padding: '10px',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         border: '1px solid #e2e8f0',
                         fontSize: '14px',
                         backgroundColor: 'white',
@@ -877,7 +877,7 @@ export default function TendersPage() {
                       style={{
                         width: '100%',
                         padding: '10px',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         border: '1px solid #e2e8f0',
                         fontSize: '14px',
                         backgroundColor: 'white',
@@ -911,7 +911,7 @@ export default function TendersPage() {
                   color: 'white',
                   border: 'none',
                   padding: '12px 24px',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',

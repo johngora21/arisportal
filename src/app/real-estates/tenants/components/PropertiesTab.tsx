@@ -80,7 +80,7 @@ export default function PropertiesTab({
             backgroundColor: 'var(--mc-sidebar-bg)',
             color: 'white',
             border: 'none',
-            borderRadius: '8px',
+            borderRadius: '20px',
             fontSize: '14px',
             fontWeight: '500',
             cursor: 'pointer'
@@ -169,7 +169,7 @@ export default function PropertiesTab({
             onClick={() => onViewProperty(property)}
             style={{
               backgroundColor: 'white',
-              borderRadius: '12px',
+              borderRadius: '20px',
               padding: '24px',
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               border: '1px solid #f0f0f0',
@@ -207,7 +207,7 @@ export default function PropertiesTab({
                 fontWeight: '500',
                 padding: '4px 8px',
                 backgroundColor: `${getStatusColor(property.status)}15`,
-                borderRadius: '6px'
+                borderRadius: '20px'
               }}>
                 {getStatusIcon(property.status)}
                 {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
@@ -255,7 +255,7 @@ export default function PropertiesTab({
                       padding: '2px 6px',
                       backgroundColor: '#f3f4f6',
                       color: '#374151',
-                      borderRadius: '4px'
+                      borderRadius: '20px'
                     }}
                   >
                     {amenity}
@@ -280,7 +280,7 @@ export default function PropertiesTab({
                     backgroundColor: 'transparent',
                     border: 'none',
                     cursor: 'pointer',
-                    borderRadius: '4px',
+                    borderRadius: '20px',
                     color: '#6b7280'
                   }}
                 >
@@ -296,7 +296,7 @@ export default function PropertiesTab({
                     backgroundColor: 'transparent',
                     border: 'none',
                     cursor: 'pointer',
-                    borderRadius: '4px',
+                    borderRadius: '20px',
                     color: '#ef4444'
                   }}
                 >

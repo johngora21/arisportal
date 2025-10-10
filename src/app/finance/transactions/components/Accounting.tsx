@@ -153,7 +153,7 @@ export default function Accounting({}: AccountingProps) {
               gap: '8px',
               padding: '12px 20px',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '20px',
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -172,7 +172,7 @@ export default function Accounting({}: AccountingProps) {
               gap: '8px',
               padding: '12px 20px',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '20px',
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -191,7 +191,7 @@ export default function Accounting({}: AccountingProps) {
               gap: '8px',
               padding: '12px 20px',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '20px',
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -240,7 +240,7 @@ export default function Accounting({}: AccountingProps) {
       {statementType === 'income_statement' && (
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -248,7 +248,7 @@ export default function Accounting({}: AccountingProps) {
           <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0 0 24px 0' }}>
             Income Statement - {selectedPeriod.replace('_', ' ').toUpperCase()}
           </h3>
-          <div style={{ backgroundColor: '#f9fafb', padding: '24px', borderRadius: '8px' }}>
+          <div style={{ backgroundColor: '#f9fafb', padding: '24px', borderRadius: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #e5e7eb' }}>
                 <span style={{ fontSize: '14px', color: '#374151' }}>Revenue</span>
@@ -291,7 +291,7 @@ export default function Accounting({}: AccountingProps) {
       {statementType === 'balance_sheet' && (
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -301,7 +301,7 @@ export default function Accounting({}: AccountingProps) {
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             {/* Assets */}
-            <div style={{ backgroundColor: '#f9fafb', padding: '20px', borderRadius: '8px' }}>
+            <div style={{ backgroundColor: '#f9fafb', padding: '20px', borderRadius: '20px' }}>
               <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', margin: '0 0 16px 0' }}>Assets</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -324,7 +324,7 @@ export default function Accounting({}: AccountingProps) {
             </div>
 
             {/* Liabilities & Equity */}
-            <div style={{ backgroundColor: '#f9fafb', padding: '20px', borderRadius: '8px' }}>
+            <div style={{ backgroundColor: '#f9fafb', padding: '20px', borderRadius: '20px' }}>
               <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', margin: '0 0 16px 0' }}>Liabilities & Equity</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -353,7 +353,7 @@ export default function Accounting({}: AccountingProps) {
       {statementType === 'cash_flow' && (
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -361,7 +361,7 @@ export default function Accounting({}: AccountingProps) {
           <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0 0 24px 0' }}>
             Cash Flow Statement - {selectedPeriod.replace('_', ' ').toUpperCase()}
           </h3>
-          <div style={{ backgroundColor: '#f9fafb', padding: '24px', borderRadius: '8px' }}>
+          <div style={{ backgroundColor: '#f9fafb', padding: '24px', borderRadius: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Operating Activities */}
               <div>

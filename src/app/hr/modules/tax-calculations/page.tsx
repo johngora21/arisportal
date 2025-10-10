@@ -78,7 +78,7 @@ export default function TaxCalculationsPage() {
               padding: '8px 12px',
               backgroundColor: 'transparent',
               border: '1px solid #d1d5db',
-              borderRadius: '6px',
+              borderRadius: '20px',
               cursor: 'pointer',
               fontSize: '14px',
               color: '#6b7280',
@@ -173,7 +173,7 @@ export default function TaxCalculationsPage() {
               backgroundColor: '#10b981',
               color: 'white',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: '20px',
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer'
@@ -192,7 +192,7 @@ export default function TaxCalculationsPage() {
               backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: '20px',
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer'
@@ -214,7 +214,7 @@ export default function TaxCalculationsPage() {
         {taxRates.map((tax, index) => (
           <div key={index} style={{
             backgroundColor: '#ffffff',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '20px',
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
           }}>
@@ -222,7 +222,7 @@ export default function TaxCalculationsPage() {
               <div style={{
                 padding: '8px',
                 backgroundColor: '#f3f4f6',
-                borderRadius: '8px'
+                borderRadius: '20px'
               }}>
                 <Percent size={20} color="#6b7280" />
               </div>
@@ -247,7 +247,7 @@ export default function TaxCalculationsPage() {
       {/* Tax Calculations Table */}
       <div style={{
         backgroundColor: '#ffffff',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
       }}>
@@ -340,7 +340,7 @@ export default function TaxCalculationsPage() {
                   <td style={{ padding: '12px', textAlign: 'center' }}>
                     <span style={{
                       padding: '4px 8px',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '12px',
                       fontWeight: '500',
                       backgroundColor: calc.status === 'Calculated' ? '#dcfce7' : '#fef3c7',
@@ -356,7 +356,7 @@ export default function TaxCalculationsPage() {
                         height: '32px',
                         backgroundColor: 'transparent',
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: '20px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -369,7 +369,7 @@ export default function TaxCalculationsPage() {
                         height: '32px',
                         backgroundColor: 'transparent',
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: '20px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -403,7 +403,7 @@ export default function TaxCalculationsPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '24px',
             width: '90%',
             maxWidth: '500px'
@@ -418,7 +418,7 @@ export default function TaxCalculationsPage() {
             <div style={{ 
               backgroundColor: '#fef3c7', 
               border: '1px solid #f59e0b', 
-              borderRadius: '8px', 
+              borderRadius: '20px', 
               padding: '12px', 
               marginBottom: '24px' 
             }}>
@@ -438,7 +438,7 @@ export default function TaxCalculationsPage() {
                   backgroundColor: '#f3f4f6',
                   color: '#6b7280',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'
@@ -456,7 +456,7 @@ export default function TaxCalculationsPage() {
                   backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'

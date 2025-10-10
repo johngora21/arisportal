@@ -80,7 +80,7 @@ export default function TenderToolsPage() {
       {/* Tools Grid */}
       <div style={{
         backgroundColor: '#ffffff',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
       }}>
@@ -98,7 +98,7 @@ export default function TenderToolsPage() {
               key={tool.id}
               style={{
                 border: '1px solid #e5e7eb',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 padding: '24px',
                 backgroundColor: 'white',
                 transition: 'all 0.2s',
@@ -118,7 +118,7 @@ export default function TenderToolsPage() {
                   width: '64px',
                   height: '64px',
                   backgroundColor: tool.color,
-                  borderRadius: '12px',
+                  borderRadius: '20px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -156,7 +156,7 @@ export default function TenderToolsPage() {
                       style={{
                         padding: '4px 8px',
                         backgroundColor: '#f3f4f6',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         fontSize: '12px',
                         fontWeight: '500',
                         color: '#6b7280'
@@ -174,7 +174,7 @@ export default function TenderToolsPage() {
                 backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',

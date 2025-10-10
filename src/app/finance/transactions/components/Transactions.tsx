@@ -376,7 +376,7 @@ export default function Transactions({}: TransactionsProps) {
       {/* Transactions Table */}
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         border: '1px solid #e5e7eb',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         overflow: 'hidden'
@@ -421,7 +421,7 @@ export default function Transactions({}: TransactionsProps) {
                   <td style={{ padding: '16px' }}>
                     <span style={{
                       padding: '4px 8px',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '12px',
                       fontWeight: '500',
                       backgroundColor: getTypeColor(transaction.type) + '20',
@@ -459,7 +459,7 @@ export default function Transactions({}: TransactionsProps) {
                       <button style={{
                         padding: '6px',
                         border: 'none',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         backgroundColor: '#f3f4f6',
                         color: '#6b7280',
                         cursor: 'pointer'
@@ -469,7 +469,7 @@ export default function Transactions({}: TransactionsProps) {
                       <button style={{
                         padding: '6px',
                         border: 'none',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         backgroundColor: '#fee2e2',
                         color: '#ef4444',
                         cursor: 'pointer'
@@ -499,7 +499,7 @@ export default function Transactions({}: TransactionsProps) {
             <button style={{
               padding: '8px 12px',
               border: '1px solid #d1d5db',
-              borderRadius: '6px',
+              borderRadius: '20px',
               backgroundColor: 'white',
               color: '#374151',
               fontSize: '14px',
@@ -510,7 +510,7 @@ export default function Transactions({}: TransactionsProps) {
             <button style={{
               padding: '8px 12px',
               border: '1px solid #d1d5db',
-              borderRadius: '6px',
+              borderRadius: '20px',
               backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               fontSize: '14px',
@@ -521,7 +521,7 @@ export default function Transactions({}: TransactionsProps) {
             <button style={{
               padding: '8px 12px',
               border: '1px solid #d1d5db',
-              borderRadius: '6px',
+              borderRadius: '20px',
               backgroundColor: 'white',
               color: '#374151',
               fontSize: '14px',

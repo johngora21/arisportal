@@ -117,7 +117,7 @@ export default function PortfoliosPage() {
               backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '20px',
               fontSize: '16px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -131,7 +131,7 @@ export default function PortfoliosPage() {
 
         {/* Stats Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <Globe size={20} color="var(--mc-sidebar-bg)" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Portfolio Status</span>
@@ -141,7 +141,7 @@ export default function PortfoliosPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <Palette size={20} color="#10b981" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Templates</span>
@@ -149,7 +149,7 @@ export default function PortfoliosPage() {
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>4</div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <Eye size={20} color="#f59e0b" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Views</span>
@@ -159,13 +159,13 @@ export default function PortfoliosPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <ExternalLink size={20} color="#8b5cf6" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Subdomain</span>
             </div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              {hasPortfolio ? 'company.meritportal.com' : 'Not Set'}
+              {hasPortfolio ? 'company.arisportal.com' : 'Not Set'}
             </div>
           </div>
         </div>
@@ -186,7 +186,7 @@ export default function PortfoliosPage() {
                 gap: '8px',
                 padding: '12px 20px',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',
@@ -215,7 +215,7 @@ export default function PortfoliosPage() {
                   width: '100%',
                   padding: '14px 12px 14px 40px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   background: 'white'
                 }}
@@ -228,7 +228,7 @@ export default function PortfoliosPage() {
               style={{
                 padding: '14px 12px',
                 border: '1px solid #d1d5db',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 background: 'white',
                 minWidth: '140px'
@@ -247,7 +247,7 @@ export default function PortfoliosPage() {
 
       {/* Content */}
       {activeTab === 'templates' && (
-        <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+        <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
           <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb' }}>
             <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
               Choose a Template ({filteredTemplates.length})
@@ -259,7 +259,7 @@ export default function PortfoliosPage() {
               {filteredTemplates.map((template) => (
                 <div key={template.id} style={{ 
                   border: '1px solid #e5e7eb', 
-                  borderRadius: '12px',
+                  borderRadius: '20px',
                   backgroundColor: 'white',
                   overflow: 'hidden',
                   position: 'relative'
@@ -272,7 +272,7 @@ export default function PortfoliosPage() {
                       background: 'var(--mc-sidebar-bg)',
                       color: 'white',
                       padding: '4px 8px',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '12px',
                       fontWeight: '600',
                       zIndex: 1
@@ -301,7 +301,7 @@ export default function PortfoliosPage() {
                       </h4>
                       <span style={{
                         padding: '4px 8px',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         fontSize: '12px',
                         fontWeight: '500',
                         ...getCategoryColor(template.category)
@@ -324,7 +324,7 @@ export default function PortfoliosPage() {
                             padding: '2px 6px',
                             backgroundColor: '#f3f4f6',
                             color: '#6b7280',
-                            borderRadius: '4px',
+                            borderRadius: '20px',
                             fontSize: '12px'
                           }}>
                             {feature}
@@ -335,7 +335,7 @@ export default function PortfoliosPage() {
                             padding: '2px 6px',
                             backgroundColor: '#f3f4f6',
                             color: '#6b7280',
-                            borderRadius: '4px',
+                            borderRadius: '20px',
                             fontSize: '12px'
                           }}>
                             +{template.features.length - 3} more
@@ -359,7 +359,7 @@ export default function PortfoliosPage() {
                       
                       <span style={{
                         padding: '4px 8px',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         fontSize: '12px',
                         fontWeight: '500',
                         backgroundColor: template.price === 'free' ? '#d1fae5' : '#fef3c7',
@@ -376,7 +376,7 @@ export default function PortfoliosPage() {
                           flex: 1,
                           padding: '10px 16px',
                           border: '1px solid #d1d5db',
-                          borderRadius: '8px',
+                          borderRadius: '20px',
                           background: 'white',
                           color: '#374151',
                           fontSize: '14px',
@@ -401,7 +401,7 @@ export default function PortfoliosPage() {
                           flex: 1,
                           padding: '10px 16px',
                           border: 'none',
-                          borderRadius: '8px',
+                          borderRadius: '20px',
                           background: 'var(--mc-sidebar-bg)',
                           color: 'white',
                           fontSize: '14px',
@@ -426,7 +426,7 @@ export default function PortfoliosPage() {
       )}
 
       {activeTab === 'customize' && (
-        <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+        <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
           <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb' }}>
             <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
               Customize Your Portfolio
@@ -449,7 +449,7 @@ export default function PortfoliosPage() {
                   style={{
                     padding: '12px 24px',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     background: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     fontSize: '14px',
@@ -465,7 +465,7 @@ export default function PortfoliosPage() {
                 {/* Portfolio Preview */}
                 <div style={{ 
                   border: '1px solid #e5e7eb', 
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   overflow: 'hidden',
                   backgroundColor: '#f9fafb'
                 }}>
@@ -485,7 +485,7 @@ export default function PortfoliosPage() {
 
                 {/* Customization Options */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-                  <div style={{ padding: '20px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: 'white' }}>
+                  <div style={{ padding: '20px', border: '1px solid #e5e7eb', borderRadius: '20px', backgroundColor: 'white' }}>
                     <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', margin: '0 0 16px 0' }}>
                       Company Information
                     </h4>
@@ -496,7 +496,7 @@ export default function PortfoliosPage() {
                         style={{
                           padding: '12px',
                           border: '1px solid #d1d5db',
-                          borderRadius: '6px',
+                          borderRadius: '20px',
                           fontSize: '14px'
                         }}
                       />
@@ -506,7 +506,7 @@ export default function PortfoliosPage() {
                         style={{
                           padding: '12px',
                           border: '1px solid #d1d5db',
-                          borderRadius: '6px',
+                          borderRadius: '20px',
                           fontSize: '14px',
                           resize: 'vertical'
                         }}
@@ -517,14 +517,14 @@ export default function PortfoliosPage() {
                         style={{
                           padding: '12px',
                           border: '1px solid #d1d5db',
-                          borderRadius: '6px',
+                          borderRadius: '20px',
                           fontSize: '14px'
                         }}
                       />
                     </div>
                   </div>
 
-                  <div style={{ padding: '20px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: 'white' }}>
+                  <div style={{ padding: '20px', border: '1px solid #e5e7eb', borderRadius: '20px', backgroundColor: 'white' }}>
                     <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', margin: '0 0 16px 0' }}>
                       Subdomain Settings
                     </h4>
@@ -536,15 +536,15 @@ export default function PortfoliosPage() {
                           style={{
                             padding: '12px',
                             border: '1px solid #d1d5db',
-                            borderRadius: '6px',
+                            borderRadius: '20px',
                             fontSize: '14px',
                             flex: 1
                           }}
                         />
-                        <span style={{ fontSize: '14px', color: '#6b7280' }}>.meritportal.com</span>
+                        <span style={{ fontSize: '14px', color: '#6b7280' }}>.arisportal.com</span>
                       </div>
                       <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                        Your portfolio will be available at: <strong>company.meritportal.com</strong>
+                        Your portfolio will be available at: <strong>company.arisportal.com</strong>
                       </div>
                     </div>
                   </div>
@@ -556,7 +556,7 @@ export default function PortfoliosPage() {
                     style={{
                       padding: '12px 24px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       background: 'white',
                       color: '#374151',
                       fontSize: '14px',
@@ -570,7 +570,7 @@ export default function PortfoliosPage() {
                     style={{
                       padding: '12px 24px',
                       border: 'none',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       background: '#10b981',
                       color: 'white',
                       fontSize: '14px',
@@ -588,7 +588,7 @@ export default function PortfoliosPage() {
       )}
 
       {activeTab === 'analytics' && (
-        <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '20px' }}>
+        <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '20px' }}>
           <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0 0 20px 0' }}>
             Portfolio Analytics
           </h3>

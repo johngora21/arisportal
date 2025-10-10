@@ -159,7 +159,7 @@ export default function InsurancePage() {
       }}>
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
@@ -167,7 +167,7 @@ export default function InsurancePage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div style={{
               backgroundColor: '#dbeafe',
-              borderRadius: '8px',
+              borderRadius: '20px',
               padding: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -187,7 +187,7 @@ export default function InsurancePage() {
 
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
@@ -195,7 +195,7 @@ export default function InsurancePage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div style={{
               backgroundColor: '#dcfce7',
-              borderRadius: '8px',
+              borderRadius: '20px',
               padding: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -215,7 +215,7 @@ export default function InsurancePage() {
 
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
@@ -223,7 +223,7 @@ export default function InsurancePage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div style={{
               backgroundColor: '#fef3c7',
-              borderRadius: '8px',
+              borderRadius: '20px',
               padding: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -243,7 +243,7 @@ export default function InsurancePage() {
 
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
@@ -251,7 +251,7 @@ export default function InsurancePage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div style={{
               backgroundColor: '#f0fdf4',
-              borderRadius: '8px',
+              borderRadius: '20px',
               padding: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -273,7 +273,7 @@ export default function InsurancePage() {
       {/* Recent Activity */}
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         border: '1px solid #e5e7eb',
         padding: '24px',
         marginBottom: '32px'
@@ -289,12 +289,12 @@ export default function InsurancePage() {
               justifyContent: 'space-between',
               padding: '12px',
               backgroundColor: '#f9fafb',
-              borderRadius: '8px'
+              borderRadius: '20px'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{
                   backgroundColor: claim.status === 'approved' ? '#dcfce7' : claim.status === 'pending' ? '#fef3c7' : '#fee2e2',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   padding: '8px',
                   display: 'flex',
                   alignItems: 'center',
@@ -347,7 +347,7 @@ export default function InsurancePage() {
             backgroundColor: 'var(--mc-sidebar-bg)',
             color: 'white',
             border: 'none',
-            borderRadius: '8px',
+            borderRadius: '20px',
             padding: '12px 20px',
             fontSize: '14px',
             fontWeight: '500',
@@ -364,7 +364,7 @@ export default function InsurancePage() {
 
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         border: '1px solid #e5e7eb',
         overflow: 'hidden'
       }}>
@@ -407,7 +407,7 @@ export default function InsurancePage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{
                 backgroundColor: policy.type === 'property' ? '#dbeafe' : policy.type === 'business' ? '#dcfce7' : policy.type === 'vehicle' ? '#fef3c7' : '#fce7f3',
-                borderRadius: '4px',
+                borderRadius: '20px',
                 padding: '4px 8px',
                 fontSize: '12px',
                 fontWeight: '500',
@@ -426,7 +426,7 @@ export default function InsurancePage() {
               <div style={{
                 backgroundColor: policy.status === 'active' ? '#dcfce7' : '#fef3c7',
                 color: policy.status === 'active' ? '#166534' : '#92400e',
-                borderRadius: '4px',
+                borderRadius: '20px',
                 padding: '4px 8px',
                 fontSize: '12px',
                 fontWeight: '500',
@@ -444,7 +444,7 @@ export default function InsurancePage() {
                 style={{
                   backgroundColor: 'transparent',
                   border: '1px solid #d1d5db',
-                  borderRadius: '4px',
+                  borderRadius: '20px',
                   padding: '6px 12px',
                   fontSize: '12px',
                   cursor: 'pointer',
@@ -460,7 +460,7 @@ export default function InsurancePage() {
                 style={{
                   backgroundColor: 'transparent',
                   border: '1px solid #d1d5db',
-                  borderRadius: '4px',
+                  borderRadius: '20px',
                   padding: '6px 12px',
                   fontSize: '12px',
                   cursor: 'pointer',
@@ -493,14 +493,14 @@ export default function InsurancePage() {
         {/* Property Insurance */}
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           border: '1px solid #e5e7eb',
           padding: '24px',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
         }}>
           <div style={{
             backgroundColor: '#dbeafe',
-            borderRadius: '8px',
+            borderRadius: '20px',
             padding: '12px',
             display: 'flex',
             alignItems: 'center',
@@ -529,7 +529,7 @@ export default function InsurancePage() {
               backgroundColor: '#3b82f6',
               color: 'white',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: '20px',
               padding: '8px 16px',
               fontSize: '12px',
               fontWeight: '500',
@@ -544,14 +544,14 @@ export default function InsurancePage() {
         {/* Business Insurance */}
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           border: '1px solid #e5e7eb',
           padding: '24px',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
         }}>
           <div style={{
             backgroundColor: '#dcfce7',
-            borderRadius: '8px',
+            borderRadius: '20px',
             padding: '12px',
             display: 'flex',
             alignItems: 'center',
@@ -580,7 +580,7 @@ export default function InsurancePage() {
               backgroundColor: '#10b981',
               color: 'white',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: '20px',
               padding: '8px 16px',
               fontSize: '12px',
               fontWeight: '500',
@@ -595,14 +595,14 @@ export default function InsurancePage() {
         {/* Vehicle Insurance */}
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           border: '1px solid #e5e7eb',
           padding: '24px',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
         }}>
           <div style={{
             backgroundColor: '#fef3c7',
-            borderRadius: '8px',
+            borderRadius: '20px',
             padding: '12px',
             display: 'flex',
             alignItems: 'center',
@@ -631,7 +631,7 @@ export default function InsurancePage() {
               backgroundColor: '#f59e0b',
               color: 'white',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: '20px',
               padding: '8px 16px',
               fontSize: '12px',
               fontWeight: '500',
@@ -677,7 +677,7 @@ export default function InsurancePage() {
       {/* Tab Navigation */}
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         border: '1px solid #e5e7eb',
         overflow: 'hidden',
         marginBottom: '32px'

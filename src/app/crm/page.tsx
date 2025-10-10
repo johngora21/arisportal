@@ -257,7 +257,7 @@ export default function CRMPage() {
               backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '20px',
               fontSize: '16px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -271,7 +271,7 @@ export default function CRMPage() {
 
         {/* Stats Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <Users size={20} color="var(--mc-sidebar-bg)" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Contacts</span>
@@ -281,7 +281,7 @@ export default function CRMPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <DollarSign size={20} color="#10b981" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Pipeline Value</span>
@@ -291,7 +291,7 @@ export default function CRMPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <Target size={20} color="#f59e0b" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Active Deals</span>
@@ -301,7 +301,7 @@ export default function CRMPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <TrendingUp size={20} color="#8b5cf6" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Completed Sales</span>
@@ -328,7 +328,7 @@ export default function CRMPage() {
                 gap: '8px',
                 padding: '12px 20px',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',
@@ -389,7 +389,7 @@ export default function CRMPage() {
 
       {/* Content */}
       {activeTab === 'contacts' && (
-        <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+        <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
           
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -419,7 +419,7 @@ export default function CRMPage() {
                     <td style={{ padding: '16px' }}>
                       <span style={{
                         padding: '4px 8px',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         fontSize: '12px',
                         fontWeight: '500',
                         ...getStatusColor(contact.status).split(' ').reduce((acc, className) => {
@@ -448,7 +448,7 @@ export default function CRMPage() {
                           style={{ 
                             padding: '6px', 
                             border: 'none', 
-                            borderRadius: '6px', 
+                            borderRadius: '20px', 
                             background: '#f3f4f6', 
                             color: '#6b7280', 
                             cursor: 'pointer',
@@ -471,7 +471,7 @@ export default function CRMPage() {
                           style={{ 
                             padding: '6px', 
                             border: 'none', 
-                            borderRadius: '6px', 
+                            borderRadius: '20px', 
                             background: '#f3f4f6', 
                             color: '#6b7280', 
                             cursor: 'pointer',
@@ -494,7 +494,7 @@ export default function CRMPage() {
                           style={{ 
                             padding: '6px', 
                             border: 'none', 
-                            borderRadius: '6px', 
+                            borderRadius: '20px', 
                             background: '#f3f4f6', 
                             color: '#6b7280', 
                             cursor: 'pointer',
@@ -532,7 +532,7 @@ export default function CRMPage() {
           {filteredDeals.map((deal) => (
             <div key={deal.id} style={{ 
               background: 'white',
-              borderRadius: '12px',
+              borderRadius: '20px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
               overflow: 'hidden',
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',
@@ -637,7 +637,7 @@ export default function CRMPage() {
       {activeTab === 'analytics' && (
         <div style={{ display: 'grid', gap: '24px' }}>
           {/* Locations Pie Chart */}
-          <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '24px' }}>
+          <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '24px' }}>
             <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: '0 0 24px 0' }}>
               Sales by Location
             </h3>
@@ -728,7 +728,7 @@ export default function CRMPage() {
           </div>
 
           {/* Top Sold Items/Services */}
-          <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '24px' }}>
+          <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '24px' }}>
             <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: '0 0 24px 0' }}>
               Top Sold Items/Services
             </h3>
@@ -816,7 +816,7 @@ export default function CRMPage() {
         </div>
 
           {/* Top Customers */}
-          <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '24px' }}>
+          <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '24px' }}>
             <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: '0 0 24px 0' }}>
               Top Customers
           </h3>
@@ -868,12 +868,12 @@ export default function CRMPage() {
                               {formatCurrency(customer.value)}
                             </span>
                           </div>
-                          <div style={{ width: '100%', height: '8px', backgroundColor: '#f3f4f6', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: '100%', height: '8px', backgroundColor: '#f3f4f6', borderRadius: '20px', overflow: 'hidden' }}>
                             <div style={{ 
                               width: `${percentage}%`, 
                               height: '100%', 
                               backgroundColor: customer.color,
-                              borderRadius: '4px',
+                              borderRadius: '20px',
                               transition: 'width 0.3s ease'
                             }}></div>
                           </div>
@@ -968,7 +968,7 @@ export default function CRMPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '24px',
             width: '90%',
             maxWidth: '500px',
@@ -1008,7 +1008,7 @@ export default function CRMPage() {
                     gap: '12px',
                     padding: '24px',
                     border: '2px solid #e5e7eb',
-                    borderRadius: '12px',
+                    borderRadius: '20px',
                     background: 'white',
                     cursor: 'pointer',
                     minWidth: '150px',
@@ -1037,7 +1037,7 @@ export default function CRMPage() {
                     gap: '12px',
                     padding: '24px',
                     border: '2px solid #e5e7eb',
-                    borderRadius: '12px',
+                    borderRadius: '20px',
                     background: 'white',
                     cursor: 'pointer',
                     minWidth: '150px',
@@ -1073,7 +1073,7 @@ export default function CRMPage() {
                       maxWidth: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       boxSizing: 'border-box'
                     }}
@@ -1094,7 +1094,7 @@ export default function CRMPage() {
                       maxWidth: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       boxSizing: 'border-box'
                     }}
@@ -1115,7 +1115,7 @@ export default function CRMPage() {
                       maxWidth: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       boxSizing: 'border-box'
                     }}
@@ -1136,7 +1136,7 @@ export default function CRMPage() {
                       maxWidth: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       boxSizing: 'border-box'
                     }}
@@ -1157,7 +1157,7 @@ export default function CRMPage() {
                         maxWidth: '100%',
                         padding: '12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         fontSize: '14px',
                         boxSizing: 'border-box'
                       }}
@@ -1180,7 +1180,7 @@ export default function CRMPage() {
                         maxWidth: '100%',
                         padding: '12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         fontSize: '14px',
                         boxSizing: 'border-box'
                       }}
@@ -1202,7 +1202,7 @@ export default function CRMPage() {
                       maxWidth: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       resize: 'vertical',
                       boxSizing: 'border-box'
@@ -1219,7 +1219,7 @@ export default function CRMPage() {
                     style={{
                       padding: '10px 20px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       background: 'white',
                       color: '#374151',
                       fontSize: '14px',
@@ -1234,7 +1234,7 @@ export default function CRMPage() {
                     style={{
                       padding: '10px 20px',
                       border: 'none',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       background: 'var(--mc-sidebar-bg)',
                       color: 'white',
                       fontSize: '14px',
@@ -1270,7 +1270,7 @@ export default function CRMPage() {
                     padding: '12px 24px',
                     backgroundColor: 'var(--mc-sidebar-bg)',
                     color: 'white',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     cursor: 'pointer',
                     fontSize: '14px',
                     fontWeight: '500'
@@ -1285,7 +1285,7 @@ export default function CRMPage() {
                     style={{
                       padding: '10px 20px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       background: 'white',
                       color: '#374151',
                       fontSize: '14px',
@@ -1318,7 +1318,7 @@ export default function CRMPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '24px',
             width: '90%',
             maxWidth: '500px',
@@ -1379,7 +1379,7 @@ export default function CRMPage() {
                   </label>
                   <span style={{
                     padding: '6px 12px',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     fontWeight: '500',
                     ...getStatusColor(selectedContact.status).split(' ').reduce((acc, className) => {
@@ -1427,7 +1427,7 @@ export default function CRMPage() {
                   Contact Information
                 </label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '20px', border: '1px solid #e5e7eb' }}>
                     <Mail size={16} color="#6b7280" />
                     <div>
                       <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>Email</div>
@@ -1435,7 +1435,7 @@ export default function CRMPage() {
                     </div>
                   </div>
                   
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '20px', border: '1px solid #e5e7eb' }}>
                     <Phone size={16} color="#6b7280" />
                     <div>
                       <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>Phone</div>
@@ -1443,7 +1443,7 @@ export default function CRMPage() {
                     </div>
                   </div>
                   
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '20px', border: '1px solid #e5e7eb' }}>
                     <MessageSquare size={16} color="#6b7280" />
                     <div>
                       <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>WhatsApp</div>
@@ -1462,7 +1462,7 @@ export default function CRMPage() {
                   style={{
                     padding: '10px 20px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     background: 'white',
                     color: '#374151',
                     fontSize: '14px',
@@ -1494,7 +1494,7 @@ export default function CRMPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '24px',
             width: '90%',
             maxWidth: '600px',
@@ -1606,7 +1606,7 @@ export default function CRMPage() {
                   width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                   fontSize: '14px',
                   resize: 'vertical',
                   fontFamily: 'inherit',
@@ -1621,7 +1621,7 @@ export default function CRMPage() {
                   style={{
                   padding: '12px 24px',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     background: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     fontSize: '14px',

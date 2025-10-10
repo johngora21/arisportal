@@ -420,7 +420,7 @@ export default function AssetsPage() {
         {/* Stats Cards - Always Visible */}
         {stats && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '24px' }}>
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <Home size={20} color="var(--mc-sidebar-bg)" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Properties</span>
@@ -430,7 +430,7 @@ export default function AssetsPage() {
               </div>
             </div>
 
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <Building size={20} color="#8b5cf6" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Units</span>
@@ -440,7 +440,7 @@ export default function AssetsPage() {
               </div>
             </div>
 
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <Users size={20} color="#10b981" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Occupied</span>
@@ -450,7 +450,7 @@ export default function AssetsPage() {
               </div>
             </div>
 
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <DollarSign size={20} color="#f59e0b" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Monthly Revenue</span>
@@ -460,7 +460,7 @@ export default function AssetsPage() {
               </div>
             </div>
 
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <BarChart3 size={20} color="#3b82f6" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Occupancy Rate</span>
@@ -473,7 +473,7 @@ export default function AssetsPage() {
         )}
 
         {/* Horizontal Tabs */}
-        <div style={{ background: 'white', borderRadius: '12px', padding: '0', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '24px' }}>
+        <div style={{ background: 'white', borderRadius: '20px', padding: '0', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '24px' }}>
           <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb' }}>
             {[
               { id: 'properties', label: 'Properties', icon: <Home size={16} /> },
@@ -533,7 +533,7 @@ export default function AssetsPage() {
 
         {/* Tenant Records Tab */}
         {activeTab === 'tenants' && (
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', borderRadius: '20px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
                 Tenant Records
@@ -548,7 +548,7 @@ export default function AssetsPage() {
                   backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'
@@ -619,7 +619,7 @@ export default function AssetsPage() {
                           padding: '4px 8px',
                           backgroundColor: tenant.status === 'active' ? '#10b98115' : '#6b728015',
                           color: tenant.status === 'active' ? '#10b981' : '#6b7280',
-                          borderRadius: '4px',
+                          borderRadius: '20px',
                           fontSize: '12px',
                           fontWeight: '500'
                         }}>
@@ -706,7 +706,7 @@ export default function AssetsPage() {
                 {/* Residential Lease Template */}
                 <div style={{
                   backgroundColor: 'white',
-                  borderRadius: '12px',
+                  borderRadius: '20px',
                   padding: '20px',
                   border: '1px solid #e5e7eb',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -725,7 +725,7 @@ export default function AssetsPage() {
                     <div style={{
                       width: '48px',
                       height: '48px',
-                      borderRadius: '12px',
+                      borderRadius: '20px',
                       backgroundColor: '#3b82f6',
                       display: 'flex',
                       alignItems: 'center',
@@ -762,7 +762,7 @@ export default function AssetsPage() {
                       backgroundColor: '#3b82f6',
                       color: 'white',
                       border: 'none',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       fontWeight: '500',
                       cursor: 'pointer'
@@ -773,7 +773,7 @@ export default function AssetsPage() {
                       padding: '10px 16px',
                       backgroundColor: '#f8fafc',
                       border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       fontWeight: '500',
                       cursor: 'pointer',
@@ -787,7 +787,7 @@ export default function AssetsPage() {
                 {/* Commercial Lease Template */}
                 <div style={{
                   backgroundColor: 'white',
-                  borderRadius: '12px',
+                  borderRadius: '20px',
                   padding: '20px',
                   border: '1px solid #e5e7eb',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -806,7 +806,7 @@ export default function AssetsPage() {
                     <div style={{
                       width: '48px',
                       height: '48px',
-                      borderRadius: '12px',
+                      borderRadius: '20px',
                       backgroundColor: '#10b981',
                       display: 'flex',
                       alignItems: 'center',
@@ -843,7 +843,7 @@ export default function AssetsPage() {
                       backgroundColor: '#10b981',
                       color: 'white',
                       border: 'none',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       fontWeight: '500',
                       cursor: 'pointer'
@@ -854,7 +854,7 @@ export default function AssetsPage() {
                       padding: '10px 16px',
                       backgroundColor: '#f8fafc',
                       border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       fontWeight: '500',
                       cursor: 'pointer',
@@ -868,7 +868,7 @@ export default function AssetsPage() {
                 {/* Short-term Lease Template */}
                 <div style={{
                   backgroundColor: 'white',
-                  borderRadius: '12px',
+                  borderRadius: '20px',
                   padding: '20px',
                   border: '1px solid #e5e7eb',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -887,7 +887,7 @@ export default function AssetsPage() {
                     <div style={{
                       width: '48px',
                       height: '48px',
-                      borderRadius: '12px',
+                      borderRadius: '20px',
                       backgroundColor: '#f59e0b',
                       display: 'flex',
                       alignItems: 'center',
@@ -924,7 +924,7 @@ export default function AssetsPage() {
                       backgroundColor: '#f59e0b',
                       color: 'white',
                       border: 'none',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       fontWeight: '500',
                       cursor: 'pointer'
@@ -935,7 +935,7 @@ export default function AssetsPage() {
                       padding: '10px 16px',
                       backgroundColor: '#f8fafc',
                       border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       fontWeight: '500',
                       cursor: 'pointer',
@@ -953,7 +953,7 @@ export default function AssetsPage() {
               <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
                 Active Smart Contracts
               </h4>
-              <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', border: '1px solid #e5e7eb' }}>
+              <div style={{ backgroundColor: 'white', borderRadius: '20px', padding: '20px', border: '1px solid #e5e7eb' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                   <div>
                     <h5 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
@@ -968,7 +968,7 @@ export default function AssetsPage() {
                     backgroundColor: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     fontWeight: '500',
                     cursor: 'pointer'
@@ -982,7 +982,7 @@ export default function AssetsPage() {
                     <div key={tenant.id} style={{
                       padding: '16px',
                       backgroundColor: '#f8fafc',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       border: '1px solid #e2e8f0'
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
@@ -1012,7 +1012,7 @@ export default function AssetsPage() {
 
         {/* Payment Tracking Tab */}
         {activeTab === 'payments' && (
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', borderRadius: '20px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
                 Payment Tracking
@@ -1026,7 +1026,7 @@ export default function AssetsPage() {
                   backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'
@@ -1073,7 +1073,7 @@ export default function AssetsPage() {
                           padding: '4px 8px',
                           backgroundColor: payment.status === 'paid' ? '#10b98115' : payment.status === 'overdue' ? '#ef444415' : '#f59e0b15',
                           color: payment.status === 'paid' ? '#10b981' : payment.status === 'overdue' ? '#ef4444' : '#f59e0b',
-                          borderRadius: '4px',
+                          borderRadius: '20px',
                           fontSize: '12px',
                           fontWeight: '500'
                         }}>
@@ -1110,7 +1110,7 @@ export default function AssetsPage() {
                 <select style={{
                   padding: '8px 12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   minWidth: '150px'
@@ -1127,7 +1127,7 @@ export default function AssetsPage() {
                 <select style={{
                   padding: '8px 12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   minWidth: '120px'
@@ -1145,7 +1145,7 @@ export default function AssetsPage() {
                 <select style={{
                   padding: '8px 12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   minWidth: '150px'
@@ -1161,7 +1161,7 @@ export default function AssetsPage() {
             {/* Financial Performance Chart */}
             <div style={{ 
               backgroundColor: 'white', 
-              borderRadius: '12px', 
+              borderRadius: '20px', 
               padding: '24px', 
               marginBottom: '24px',
               border: '1px solid #e5e7eb'
@@ -1176,7 +1176,7 @@ export default function AssetsPage() {
               <div style={{ 
                 height: '300px', 
                 backgroundColor: '#f8fafc', 
-                borderRadius: '8px',
+                borderRadius: '20px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1222,7 +1222,7 @@ export default function AssetsPage() {
               {/* Occupancy Analysis */}
               <div style={{ 
                 backgroundColor: 'white', 
-                borderRadius: '12px', 
+                borderRadius: '20px', 
                 padding: '24px',
                 border: '1px solid #e5e7eb'
               }}>
@@ -1273,7 +1273,7 @@ export default function AssetsPage() {
               {/* Payment Status Breakdown */}
               <div style={{ 
                 backgroundColor: 'white', 
-                borderRadius: '12px', 
+                borderRadius: '20px', 
                 padding: '24px',
                 border: '1px solid #e5e7eb'
               }}>
@@ -1309,7 +1309,7 @@ export default function AssetsPage() {
                   marginTop: '20px', 
                   height: '120px', 
                   backgroundColor: '#f8fafc', 
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1325,7 +1325,7 @@ export default function AssetsPage() {
               {/* Top Performing Properties */}
               <div style={{ 
                 backgroundColor: 'white', 
-                borderRadius: '12px', 
+                borderRadius: '20px', 
                 padding: '24px',
                 border: '1px solid #e5e7eb'
               }}>
@@ -1340,14 +1340,14 @@ export default function AssetsPage() {
                       alignItems: 'center',
                       padding: '12px',
                       backgroundColor: '#f8fafc',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       border: '1px solid #e2e8f0'
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div style={{
                           width: '32px',
                           height: '32px',
-                          borderRadius: '8px',
+                          borderRadius: '20px',
                           backgroundColor: index === 0 ? '#fbbf24' : index === 1 ? '#9ca3af' : '#cd7c2f',
                           display: 'flex',
                           alignItems: 'center',
@@ -1401,7 +1401,7 @@ export default function AssetsPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             width: '100%',
             maxWidth: '900px',
             maxHeight: '95vh',
@@ -1438,7 +1438,7 @@ export default function AssetsPage() {
                   border: 'none',
                   cursor: 'pointer',
                   color: '#6b7280',
-                  borderRadius: '6px'
+                  borderRadius: '20px'
                 }}
               >
                 <X size={20} />
@@ -1467,7 +1467,7 @@ export default function AssetsPage() {
                         width: '100%',
                         padding: '10px 12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         fontSize: '14px',
                         backgroundColor: 'white',
                         boxSizing: 'border-box'
@@ -1491,7 +1491,7 @@ export default function AssetsPage() {
                         width: '100%',
                         padding: '10px 12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         fontSize: '14px',
                         backgroundColor: 'white',
                         boxSizing: 'border-box'
@@ -1517,7 +1517,7 @@ export default function AssetsPage() {
                         width: '100%',
                         padding: '10px 12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         fontSize: '14px',
                         backgroundColor: 'white',
                         boxSizing: 'border-box'
@@ -1538,7 +1538,7 @@ export default function AssetsPage() {
                         width: '100%',
                         padding: '10px 12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         fontSize: '14px',
                         backgroundColor: 'white',
                         boxSizing: 'border-box'
@@ -1576,7 +1576,7 @@ export default function AssetsPage() {
                               width: '100%',
                               padding: '12px',
                               border: '1px solid #d1d5db',
-                              borderRadius: '8px',
+                              borderRadius: '20px',
                               fontSize: '14px',
                               backgroundColor: 'white'
                             }}
@@ -1596,7 +1596,7 @@ export default function AssetsPage() {
                                 width: '100%',
                                 padding: '12px',
                                 border: '1px solid #d1d5db',
-                                borderRadius: '8px',
+                                borderRadius: '20px',
                                 fontSize: '14px',
                                 backgroundColor: 'white'
                               }}
@@ -1624,7 +1624,7 @@ export default function AssetsPage() {
                                     flex: 1,
                                     padding: '12px',
                                     border: '1px solid #d1d5db',
-                                    borderRadius: '8px',
+                                    borderRadius: '20px',
                                     fontSize: '14px',
                                     backgroundColor: 'white'
                                   }}
@@ -1642,7 +1642,7 @@ export default function AssetsPage() {
                                     flex: 1,
                                     padding: '12px',
                                     border: '1px solid #d1d5db',
-                                    borderRadius: '8px',
+                                    borderRadius: '20px',
                                     fontSize: '14px',
                                     backgroundColor: 'white'
                                   }}
@@ -1658,7 +1658,7 @@ export default function AssetsPage() {
                                     flex: 1,
                                     padding: '12px',
                                     border: '1px solid #d1d5db',
-                                    borderRadius: '8px',
+                                    borderRadius: '20px',
                                     fontSize: '14px',
                                     backgroundColor: 'white'
                                   }}
@@ -1674,7 +1674,7 @@ export default function AssetsPage() {
                                     flex: 1,
                                     padding: '12px',
                                     border: '1px solid #d1d5db',
-                                    borderRadius: '8px',
+                                    borderRadius: '20px',
                                     fontSize: '14px',
                                     backgroundColor: 'white'
                                   }}
@@ -1703,7 +1703,7 @@ export default function AssetsPage() {
                                   flex: 1,
                                   padding: '12px',
                                   border: '1px solid #d1d5db',
-                                  borderRadius: '8px',
+                                  borderRadius: '20px',
                                   fontSize: '14px',
                                   backgroundColor: 'white'
                                 }}
@@ -1740,7 +1740,7 @@ export default function AssetsPage() {
                             backgroundColor: 'var(--mc-sidebar-bg)',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '6px',
+                            borderRadius: '20px',
                             fontSize: '14px',
                             fontWeight: '500',
                             cursor: 'pointer'
@@ -1796,7 +1796,7 @@ export default function AssetsPage() {
                             backgroundColor: '#10b981',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '6px',
+                            borderRadius: '20px',
                             fontSize: '14px',
                             fontWeight: '500',
                             cursor: 'pointer'
@@ -1841,7 +1841,7 @@ export default function AssetsPage() {
                                   backgroundColor: '#ef4444',
                                   color: 'white',
                                   border: 'none',
-                                  borderRadius: '4px',
+                                  borderRadius: '20px',
                                   fontSize: '12px',
                                   cursor: 'pointer'
                                 }}
@@ -1869,7 +1869,7 @@ export default function AssetsPage() {
                       width: '100%',
                       padding: '10px 12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       resize: 'vertical',
@@ -1888,7 +1888,7 @@ export default function AssetsPage() {
                       backgroundColor: 'white',
                       color: '#6b7280',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       fontWeight: '500',
                       cursor: 'pointer'
@@ -1906,7 +1906,7 @@ export default function AssetsPage() {
                       backgroundColor: 'var(--mc-sidebar-bg)',
                       color: 'white',
                       border: 'none',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       fontWeight: '500',
                       cursor: 'pointer'
@@ -1939,7 +1939,7 @@ export default function AssetsPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             width: '90%',
             maxWidth: '1200px',
             maxHeight: '90vh',
@@ -1970,7 +1970,7 @@ export default function AssetsPage() {
                   height: '40px',
                   backgroundColor: 'transparent',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -2008,7 +2008,7 @@ export default function AssetsPage() {
                       backgroundColor: activePropertyTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
                       color: activePropertyTab === tab.id ? 'white' : '#6b7280',
                       border: 'none',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       fontWeight: '500',
                       cursor: 'pointer',
@@ -2057,7 +2057,7 @@ export default function AssetsPage() {
                         fontWeight: '500',
                         padding: '4px 8px',
                         backgroundColor: `${getStatusColor(selectedProperty.status)}15`,
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         width: 'fit-content'
                       }}>
                         {getStatusIcon(selectedProperty.status)}
@@ -2127,7 +2127,7 @@ export default function AssetsPage() {
                             padding: '6px 12px',
                             backgroundColor: '#f3f4f6',
                             color: '#374151',
-                            borderRadius: '6px',
+                            borderRadius: '20px',
                             fontWeight: '500'
                           }}
                         >
@@ -2157,7 +2157,7 @@ export default function AssetsPage() {
                     {units.filter(unit => unit.propertyId === selectedProperty.id).map((unit) => (
                       <div key={unit.id} style={{
                         backgroundColor: '#f9fafb',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         padding: '16px',
                         border: '1px solid #e5e7eb'
                       }}>
@@ -2169,7 +2169,7 @@ export default function AssetsPage() {
                             fontSize: '12px',
                             fontWeight: '500',
                             padding: '4px 8px',
-                            borderRadius: '4px',
+                            borderRadius: '20px',
                             backgroundColor: unit.status === 'occupied' ? '#dcfce7' : '#fef3c7',
                             color: unit.status === 'occupied' ? '#166534' : '#92400e'
                           }}>
@@ -2211,7 +2211,7 @@ export default function AssetsPage() {
                       backgroundColor: 'var(--mc-sidebar-bg)',
                       color: 'white',
                       border: 'none',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       fontWeight: '500',
                       cursor: 'pointer'
@@ -2228,7 +2228,7 @@ export default function AssetsPage() {
                     }).map((tenant) => (
                       <div key={tenant.id} style={{
                         backgroundColor: '#f9fafb',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         padding: '20px',
                         border: '1px solid #e5e7eb'
                       }}>
@@ -2245,7 +2245,7 @@ export default function AssetsPage() {
                             fontSize: '12px',
                             fontWeight: '500',
                             padding: '4px 8px',
-                            borderRadius: '4px',
+                            borderRadius: '20px',
                             backgroundColor: tenant.status === 'active' ? '#dcfce7' : '#fef3c7',
                             color: tenant.status === 'active' ? '#166534' : '#92400e'
                           }}>
@@ -2282,7 +2282,7 @@ export default function AssetsPage() {
                             padding: '8px 12px',
                             backgroundColor: 'transparent',
                             border: '1px solid #d1d5db',
-                            borderRadius: '6px',
+                            borderRadius: '20px',
                             fontSize: '14px',
                             fontWeight: '500',
                             cursor: 'pointer',
@@ -2296,7 +2296,7 @@ export default function AssetsPage() {
                             backgroundColor: 'var(--mc-sidebar-bg)',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '6px',
+                            borderRadius: '20px',
                             fontSize: '14px',
                             fontWeight: '500',
                             cursor: 'pointer'
@@ -2317,7 +2317,7 @@ export default function AssetsPage() {
                     Payment History
                   </h3>
                   
-                  <div style={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                  <div style={{ backgroundColor: 'white', borderRadius: '20px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                     <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '16px', fontSize: '14px', fontWeight: '600', color: '#374151' }}>
                         <div>Date</div>
@@ -2351,7 +2351,7 @@ export default function AssetsPage() {
                               fontSize: '12px',
                               fontWeight: '500',
                               padding: '4px 8px',
-                              borderRadius: '4px',
+                              borderRadius: '20px',
                               backgroundColor: payment.status === 'paid' ? '#dcfce7' : '#fef3c7',
                               color: payment.status === 'paid' ? '#166534' : '#92400e'
                             }}>
@@ -2414,7 +2414,7 @@ export default function AssetsPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '24px',
             width: '90%',
             maxWidth: '600px',
@@ -2434,7 +2434,7 @@ export default function AssetsPage() {
                   border: 'none',
                   cursor: 'pointer',
                   padding: '8px',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -2592,7 +2592,7 @@ export default function AssetsPage() {
                     padding: '4px 8px',
                     backgroundColor: selectedTenant.status === 'active' ? '#10b98115' : '#6b728015',
                     color: selectedTenant.status === 'active' ? '#10b981' : '#6b7280',
-                    borderRadius: '4px',
+                    borderRadius: '20px',
                     fontSize: '12px',
                     fontWeight: '500'
                   }}>
@@ -2609,7 +2609,7 @@ export default function AssetsPage() {
               </h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 {/* Contract Document */}
-                <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
+                <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '20px', backgroundColor: '#f9fafb' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                     <FileText size={16} color="#6b7280" />
                     <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
@@ -2634,7 +2634,7 @@ export default function AssetsPage() {
                         backgroundColor: 'var(--mc-sidebar-bg)',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         fontSize: '12px',
                         fontWeight: '500',
                         cursor: 'pointer'
@@ -2646,7 +2646,7 @@ export default function AssetsPage() {
                 </div>
 
                 {/* ID Document */}
-                <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
+                <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '20px', backgroundColor: '#f9fafb' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                     <FileText size={16} color="#6b7280" />
                     <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
@@ -2671,7 +2671,7 @@ export default function AssetsPage() {
                         backgroundColor: 'var(--mc-sidebar-bg)',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         fontSize: '12px',
                         fontWeight: '500',
                         cursor: 'pointer'
@@ -2699,7 +2699,7 @@ export default function AssetsPage() {
                   backgroundColor: '#10b981',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'
@@ -2721,7 +2721,7 @@ export default function AssetsPage() {
                   backgroundColor: '#dc2626',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'
@@ -2751,7 +2751,7 @@ export default function AssetsPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '24px',
             width: '90%',
             maxWidth: '600px',
@@ -2855,7 +2855,7 @@ export default function AssetsPage() {
             <div style={{ 
               flex: 1, 
               border: '1px solid #e5e7eb', 
-              borderRadius: '8px', 
+              borderRadius: '20px', 
               marginBottom: '16px',
               backgroundColor: 'white',
               minHeight: '300px',
@@ -2919,7 +2919,7 @@ export default function AssetsPage() {
                     flex: 1,
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px'
                   }}
                 />
@@ -2935,7 +2935,7 @@ export default function AssetsPage() {
                   style={{
                     padding: '12px 20px',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     background: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     fontSize: '14px',
@@ -2972,7 +2972,7 @@ export default function AssetsPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '24px',
             width: '90%',
             maxWidth: '700px',
@@ -2992,7 +2992,7 @@ export default function AssetsPage() {
                   border: 'none',
                   cursor: 'pointer',
                   padding: '8px',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -3023,7 +3023,7 @@ export default function AssetsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -3046,7 +3046,7 @@ export default function AssetsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -3069,7 +3069,7 @@ export default function AssetsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -3092,7 +3092,7 @@ export default function AssetsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -3115,7 +3115,7 @@ export default function AssetsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -3144,7 +3144,7 @@ export default function AssetsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: newTenant.propertyId ? 'white' : '#f9fafb',
                       boxSizing: 'border-box'
@@ -3187,7 +3187,7 @@ export default function AssetsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -3210,7 +3210,7 @@ export default function AssetsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -3232,7 +3232,7 @@ export default function AssetsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -3255,7 +3255,7 @@ export default function AssetsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -3278,7 +3278,7 @@ export default function AssetsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -3300,7 +3300,7 @@ export default function AssetsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -3322,7 +3322,7 @@ export default function AssetsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -3356,7 +3356,7 @@ export default function AssetsPage() {
                           width: '100%',
                           padding: '12px',
                           border: '1px solid #d1d5db',
-                          borderRadius: '8px',
+                          borderRadius: '20px',
                           fontSize: '14px',
                           backgroundColor: 'white',
                           boxSizing: 'border-box'
@@ -3392,7 +3392,7 @@ export default function AssetsPage() {
                           width: '100%',
                           padding: '12px',
                           border: '1px solid #d1d5db',
-                          borderRadius: '8px',
+                          borderRadius: '20px',
                           fontSize: '14px',
                           backgroundColor: 'white',
                           boxSizing: 'border-box'
@@ -3483,7 +3483,7 @@ export default function AssetsPage() {
                     backgroundColor: '#6b7280',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     fontWeight: '500',
                     cursor: 'pointer'
@@ -3501,7 +3501,7 @@ export default function AssetsPage() {
                     backgroundColor: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     fontWeight: '500',
                     cursor: 'pointer'

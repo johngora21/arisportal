@@ -295,7 +295,7 @@ export default function InventoryPage() {
                 backgroundColor: 'white',
                 color: '#6b7280',
                 border: '1px solid #d1d5db',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '16px',
                 fontWeight: '500',
                 cursor: 'pointer',
@@ -315,7 +315,7 @@ export default function InventoryPage() {
                 backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '16px',
                 fontWeight: '500',
                 cursor: 'pointer',
@@ -331,7 +331,7 @@ export default function InventoryPage() {
         {/* Stats Cards */}
         {stats && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '24px' }}>
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <Package size={20} color="var(--mc-sidebar-bg)" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Items</span>
@@ -341,7 +341,7 @@ export default function InventoryPage() {
               </div>
             </div>
 
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <DollarSign size={20} color="#10b981" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Value</span>
@@ -351,7 +351,7 @@ export default function InventoryPage() {
               </div>
             </div>
 
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <AlertTriangle size={20} color="#f59e0b" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Low Stock</span>
@@ -361,7 +361,7 @@ export default function InventoryPage() {
               </div>
             </div>
 
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <XCircle size={20} color="#ef4444" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Out of Stock</span>
@@ -371,7 +371,7 @@ export default function InventoryPage() {
               </div>
             </div>
 
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <Database size={20} color="#8b5cf6" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Categories</span>
@@ -451,7 +451,7 @@ export default function InventoryPage() {
       </div>
 
       {/* Inventory Table */}
-      <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+      <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
         
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -516,7 +516,7 @@ export default function InventoryPage() {
                           backgroundColor: 'transparent',
                           border: 'none',
                           cursor: 'pointer',
-                          borderRadius: '4px',
+                          borderRadius: '20px',
                           color: '#6b7280'
                         }}
                         onMouseEnter={(e) => {
@@ -537,7 +537,7 @@ export default function InventoryPage() {
                           backgroundColor: 'transparent',
                           border: 'none',
                           cursor: 'pointer',
-                          borderRadius: '4px',
+                          borderRadius: '20px',
                           color: '#6b7280'
                         }}
                         onMouseEnter={(e) => {
@@ -578,7 +578,7 @@ export default function InventoryPage() {
             backgroundColor: 'white',
             width: 'min(600px, 90vw)',
             maxHeight: '90vh',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '32px',
             overflowY: 'auto'
           }}>
@@ -593,7 +593,7 @@ export default function InventoryPage() {
                   backgroundColor: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  borderRadius: '4px',
+                  borderRadius: '20px',
                   color: '#6b7280'
                 }}
               >
@@ -615,7 +615,7 @@ export default function InventoryPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -632,7 +632,7 @@ export default function InventoryPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -651,7 +651,7 @@ export default function InventoryPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white'
                     }}
@@ -675,7 +675,7 @@ export default function InventoryPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -694,7 +694,7 @@ export default function InventoryPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     resize: 'vertical'
                   }}
@@ -714,7 +714,7 @@ export default function InventoryPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -731,7 +731,7 @@ export default function InventoryPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -751,7 +751,7 @@ export default function InventoryPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -768,7 +768,7 @@ export default function InventoryPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -785,7 +785,7 @@ export default function InventoryPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -805,7 +805,7 @@ export default function InventoryPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px'
                   }}
                 />
@@ -820,7 +820,7 @@ export default function InventoryPage() {
                   backgroundColor: 'transparent',
                   color: '#6b7280',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'
@@ -836,7 +836,7 @@ export default function InventoryPage() {
                   backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: formLoading ? 'not-allowed' : 'pointer',
@@ -868,7 +868,7 @@ export default function InventoryPage() {
             backgroundColor: 'white',
             width: 'min(600px, 90vw)',
             maxHeight: '90vh',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '32px',
             overflowY: 'auto'
           }}>
@@ -883,7 +883,7 @@ export default function InventoryPage() {
                   backgroundColor: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  borderRadius: '4px',
+                  borderRadius: '20px',
                   color: '#6b7280'
                 }}
               >
@@ -910,7 +910,7 @@ export default function InventoryPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -928,7 +928,7 @@ export default function InventoryPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       resize: 'vertical'
                     }}
@@ -954,7 +954,7 @@ export default function InventoryPage() {
                       backgroundColor: 'var(--mc-sidebar-bg)',
                       color: 'white',
                       border: 'none',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       fontWeight: '500',
                       cursor: categoryLoading ? 'not-allowed' : 'pointer',
@@ -977,7 +977,7 @@ export default function InventoryPage() {
                   textAlign: 'center',
                   padding: '40px',
                   backgroundColor: '#f9fafb',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   border: '2px dashed #d1d5db'
                 }}>
                   <Database size={48} color="#9ca3af" />
@@ -997,7 +997,7 @@ export default function InventoryPage() {
                         padding: '16px',
                         backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                       }}
                     >
@@ -1026,7 +1026,7 @@ export default function InventoryPage() {
                             backgroundColor: 'transparent',
                             border: 'none',
                             cursor: 'pointer',
-                            borderRadius: '4px',
+                            borderRadius: '20px',
                             color: '#ef4444'
                           }}
                           onMouseEnter={(e) => {
@@ -1066,7 +1066,7 @@ export default function InventoryPage() {
             backgroundColor: 'white',
             width: 'min(560px, 90vw)',
             maxHeight: '90vh',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '28px',
             overflowY: 'auto'
           }}>
@@ -1081,7 +1081,7 @@ export default function InventoryPage() {
                   backgroundColor: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  borderRadius: '4px',
+                  borderRadius: '20px',
                   color: '#6b7280'
                 }}
               >
@@ -1101,7 +1101,7 @@ export default function InventoryPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     backgroundColor: 'white'
                   }}
@@ -1126,7 +1126,7 @@ export default function InventoryPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -1143,7 +1143,7 @@ export default function InventoryPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -1162,7 +1162,7 @@ export default function InventoryPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px'
                   }}
                 />
@@ -1180,7 +1180,7 @@ export default function InventoryPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     resize: 'vertical'
                   }}
@@ -1195,7 +1195,7 @@ export default function InventoryPage() {
                     backgroundColor: 'transparent',
                     color: '#6b7280',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     fontWeight: '500',
                     cursor: 'pointer'
@@ -1211,7 +1211,7 @@ export default function InventoryPage() {
                     backgroundColor: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     fontWeight: '500',
                     cursor: outgoingsLoading ? 'not-allowed' : 'pointer',

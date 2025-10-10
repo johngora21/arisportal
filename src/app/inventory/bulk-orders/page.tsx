@@ -364,7 +364,7 @@ export function BulkOrdersModule() {
           backgroundColor: 'var(--mc-sidebar-bg)',
           color: 'white',
           border: 'none',
-          borderRadius: '8px',
+          borderRadius: '20px',
           fontSize: '14px',
           fontWeight: '600',
           cursor: 'pointer',
@@ -504,7 +504,7 @@ export function BulkOrdersModule() {
               style={{
                 backgroundColor: 'white',
                 border: '1px solid #e5e7eb',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 padding: '20px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                 transition: 'all 0.2s ease',
@@ -610,7 +610,7 @@ export function BulkOrdersModule() {
                         padding: '4px 8px',
                         backgroundColor: '#f9fafb',
                         color: '#6b7280',
-                        borderRadius: '12px',
+                        borderRadius: '20px',
                         fontSize: '10px',
                         fontWeight: 500,
                         border: '1px solid #e5e7eb'
@@ -624,7 +624,7 @@ export function BulkOrdersModule() {
                       padding: '4px 8px',
                       backgroundColor: '#f9fafb',
                       color: '#6b7280',
-                      borderRadius: '12px',
+                      borderRadius: '20px',
                       fontSize: '10px',
                       fontWeight: 500,
                       border: '1px solid #e5e7eb'
@@ -653,7 +653,7 @@ export function BulkOrdersModule() {
                   backgroundColor: isClosed ? '#9ca3af' : 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   padding: '8px 14px',
                   fontSize: '13px',
                   fontWeight: '500',
@@ -710,7 +710,7 @@ export function BulkOrdersModule() {
             backgroundColor: 'white',
             width: 'min(920px, 96vw)',
             maxHeight: '95vh',
-            borderRadius: '12px',
+            borderRadius: '20px',
             overflowY: 'auto',
             boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
           }}>

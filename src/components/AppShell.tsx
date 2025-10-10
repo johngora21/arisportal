@@ -32,7 +32,12 @@ import {
   TrendingUp,
   Briefcase,
   Warehouse,
-  SearchCheck
+  SearchCheck,
+  Receipt,
+  Building2,
+  Trees,
+  Truck,
+  Zap
 } from 'lucide-react';
 import { Database } from 'lucide-react';
 import { FaUserTie, FaSignOutAlt } from 'react-icons/fa';
@@ -88,6 +93,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         subItems: [
           { id: 'finance-transactions', label: 'Transactions', href: '/finance/transactions', icon: <CreditCard size={16} /> },
           { id: 'finance-wallet', label: 'My Wallet', href: '/finance/wallets', icon: <Wallet size={16} /> },
+          { id: 'finance-payroll', label: 'Payroll', href: '/finance/payroll', icon: <Receipt size={16} /> },
           { id: 'finance-invoicing', label: 'Invoicing', href: '/finance/invoicing', icon: <FileText size={16} /> },
           { id: 'finance-escrow', label: 'Escrow', href: '/finance/escrow', icon: <Shield size={16} /> },
           { id: 'finance-insurance', label: 'Insurance', href: '/finance/insurance', icon: <ShieldCheck size={16} /> },
@@ -95,6 +101,18 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         ]
       },
       { id: 'crm', label: 'CRM', href: '/crm', icon: <UserCheck size={20} /> },
+      { 
+        id: 'investments', 
+        label: 'Investments', 
+        href: '/investments', 
+        icon: <TrendingUp size={20} />,
+        subItems: [
+          { id: 'investments-real-estates', label: 'Real Estates', href: '/investments/real-estates', icon: <Landmark size={16} /> },
+          { id: 'investments-agriculture', label: 'Agriculture', href: '/investments/agriculture', icon: <Trees size={16} /> },
+          { id: 'investments-logistics', label: 'Logistics', href: '/investments/logistics', icon: <Truck size={16} /> },
+          { id: 'investments-energy', label: 'Energy', href: '/investments/energy', icon: <Zap size={16} /> }
+        ]
+      },
       // { 
       //   id: 'hr', 
       //   label: 'HR', 
@@ -139,8 +157,6 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         ]
       },
       { id: 'real-estates', label: 'Real Estates', href: '/real-estates', icon: <Landmark size={20} /> },
-      { id: 'portfolios', label: 'Portifolio', href: '/portfolios', icon: <Globe size={20} /> },
-      { id: 'compliance', label: 'Compliance & Security', href: '/compliance', icon: <ShieldCheck size={20} /> },
       { id: 'settings', label: 'Settings', href: '/settings', icon: <Settings size={20} /> },
     ];
     return [{ id: 'main', items: base }];
@@ -167,7 +183,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
   return (
     <Sidebar
-      productName="meritportal"
+      productName="arisportal"
       logo={<div className="mc-logo">MG</div>}
       items={items}
       initialCollapsed={false}

@@ -333,7 +333,7 @@ export default function DepartmentsPage() {
               backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '20px',
               fontSize: '16px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -348,7 +348,7 @@ export default function DepartmentsPage() {
         {/* Stats Cards */}
         {stats && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <Building size={20} color="var(--mc-sidebar-bg)" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Departments</span>
@@ -358,7 +358,7 @@ export default function DepartmentsPage() {
               </div>
             </div>
 
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <CheckCircle size={20} color="#10b981" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Active Departments</span>
@@ -368,7 +368,7 @@ export default function DepartmentsPage() {
               </div>
             </div>
 
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <Users size={20} color="#8b5cf6" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Employees</span>
@@ -378,7 +378,7 @@ export default function DepartmentsPage() {
               </div>
             </div>
 
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <DollarSign size={20} color="#f59e0b" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Avg Budget</span>
@@ -469,7 +469,7 @@ export default function DepartmentsPage() {
             key={department.id}
             style={{
               backgroundColor: 'white',
-              borderRadius: '12px',
+              borderRadius: '20px',
               padding: '24px',
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               border: '1px solid #f0f0f0',
@@ -504,7 +504,7 @@ export default function DepartmentsPage() {
                 fontWeight: '500',
                 padding: '4px 8px',
                 backgroundColor: `${getStatusColor(department.status)}15`,
-                borderRadius: '6px'
+                borderRadius: '20px'
               }}>
                 {getStatusIcon(department.status)}
                 {department.status.charAt(0).toUpperCase() + department.status.slice(1)}
@@ -561,7 +561,7 @@ export default function DepartmentsPage() {
                     backgroundColor: 'transparent',
                     border: 'none',
                     cursor: 'pointer',
-                    borderRadius: '4px',
+                    borderRadius: '20px',
                     color: '#6b7280'
                   }}
                   onMouseEnter={(e) => {
@@ -581,7 +581,7 @@ export default function DepartmentsPage() {
                     backgroundColor: 'transparent',
                     border: 'none',
                     cursor: 'pointer',
-                    borderRadius: '4px',
+                    borderRadius: '20px',
                     color: '#6b7280'
                   }}
                   onMouseEnter={(e) => {
@@ -602,7 +602,7 @@ export default function DepartmentsPage() {
                     backgroundColor: 'transparent',
                     border: 'none',
                     cursor: 'pointer',
-                    borderRadius: '4px',
+                    borderRadius: '20px',
                     color: '#6b7280'
                   }}
                   onMouseEnter={(e) => {
@@ -640,7 +640,7 @@ export default function DepartmentsPage() {
             backgroundColor: 'white',
             width: 'min(600px, 90vw)',
             maxHeight: '90vh',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '32px',
             overflowY: 'auto'
           }}>
@@ -655,7 +655,7 @@ export default function DepartmentsPage() {
                   backgroundColor: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  borderRadius: '4px',
+                  borderRadius: '20px',
                   color: '#6b7280'
                 }}
               >
@@ -677,7 +677,7 @@ export default function DepartmentsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -694,7 +694,7 @@ export default function DepartmentsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -713,7 +713,7 @@ export default function DepartmentsPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     resize: 'vertical'
                   }}
@@ -732,7 +732,7 @@ export default function DepartmentsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white'
                     }}
@@ -754,7 +754,7 @@ export default function DepartmentsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -774,7 +774,7 @@ export default function DepartmentsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -791,7 +791,7 @@ export default function DepartmentsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px'
                     }}
                   />
@@ -807,7 +807,7 @@ export default function DepartmentsPage() {
                   backgroundColor: 'transparent',
                   color: '#6b7280',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'
@@ -823,7 +823,7 @@ export default function DepartmentsPage() {
                   backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: formLoading ? 'not-allowed' : 'pointer',

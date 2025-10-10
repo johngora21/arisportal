@@ -100,7 +100,7 @@ export default function MyPropertiesTab({ properties = [], onPropertyClick }: My
       <div style={{ 
         backgroundColor: '#f0f9ff', 
         border: '1px solid #0ea5e9', 
-        borderRadius: '8px', 
+        borderRadius: '20px', 
         padding: '16px', 
         marginBottom: '24px' 
       }}>
@@ -118,7 +118,7 @@ export default function MyPropertiesTab({ properties = [], onPropertyClick }: My
       {properties.length === 0 ? (
         <div style={{
           backgroundColor: '#f9fafb',
-          borderRadius: '8px',
+          borderRadius: '20px',
           padding: '24px',
           textAlign: 'center',
           border: '2px dashed #d1d5db'
@@ -142,7 +142,7 @@ export default function MyPropertiesTab({ properties = [], onPropertyClick }: My
               key={property.id}
               style={{
                 backgroundColor: 'white',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 border: '1px solid #e5e7eb',
                 overflow: 'hidden',
                 boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',

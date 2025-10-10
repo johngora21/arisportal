@@ -55,7 +55,7 @@ export default function TransactionsPage() {
             onClick={() => setShowAddModal(true)}
             style={{
               padding: '12px 16px', backgroundColor: 'var(--mc-sidebar-bg)', color: 'white',
-              border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '500', cursor: 'pointer',
+              border: 'none', borderRadius: '20px', fontSize: '14px', fontWeight: '500', cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: '8px', minHeight: '44px'
             }}
           >
@@ -129,7 +129,7 @@ export default function TransactionsPage() {
                 <div style={{ 
                   backgroundColor: k.bg, 
                   color: k.color, 
-                  borderRadius: '12px', 
+                  borderRadius: '20px', 
                   padding: '12px',
                   display: 'flex',
                   alignItems: 'center',
@@ -143,7 +143,7 @@ export default function TransactionsPage() {
                   color: k.changeType === 'positive' ? '#10b981' : '#ef4444',
                   backgroundColor: k.changeType === 'positive' ? '#ecfdf5' : '#fee2e2',
                   padding: '4px 8px',
-                  borderRadius: '6px'
+                  borderRadius: '20px'
                 }}>
                   {k.change}
                 </div>
@@ -179,7 +179,7 @@ export default function TransactionsPage() {
       </div>
 
       {/* Tabs (Dashboard, Transactions, Accounting, Cash Flow, Revenue, Reports) */}
-      <div style={{ backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', overflow: 'hidden', marginBottom: '60px' }}>
+      <div style={{ backgroundColor: 'white', borderRadius: '20px', border: '1px solid #e5e7eb', overflow: 'hidden', marginBottom: '60px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)' }}>
           {[
             { id: 'dashboard', label: 'Dashboard' },
@@ -228,7 +228,7 @@ export default function TransactionsPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '24px',
             width: '90%',
             maxWidth: '500px',
@@ -270,7 +270,7 @@ export default function TransactionsPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     boxSizing: 'border-box'
                   }}
@@ -289,7 +289,7 @@ export default function TransactionsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -319,7 +319,7 @@ export default function TransactionsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       boxSizing: 'border-box'
                     }}
@@ -341,7 +341,7 @@ export default function TransactionsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       boxSizing: 'border-box'
                     }}
@@ -361,7 +361,7 @@ export default function TransactionsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       boxSizing: 'border-box'
                     }}
@@ -380,7 +380,7 @@ export default function TransactionsPage() {
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     backgroundColor: 'white',
                     boxSizing: 'border-box'
@@ -400,7 +400,7 @@ export default function TransactionsPage() {
                   style={{
                     padding: '10px 20px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     background: 'white',
                     color: '#374151',
                     fontSize: '14px',
@@ -421,7 +421,7 @@ export default function TransactionsPage() {
                   style={{
                     padding: '10px 20px',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     background: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     fontSize: '14px',

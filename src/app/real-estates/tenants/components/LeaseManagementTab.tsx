@@ -28,7 +28,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
           {/* Residential Lease Template */}
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '20px',
             border: '1px solid #e5e7eb',
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -47,7 +47,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
               <div style={{
                 width: '48px',
                 height: '48px',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 backgroundColor: '#3b82f6',
                 display: 'flex',
                 alignItems: 'center',
@@ -84,7 +84,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
                 backgroundColor: '#3b82f6',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer'
@@ -95,7 +95,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
                 padding: '10px 16px',
                 backgroundColor: '#f8fafc',
                 border: '1px solid #e2e8f0',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',
@@ -109,7 +109,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
           {/* Commercial Lease Template */}
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '20px',
             border: '1px solid #e5e7eb',
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -128,7 +128,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
               <div style={{
                 width: '48px',
                 height: '48px',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 backgroundColor: '#10b981',
                 display: 'flex',
                 alignItems: 'center',
@@ -165,7 +165,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
                 backgroundColor: '#10b981',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer'
@@ -176,7 +176,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
                 padding: '10px 16px',
                 backgroundColor: '#f8fafc',
                 border: '1px solid #e2e8f0',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',
@@ -190,7 +190,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
           {/* Short-term Lease Template */}
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '20px',
             border: '1px solid #e5e7eb',
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -209,7 +209,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
               <div style={{
                 width: '48px',
                 height: '48px',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 backgroundColor: '#f59e0b',
                 display: 'flex',
                 alignItems: 'center',
@@ -246,7 +246,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
                 backgroundColor: '#f59e0b',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer'
@@ -257,7 +257,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
                 padding: '10px 16px',
                 backgroundColor: '#f8fafc',
                 border: '1px solid #e2e8f0',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',
@@ -275,7 +275,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
         <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
           Active Smart Contracts
         </h4>
-        <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', border: '1px solid #e5e7eb' }}>
+        <div style={{ backgroundColor: 'white', borderRadius: '20px', padding: '20px', border: '1px solid #e5e7eb' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div>
               <h5 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
@@ -290,7 +290,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
               backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '20px',
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer'
@@ -304,7 +304,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
             <div style={{
               padding: '16px',
               backgroundColor: '#f8fafc',
-              borderRadius: '8px',
+              borderRadius: '20px',
               border: '1px solid #e2e8f0'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
@@ -329,7 +329,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
             <div style={{
               padding: '16px',
               backgroundColor: '#f8fafc',
-              borderRadius: '8px',
+              borderRadius: '20px',
               border: '1px solid #e2e8f0'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
@@ -354,7 +354,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
             <div style={{
               padding: '16px',
               backgroundColor: '#f8fafc',
-              borderRadius: '8px',
+              borderRadius: '20px',
               border: '1px solid #e2e8f0'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>

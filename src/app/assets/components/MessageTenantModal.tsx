@@ -51,7 +51,7 @@ export default function MessageTenantModal({
     }}>
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         width: '90%',
         maxWidth: '600px',
@@ -152,7 +152,7 @@ export default function MessageTenantModal({
         <div style={{ 
           flex: 1, 
           border: '1px solid #e5e7eb', 
-          borderRadius: '8px', 
+          borderRadius: '20px', 
           marginBottom: '16px',
           backgroundColor: 'white',
           minHeight: '300px',
@@ -221,7 +221,7 @@ export default function MessageTenantModal({
                 flex: 1,
                 padding: '12px',
                 border: '1px solid #d1d5db',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px'
               }}
             />
@@ -231,7 +231,7 @@ export default function MessageTenantModal({
               style={{
                 padding: '12px 20px',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 background: messageContent.trim() ? 'var(--mc-sidebar-bg)' : '#d1d5db',
                 color: 'white',
                 fontSize: '14px',

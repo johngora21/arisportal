@@ -43,7 +43,7 @@ export default function ViewTenantModal({
     }}>
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         width: '90%',
         maxWidth: '600px',
@@ -61,7 +61,7 @@ export default function ViewTenantModal({
               border: 'none',
               cursor: 'pointer',
               padding: '8px',
-              borderRadius: '6px',
+              borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -226,7 +226,7 @@ export default function ViewTenantModal({
                     backgroundColor: '#3b82f6',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '4px',
+                    borderRadius: '20px',
                     fontSize: '12px',
                     cursor: 'pointer'
                   }}
@@ -251,7 +251,7 @@ export default function ViewTenantModal({
                     backgroundColor: '#3b82f6',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '4px',
+                    borderRadius: '20px',
                     fontSize: '12px',
                     cursor: 'pointer'
                   }}
@@ -294,7 +294,7 @@ export default function ViewTenantModal({
                 backgroundColor: '#10b981',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer'
@@ -314,7 +314,7 @@ export default function ViewTenantModal({
                 backgroundColor: '#ef4444',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer'

@@ -75,7 +75,7 @@ export default function PropertyDetailsModal({
     }}>
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         width: '90%',
         maxWidth: '1200px',
         maxHeight: '90vh',
@@ -106,7 +106,7 @@ export default function PropertyDetailsModal({
               height: '40px',
               backgroundColor: 'transparent',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '20px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -144,7 +144,7 @@ export default function PropertyDetailsModal({
                   backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
                   color: activeTab === tab.id ? 'white' : '#6b7280',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer',
@@ -193,7 +193,7 @@ export default function PropertyDetailsModal({
                     fontWeight: '500',
                     padding: '4px 8px',
                     backgroundColor: `${getStatusColor(property.status)}15`,
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     width: 'fit-content'
                   }}>
                     {getStatusIcon(property.status)}
@@ -263,7 +263,7 @@ export default function PropertyDetailsModal({
                         padding: '6px 12px',
                         backgroundColor: '#f3f4f6',
                         color: '#374151',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         fontWeight: '500'
                       }}
                     >
@@ -293,7 +293,7 @@ export default function PropertyDetailsModal({
                 {units.filter(unit => unit.propertyId === property.id).map((unit) => (
                   <div key={unit.id} style={{
                     backgroundColor: '#f9fafb',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     padding: '16px',
                     border: '1px solid #e5e7eb'
                   }}>
@@ -305,7 +305,7 @@ export default function PropertyDetailsModal({
                         fontSize: '12px',
                         fontWeight: '500',
                         padding: '4px 8px',
-                        borderRadius: '4px',
+                        borderRadius: '20px',
                         backgroundColor: unit.status === 'occupied' ? '#dcfce7' : '#fef3c7',
                         color: unit.status === 'occupied' ? '#166534' : '#92400e'
                       }}>
@@ -350,7 +350,7 @@ export default function PropertyDetailsModal({
                       backgroundColor: 'var(--mc-sidebar-bg)',
                       color: 'white',
                       border: 'none',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       fontWeight: '500',
                       cursor: 'pointer'
@@ -369,7 +369,7 @@ export default function PropertyDetailsModal({
                 }).map((tenant) => (
                   <div key={tenant.id} style={{
                     backgroundColor: '#f9fafb',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     padding: '20px',
                     border: '1px solid #e5e7eb'
                   }}>
@@ -386,7 +386,7 @@ export default function PropertyDetailsModal({
                         fontSize: '12px',
                         fontWeight: '500',
                         padding: '4px 8px',
-                        borderRadius: '4px',
+                        borderRadius: '20px',
                         backgroundColor: tenant.status === 'active' ? '#dcfce7' : '#fef3c7',
                         color: tenant.status === 'active' ? '#166534' : '#92400e'
                       }}>
@@ -425,7 +425,7 @@ export default function PropertyDetailsModal({
                           padding: '8px 12px',
                           backgroundColor: 'transparent',
                           border: '1px solid #d1d5db',
-                          borderRadius: '6px',
+                          borderRadius: '20px',
                           fontSize: '14px',
                           fontWeight: '500',
                           cursor: 'pointer',
@@ -442,7 +442,7 @@ export default function PropertyDetailsModal({
                           backgroundColor: 'var(--mc-sidebar-bg)',
                           color: 'white',
                           border: 'none',
-                          borderRadius: '6px',
+                          borderRadius: '20px',
                           fontSize: '14px',
                           fontWeight: '500',
                           cursor: 'pointer'
@@ -464,7 +464,7 @@ export default function PropertyDetailsModal({
                 Payment History
               </h3>
               
-              <div style={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+              <div style={{ backgroundColor: 'white', borderRadius: '20px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                 <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '16px', fontSize: '14px', fontWeight: '600', color: '#374151' }}>
                     <div>Date</div>
@@ -498,7 +498,7 @@ export default function PropertyDetailsModal({
                           fontSize: '12px',
                           fontWeight: '500',
                           padding: '4px 8px',
-                          borderRadius: '4px',
+                          borderRadius: '20px',
                           backgroundColor: payment.status === 'paid' ? '#dcfce7' : '#fef3c7',
                           color: payment.status === 'paid' ? '#166534' : '#92400e'
                         }}>

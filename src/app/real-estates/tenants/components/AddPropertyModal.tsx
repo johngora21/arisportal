@@ -123,7 +123,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
     }}>
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         width: '100%',
         maxWidth: '900px',
         maxHeight: '95vh',
@@ -160,7 +160,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
               border: 'none',
               cursor: 'pointer',
               color: '#6b7280',
-              borderRadius: '6px'
+              borderRadius: '20px'
             }}
           >
             <X size={20} />
@@ -189,7 +189,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                     width: '100%',
                     padding: '10px 12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     backgroundColor: 'white',
                     boxSizing: 'border-box'
@@ -213,7 +213,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                     width: '100%',
                     padding: '10px 12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     backgroundColor: 'white',
                     boxSizing: 'border-box'
@@ -239,7 +239,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                     width: '100%',
                     padding: '10px 12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     backgroundColor: 'white',
                     boxSizing: 'border-box'
@@ -260,7 +260,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                     width: '100%',
                     padding: '10px 12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     backgroundColor: 'white',
                     boxSizing: 'border-box'
@@ -294,7 +294,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                         width: '100%',
                         padding: '12px 16px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         fontSize: '14px',
                         backgroundColor: 'white',
                         boxSizing: 'border-box'
@@ -317,7 +317,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                             width: '100%',
                             padding: '12px 16px',
                             border: '1px solid #d1d5db',
-                            borderRadius: '8px',
+                            borderRadius: '20px',
                             fontSize: '14px',
                             backgroundColor: 'white',
                             boxSizing: 'border-box'
@@ -337,7 +337,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                             width: '100%',
                             padding: '12px 16px',
                             border: '1px solid #d1d5db',
-                            borderRadius: '8px',
+                            borderRadius: '20px',
                             fontSize: '14px',
                             backgroundColor: 'white',
                             boxSizing: 'border-box'
@@ -357,7 +357,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                             width: '100%',
                             padding: '12px 16px',
                             border: '1px solid #d1d5db',
-                            borderRadius: '8px',
+                            borderRadius: '20px',
                             fontSize: '14px',
                             backgroundColor: 'white',
                             boxSizing: 'border-box'
@@ -377,7 +377,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                             width: '100%',
                             padding: '12px 16px',
                             border: '1px solid #d1d5db',
-                            borderRadius: '8px',
+                            borderRadius: '20px',
                             fontSize: '14px',
                             backgroundColor: 'white',
                             boxSizing: 'border-box'
@@ -401,7 +401,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                           width: '100%',
                           padding: '12px 16px',
                           border: '1px solid #d1d5db',
-                          borderRadius: '8px',
+                          borderRadius: '20px',
                           fontSize: '14px',
                           backgroundColor: 'white',
                           boxSizing: 'border-box'
@@ -418,7 +418,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                       backgroundColor: '#3b82f6',
                       color: 'white',
                       border: 'none',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       fontWeight: '500',
                       cursor: 'pointer',
@@ -444,7 +444,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                           padding: '12px',
                           backgroundColor: 'white',
                           border: '1px solid #e2e8f0',
-                          borderRadius: '6px',
+                          borderRadius: '20px',
                           maxWidth: '400px'
                         }}>
                           <span style={{ fontSize: '14px', color: '#374151' }}>
@@ -462,7 +462,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                                 padding: '4px 8px',
                                 backgroundColor: '#f3f4f6',
                                 border: '1px solid #d1d5db',
-                                borderRadius: '4px',
+                                borderRadius: '20px',
                                 fontSize: '12px',
                                 cursor: 'pointer'
                               }}
@@ -476,7 +476,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                                 padding: '4px 8px',
                                 backgroundColor: '#fef2f2',
                                 border: '1px solid #fecaca',
-                                borderRadius: '4px',
+                                borderRadius: '20px',
                                 fontSize: '12px',
                                 cursor: 'pointer',
                                 color: '#dc2626'
@@ -504,7 +504,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                     width: '100%',
                     padding: '10px 12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     backgroundColor: 'white',
                     boxSizing: 'border-box',
@@ -523,7 +523,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                   padding: '10px 20px',
                   backgroundColor: 'transparent',
                   border: '1px solid #d1d5db',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer',
@@ -539,7 +539,7 @@ export default function AddPropertyModal({ isOpen, onClose, onSave }: AddPropert
                   backgroundColor: '#3b82f6',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'

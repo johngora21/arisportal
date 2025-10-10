@@ -294,7 +294,7 @@ export default function RealEstatesPage() {
             backgroundColor: 'var(--mc-sidebar-bg)',
             color: 'white',
             border: 'none',
-              borderRadius: '8px',
+              borderRadius: '20px',
             padding: '12px 20px',
             fontSize: '14px',
             fontWeight: '500',
@@ -319,7 +319,7 @@ export default function RealEstatesPage() {
       {/* Tab Navigation */}
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         border: '1px solid #e5e7eb',
         overflow: 'hidden',
         marginBottom: '32px'

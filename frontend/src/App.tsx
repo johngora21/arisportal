@@ -35,7 +35,7 @@ function Login() {
         <section className="auth-side">
           <div className="auth-side__header">
             <div className="auth-logo">MC</div>
-            <div className="auth-name">Merit Capital</div>
+            <div className="auth-name">Aris Portal</div>
           </div>
           <h2>Fueling innovation with smart capital</h2>
           <p>Connect with investors, mentors, and resources to grow your startup.</p>

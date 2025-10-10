@@ -70,7 +70,7 @@ export default function AddTenantModal({
     }}>
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         width: '90%',
         maxWidth: '700px',
@@ -90,7 +90,7 @@ export default function AddTenantModal({
               border: 'none',
               cursor: 'pointer',
               padding: '8px',
-              borderRadius: '6px',
+              borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -118,7 +118,7 @@ export default function AddTenantModal({
                   width: '100%',
                   padding: '12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   boxSizing: 'border-box'
@@ -141,7 +141,7 @@ export default function AddTenantModal({
                   width: '100%',
                   padding: '12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   boxSizing: 'border-box'
@@ -164,7 +164,7 @@ export default function AddTenantModal({
                   width: '100%',
                   padding: '12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   boxSizing: 'border-box'
@@ -187,7 +187,7 @@ export default function AddTenantModal({
                   width: '100%',
                   padding: '12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   boxSizing: 'border-box'
@@ -210,7 +210,7 @@ export default function AddTenantModal({
                   width: '100%',
                   padding: '12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   boxSizing: 'border-box'
@@ -239,7 +239,7 @@ export default function AddTenantModal({
                   width: '100%',
                   padding: '12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: newTenant.propertyId ? 'white' : '#f9fafb',
                   boxSizing: 'border-box'
@@ -282,7 +282,7 @@ export default function AddTenantModal({
                   width: '100%',
                   padding: '12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   boxSizing: 'border-box'
@@ -305,7 +305,7 @@ export default function AddTenantModal({
                   width: '100%',
                   padding: '12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   boxSizing: 'border-box'
@@ -327,7 +327,7 @@ export default function AddTenantModal({
                   width: '100%',
                   padding: '12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   boxSizing: 'border-box'
@@ -350,7 +350,7 @@ export default function AddTenantModal({
                   width: '100%',
                   padding: '12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   boxSizing: 'border-box'
@@ -373,7 +373,7 @@ export default function AddTenantModal({
                   width: '100%',
                   padding: '12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   boxSizing: 'border-box'
@@ -395,7 +395,7 @@ export default function AddTenantModal({
                   width: '100%',
                   padding: '12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   boxSizing: 'border-box'
@@ -417,7 +417,7 @@ export default function AddTenantModal({
                   width: '100%',
                   padding: '12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   boxSizing: 'border-box'
@@ -451,7 +451,7 @@ export default function AddTenantModal({
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -487,7 +487,7 @@ export default function AddTenantModal({
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       backgroundColor: 'white',
                       boxSizing: 'border-box'
@@ -578,7 +578,7 @@ export default function AddTenantModal({
                 backgroundColor: '#6b7280',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer'
@@ -596,7 +596,7 @@ export default function AddTenantModal({
                 backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer'

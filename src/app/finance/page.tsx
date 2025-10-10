@@ -43,7 +43,7 @@ export default function FinanceDashboardPage() {
       }}>
         <div style={{ 
           backgroundColor: 'white', 
-          borderRadius: '12px', 
+          borderRadius: '20px', 
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
@@ -53,7 +53,7 @@ export default function FinanceDashboardPage() {
               width: '48px', 
               height: '48px', 
               backgroundColor: '#f9fafb', 
-              borderRadius: '12px',
+              borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -72,7 +72,7 @@ export default function FinanceDashboardPage() {
 
         <div style={{ 
           backgroundColor: 'white', 
-          borderRadius: '12px', 
+          borderRadius: '20px', 
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
@@ -82,7 +82,7 @@ export default function FinanceDashboardPage() {
               width: '48px', 
               height: '48px', 
               backgroundColor: '#f9fafb', 
-              borderRadius: '12px',
+              borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -101,7 +101,7 @@ export default function FinanceDashboardPage() {
 
         <div style={{ 
           backgroundColor: 'white', 
-          borderRadius: '12px', 
+          borderRadius: '20px', 
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
@@ -111,7 +111,7 @@ export default function FinanceDashboardPage() {
               width: '48px', 
               height: '48px', 
               backgroundColor: '#f9fafb', 
-              borderRadius: '12px',
+              borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -130,7 +130,7 @@ export default function FinanceDashboardPage() {
 
         <div style={{ 
           backgroundColor: 'white', 
-          borderRadius: '12px', 
+          borderRadius: '20px', 
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
@@ -140,7 +140,7 @@ export default function FinanceDashboardPage() {
               width: '48px', 
               height: '48px', 
               backgroundColor: '#f3e8ff', 
-              borderRadius: '12px',
+              borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'

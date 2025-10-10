@@ -66,7 +66,7 @@ export default function SalaryProcessingPage() {
               padding: '8px 12px',
               backgroundColor: 'transparent',
               border: '1px solid #d1d5db',
-              borderRadius: '6px',
+              borderRadius: '20px',
               cursor: 'pointer',
               fontSize: '14px',
               color: '#6b7280',
@@ -163,7 +163,7 @@ export default function SalaryProcessingPage() {
                 backgroundColor: '#10b981',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer'
@@ -182,7 +182,7 @@ export default function SalaryProcessingPage() {
                 backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer'
@@ -198,7 +198,7 @@ export default function SalaryProcessingPage() {
       {/* Salary Processing Table */}
       <div style={{
         backgroundColor: '#ffffff',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
       }}>
@@ -279,7 +279,7 @@ export default function SalaryProcessingPage() {
                   <td style={{ padding: '12px', textAlign: 'center' }}>
                     <span style={{
                       padding: '4px 8px',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '12px',
                       fontWeight: '500',
                       backgroundColor: employee.status === 'Processed' ? '#dcfce7' : '#fef3c7',
@@ -295,7 +295,7 @@ export default function SalaryProcessingPage() {
                         height: '32px',
                         backgroundColor: 'transparent',
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: '20px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -308,7 +308,7 @@ export default function SalaryProcessingPage() {
                         height: '32px',
                         backgroundColor: 'transparent',
                         border: 'none',
-                        borderRadius: '4px',
+                        borderRadius: '20px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -342,7 +342,7 @@ export default function SalaryProcessingPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '24px',
             width: '90%',
             maxWidth: '500px'
@@ -362,7 +362,7 @@ export default function SalaryProcessingPage() {
                   backgroundColor: '#f3f4f6',
                   color: '#6b7280',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'
@@ -380,7 +380,7 @@ export default function SalaryProcessingPage() {
                     backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'

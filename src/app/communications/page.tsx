@@ -382,7 +382,7 @@ export default function CommunicationsPage() {
   };
 
   const templates = [
-    { name: 'Welcome', content: 'Welcome to Merit Global! How can we help you today?' },
+    { name: 'Welcome', content: 'Welcome to Aris Portal! How can we help you today?' },
     { name: 'Follow-up', content: 'Hi! Just following up on our conversation. Do you have any questions?' },
     { name: 'Meeting', content: 'I\'d like to schedule a meeting to discuss your requirements. When works best for you?' },
     { name: 'Thank you', content: 'Thank you for your interest! We\'ll get back to you soon.' }
@@ -473,7 +473,7 @@ export default function CommunicationsPage() {
             display: 'flex', 
             gap: '4px', 
             background: '#f3f4f6', 
-            borderRadius: '8px', 
+            borderRadius: '20px', 
             padding: '4px' 
           }}>
             {(['email', 'sms', 'whatsapp'] as const).map((channel) => {
@@ -489,7 +489,7 @@ export default function CommunicationsPage() {
                     justifyContent: 'center',
                     gap: '8px',
                     padding: '8px 12px',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     fontWeight: '500',
                     cursor: 'pointer',
@@ -611,7 +611,7 @@ export default function CommunicationsPage() {
                           background: 'var(--mc-sidebar-bg)',
                           color: 'white',
                           fontSize: '12px',
-                          borderRadius: '12px',
+                          borderRadius: '20px',
                           padding: '2px 8px',
                           minWidth: '20px',
                           textAlign: 'center'
@@ -689,7 +689,7 @@ export default function CommunicationsPage() {
                       padding: '8px', 
                       background: 'none', 
                       border: 'none', 
-                      borderRadius: '8px', 
+                      borderRadius: '20px', 
                       cursor: 'pointer' 
                     }}
                   >
@@ -703,7 +703,7 @@ export default function CommunicationsPage() {
                       right: 0,
                       background: 'white',
                       border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                       zIndex: 10,
                       minWidth: '150px',
@@ -780,7 +780,7 @@ export default function CommunicationsPage() {
                     <div style={{
                       maxWidth: '320px',
                       padding: '12px 16px',
-                      borderRadius: '12px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       background: isUser ? 'var(--mc-sidebar-bg)' : '#f3f4f6',
                       color: isUser ? 'white' : 'var(--mc-sidebar-bg)'
@@ -839,7 +839,7 @@ export default function CommunicationsPage() {
                   marginBottom: '16px', 
                   padding: '12px', 
                   background: '#f9fafb', 
-                  borderRadius: '8px' 
+                  borderRadius: '20px' 
                 }}>
                   <div style={{ 
                     display: 'flex', 
@@ -883,7 +883,7 @@ export default function CommunicationsPage() {
                           padding: '8px',
                           background: 'white',
                           border: '1px solid #e5e7eb',
-                          borderRadius: '6px',
+                          borderRadius: '20px',
                           cursor: 'pointer'
                         }}
                       >
@@ -957,7 +957,7 @@ export default function CommunicationsPage() {
                     padding: '6px', 
                     background: 'transparent', 
                     border: 'none', 
-                    borderRadius: '6px', 
+                    borderRadius: '20px', 
                     cursor: 'pointer',
                     transition: 'background-color 0.2s',
                     display: 'flex',

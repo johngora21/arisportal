@@ -14,7 +14,7 @@ interface PaymentTrackingTabProps {
 
 export default function PaymentTrackingTab({ payments, tenants, units, properties }: PaymentTrackingTabProps) {
   return (
-    <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+    <div style={{ background: 'white', borderRadius: '20px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
           Payment Tracking
@@ -28,7 +28,7 @@ export default function PaymentTrackingTab({ payments, tenants, units, propertie
             backgroundColor: 'var(--mc-sidebar-bg)',
             color: 'white',
             border: 'none',
-            borderRadius: '8px',
+            borderRadius: '20px',
             fontSize: '14px',
             fontWeight: '500',
             cursor: 'pointer'
@@ -79,7 +79,7 @@ export default function PaymentTrackingTab({ payments, tenants, units, propertie
                       padding: '4px 8px',
                       backgroundColor: payment.status === 'paid' ? '#10b98115' : payment.status === 'overdue' ? '#ef444415' : '#f59e0b15',
                       color: payment.status === 'paid' ? '#10b981' : payment.status === 'overdue' ? '#ef4444' : '#f59e0b',
-                      borderRadius: '4px',
+                      borderRadius: '20px',
                       fontSize: '12px',
                       fontWeight: '500'
                     }}>

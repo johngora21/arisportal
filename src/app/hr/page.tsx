@@ -77,7 +77,7 @@ export default function HRPage() {
                 backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '16px',
                 fontWeight: '500',
                 cursor: 'pointer',
@@ -101,7 +101,7 @@ export default function HRPage() {
         <div style={{
           backgroundColor: '#ffffff',
           border: '1px solid #e5e7eb',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
         }}>
@@ -123,7 +123,7 @@ export default function HRPage() {
             <div style={{
               padding: '12px',
               backgroundColor: '#f3f4f6',
-              borderRadius: '12px'
+              borderRadius: '20px'
             }}>
               <Users size={32} color="#6b7280" />
             </div>
@@ -133,7 +133,7 @@ export default function HRPage() {
         <div style={{
           backgroundColor: '#ffffff',
           border: '1px solid #e5e7eb',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
         }}>
@@ -155,7 +155,7 @@ export default function HRPage() {
             <div style={{
               padding: '12px',
               backgroundColor: '#dcfce7',
-              borderRadius: '12px'
+              borderRadius: '20px'
             }}>
               <UserPlus size={32} color="#10b981" />
             </div>
@@ -165,7 +165,7 @@ export default function HRPage() {
         <div style={{
           backgroundColor: '#ffffff',
           border: '1px solid #e5e7eb',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
         }}>
@@ -187,7 +187,7 @@ export default function HRPage() {
             <div style={{
               padding: '12px',
               backgroundColor: '#fef3c7',
-              borderRadius: '12px'
+              borderRadius: '20px'
             }}>
               <DollarSign size={32} color="#f59e0b" />
             </div>
@@ -197,7 +197,7 @@ export default function HRPage() {
         <div style={{
           backgroundColor: '#ffffff',
           border: '1px solid #e5e7eb',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
         }}>
@@ -219,7 +219,7 @@ export default function HRPage() {
             <div style={{
               padding: '12px',
               backgroundColor: '#fef3c7',
-              borderRadius: '12px'
+              borderRadius: '20px'
             }}>
               <Star size={32} color="#f59e0b" />
             </div>
@@ -237,7 +237,7 @@ export default function HRPage() {
         {/* Monthly Trends */}
         <div style={{
           backgroundColor: '#ffffff',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
         }}>
@@ -252,7 +252,7 @@ export default function HRPage() {
                 justifyContent: 'space-between',
                 padding: '12px',
                 backgroundColor: '#f9fafb',
-                borderRadius: '8px'
+                borderRadius: '20px'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ 
@@ -296,7 +296,7 @@ export default function HRPage() {
         {/* Recent Employees */}
         <div style={{
           backgroundColor: '#ffffff',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
         }}>
@@ -311,7 +311,7 @@ export default function HRPage() {
                 gap: '12px',
                 padding: '12px',
                 backgroundColor: '#f9fafb',
-                borderRadius: '8px'
+                borderRadius: '20px'
               }}>
                 <div style={{
                   width: '40px',
@@ -337,7 +337,7 @@ export default function HRPage() {
                 </div>
                 <span style={{
                   padding: '2px 8px',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '10px',
                   fontWeight: '500',
                   backgroundColor: '#dcfce7',
@@ -354,7 +354,7 @@ export default function HRPage() {
       {/* Quick Actions */}
       <div style={{
         backgroundColor: '#ffffff',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
       }}>
@@ -369,7 +369,7 @@ export default function HRPage() {
           <a href="/hr/employees" style={{
             padding: '20px',
             border: '1px solid #e5e7eb',
-            borderRadius: '8px',
+            borderRadius: '20px',
             textAlign: 'center',
             cursor: 'pointer',
             transition: 'all 0.2s',
@@ -396,7 +396,7 @@ export default function HRPage() {
           <a href="/hr/modules" style={{
             padding: '20px',
             border: '1px solid #e5e7eb',
-            borderRadius: '8px',
+            borderRadius: '20px',
             textAlign: 'center',
             cursor: 'pointer',
             transition: 'all 0.2s',
@@ -423,7 +423,7 @@ export default function HRPage() {
           <a href="/hr/reports" style={{
             padding: '20px',
             border: '1px solid #e5e7eb',
-            borderRadius: '8px',
+            borderRadius: '20px',
             textAlign: 'center',
             cursor: 'pointer',
             transition: 'all 0.2s',

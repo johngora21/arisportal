@@ -207,7 +207,7 @@ export default function Reports({}: ReportsProps) {
             backgroundColor: selectedReportToGenerate ? 'var(--mc-sidebar-bg)' : '#d1d5db',
             color: 'white',
             border: 'none',
-            borderRadius: '8px',
+            borderRadius: '20px',
             fontSize: '14px',
             fontWeight: '500',
             cursor: selectedReportToGenerate ? 'pointer' : 'not-allowed',
@@ -291,7 +291,7 @@ export default function Reports({}: ReportsProps) {
             key={report.id} 
             style={{
               border: '1px solid #e5e7eb',
-              borderRadius: '12px',
+              borderRadius: '20px',
               padding: '20px',
               backgroundColor: 'white',
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
@@ -312,7 +312,7 @@ export default function Reports({}: ReportsProps) {
                 <div style={{
                   backgroundColor: getTypeColor(report.type) + '20',
                   color: getTypeColor(report.type),
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   padding: '6px',
                   display: 'flex',
                   alignItems: 'center',
@@ -334,7 +334,7 @@ export default function Reports({}: ReportsProps) {
                 alignItems: 'center',
                 gap: '4px',
                 padding: '4px 8px',
-                borderRadius: '6px',
+                borderRadius: '20px',
                 fontSize: '12px',
                 fontWeight: '500',
                 ...getStatusColor(report.status)
@@ -365,7 +365,7 @@ export default function Reports({}: ReportsProps) {
                   <button style={{
                     padding: '6px',
                     border: 'none',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     backgroundColor: '#f3f4f6',
                     color: '#6b7280',
                     cursor: 'pointer'
@@ -376,7 +376,7 @@ export default function Reports({}: ReportsProps) {
                 <button style={{
                   padding: '6px',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   backgroundColor: '#f3f4f6',
                   color: '#ef4444',
                   cursor: 'pointer'

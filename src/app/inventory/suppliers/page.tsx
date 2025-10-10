@@ -294,7 +294,7 @@ export function SuppliersModule() {
             style={{ 
               background: 'white', 
               border: '1px solid #e5e7eb', 
-              borderRadius: '8px', 
+              borderRadius: '20px', 
               padding: '16px',
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               transition: 'all 0.2s ease',
@@ -322,7 +322,7 @@ export function SuppliersModule() {
               backgroundColor: '#10b981',
               color: 'white',
               padding: '4px 8px',
-              borderRadius: '12px',
+              borderRadius: '20px',
               fontSize: '10px',
               fontWeight: '600',
               display: 'flex',
@@ -394,7 +394,7 @@ export function SuppliersModule() {
                     backgroundColor: '#f9fafb',
                     color: '#6b7280',
                     padding: '4px 8px',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '11px',
                     fontWeight: '500',
                     border: '1px solid #e5e7eb'
@@ -409,7 +409,7 @@ export function SuppliersModule() {
                     backgroundColor: '#f3f4f6',
                     color: '#6b7280',
                     padding: '4px 8px',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '11px',
                     fontWeight: '600',
                     border: '1px solid #d1d5db'
@@ -444,7 +444,7 @@ export function SuppliersModule() {
                   backgroundColor: 'transparent',
                   color: 'var(--mc-sidebar-bg)',
                   border: '1px solid var(--mc-sidebar-bg)',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   padding: '8px 16px',
                   fontSize: '14px',
                   fontWeight: '500',
@@ -467,7 +467,7 @@ export function SuppliersModule() {
                   backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   padding: '8px 16px',
                   fontSize: '14px',
                   fontWeight: '500',
@@ -508,7 +508,7 @@ export function SuppliersModule() {
             backgroundColor: 'white',
             width: 'min(900px, 95vw)',
             maxHeight: '95vh',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '32px',
             overflowY: 'auto',
             position: 'relative'
@@ -524,7 +524,7 @@ export function SuppliersModule() {
                 backgroundColor: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                borderRadius: '4px',
+                borderRadius: '20px',
                 color: '#6b7280'
               }}
             >
@@ -587,7 +587,7 @@ export function SuppliersModule() {
               <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
                 Location
               </h3>
-              <div style={{ height: '300px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+              <div style={{ height: '300px', borderRadius: '20px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
                 <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
               </div>
             </div>
@@ -605,7 +605,7 @@ export function SuppliersModule() {
                       backgroundColor: '#f9fafb',
                       color: '#6b7280',
                       padding: '6px 12px',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '12px',
                       fontWeight: '500',
                       border: '1px solid #e5e7eb'
@@ -627,7 +627,7 @@ export function SuppliersModule() {
                         backgroundColor: '#e0f2fe',
                         color: '#0369a1',
                         padding: '4px 8px',
-                        borderRadius: '6px',
+                        borderRadius: '20px',
                         fontSize: '11px',
                         fontWeight: '500'
                       }}
@@ -690,7 +690,7 @@ export function SuppliersModule() {
                     style={{
                       padding: '16px',
                       border: '1px solid #e5e7eb',
-                      borderRadius: '8px'
+                      borderRadius: '20px'
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -718,7 +718,7 @@ export function SuppliersModule() {
                 backgroundColor: 'transparent',
                 color: 'var(--mc-sidebar-bg)',
                 border: '1px solid var(--mc-sidebar-bg)',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 padding: '12px 24px',
                 fontSize: '14px',
                 fontWeight: '500',
@@ -741,7 +741,7 @@ export function SuppliersModule() {
                 backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 padding: '12px 24px',
                 fontSize: '14px',
                 fontWeight: '500',

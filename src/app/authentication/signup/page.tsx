@@ -43,14 +43,14 @@ export default function AuthenticationSignupPage() {
         <section className="auth-side">
           <div className="auth-side__header">
             <div className="auth-logo">MC</div>
-            <div className="auth-name">Merit Capital</div>
+            <div className="auth-name">Aris Portal</div>
           </div>
           <h2>Join the ecosystem</h2>
           <p>Create your account to explore opportunities and resources.</p>
         </section>
         <section className="auth-card">
           <h1>Signup</h1>
-          <p className="auth-sub">Create your Merit Capital account</p>
+          <p className="auth-sub">Create your Aris Portal account</p>
           {error && <div className="auth-alert">{error}</div>}
           <form onSubmit={onSubmit}>
             <label>Full name</label>

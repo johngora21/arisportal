@@ -27,7 +27,7 @@ export default function TenantRecordsTab({
   onMessageTenant
 }: TenantRecordsTabProps) {
   return (
-    <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+    <div style={{ background: 'white', borderRadius: '20px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
           Tenant Records
@@ -42,7 +42,7 @@ export default function TenantRecordsTab({
             backgroundColor: 'var(--mc-sidebar-bg)',
             color: 'white',
             border: 'none',
-            borderRadius: '8px',
+            borderRadius: '20px',
             fontSize: '14px',
             fontWeight: '500',
             cursor: 'pointer'
@@ -113,7 +113,7 @@ export default function TenantRecordsTab({
                     padding: '4px 8px',
                     backgroundColor: tenant.status === 'active' ? '#10b98115' : '#6b728015',
                     color: tenant.status === 'active' ? '#10b981' : '#6b7280',
-                    borderRadius: '4px',
+                    borderRadius: '20px',
                     fontSize: '12px',
                     fontWeight: '500'
                   }}>

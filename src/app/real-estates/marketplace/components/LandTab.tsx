@@ -222,7 +222,7 @@ export default function LandTab({
             key={property.id}
             style={{
               backgroundColor: 'white',
-              borderRadius: '12px',
+              borderRadius: '20px',
               border: '1px solid #e5e7eb',
               overflow: 'hidden',
               boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
@@ -292,7 +292,7 @@ export default function LandTab({
                   backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   padding: '8px 16px',
                   fontSize: '14px',
                   fontWeight: '500',
@@ -323,7 +323,7 @@ export default function LandTab({
           textAlign: 'center',
           padding: '60px 20px',
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           border: '1px solid #e5e7eb'
         }}>
           <Building size={48} color="#d1d5db" />
@@ -353,7 +353,7 @@ export default function LandTab({
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             width: '98vw',
             height: '98vh',
             overflow: 'hidden',
@@ -400,7 +400,7 @@ export default function LandTab({
                     backgroundColor: '#f3f4f6',
                     color: '#374151',
                     border: '1px solid #d1d5db',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '12px',
                     fontWeight: '500',
                     cursor: 'pointer'
@@ -415,7 +415,7 @@ export default function LandTab({
                     backgroundColor: '#f3f4f6',
                     color: '#374151',
                     border: '1px solid #d1d5db',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '12px',
                     fontWeight: '500',
                     cursor: 'pointer'
@@ -430,7 +430,7 @@ export default function LandTab({
                     backgroundColor: '#f3f4f6',
                     color: '#374151',
                     border: '1px solid #d1d5db',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '12px',
                     fontWeight: '500',
                     cursor: 'pointer'
@@ -445,7 +445,7 @@ export default function LandTab({
                     backgroundColor: '#ef4444',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     cursor: 'pointer',
                     display: 'flex',

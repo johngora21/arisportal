@@ -78,7 +78,7 @@ export default function Dashboard({}: DashboardProps) {
         {/* Monthly Trend Chart */}
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -138,7 +138,7 @@ export default function Dashboard({}: DashboardProps) {
         {/* Expense Breakdown */}
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -183,7 +183,7 @@ export default function Dashboard({}: DashboardProps) {
         {/* Cash Flow Pie Chart */}
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -224,7 +224,7 @@ export default function Dashboard({}: DashboardProps) {
         {/* Tax Breakdown Pie Chart */}
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -269,7 +269,7 @@ export default function Dashboard({}: DashboardProps) {
         {/* Revenue Trend Chart */}
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -291,7 +291,7 @@ export default function Dashboard({}: DashboardProps) {
         {/* Financial Health Gauge */}
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'

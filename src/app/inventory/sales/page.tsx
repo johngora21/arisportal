@@ -34,7 +34,7 @@ export function SalesModule() {
   return (
     <div>
 
-      <div style={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: 24 }}>
+      <div style={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '20px', padding: 24 }}>
         <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--mc-sidebar-bg)' }}>Record Sale (Buyer Details)</h3>
         <p style={{ color: '#6b7280', marginTop: 8 }}>Capture buyer identity and demographics with each sale for analytics.</p>
 

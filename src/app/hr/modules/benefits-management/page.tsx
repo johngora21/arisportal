@@ -77,7 +77,7 @@ export default function BenefitsManagementPage() {
               padding: '8px 12px',
               backgroundColor: 'transparent',
               border: '1px solid #d1d5db',
-              borderRadius: '6px',
+              borderRadius: '20px',
               cursor: 'pointer',
               fontSize: '14px',
               color: '#6b7280',
@@ -113,7 +113,7 @@ export default function BenefitsManagementPage() {
               style={{
                 padding: '12px 12px 12px 40px',
                 border: '1px solid #d1d5db',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '16px',
                 width: '300px',
                 outline: 'none'
@@ -131,7 +131,7 @@ export default function BenefitsManagementPage() {
               backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: '20px',
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer'
@@ -152,7 +152,7 @@ export default function BenefitsManagementPage() {
       }}>
         <div style={{
           backgroundColor: '#ffffff',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
         }}>
@@ -171,7 +171,7 @@ export default function BenefitsManagementPage() {
             <div style={{
               padding: '12px',
               backgroundColor: '#f3f4f6',
-              borderRadius: '12px'
+              borderRadius: '20px'
             }}>
               <Award size={32} color="#6b7280" />
             </div>
@@ -180,7 +180,7 @@ export default function BenefitsManagementPage() {
 
         <div style={{
           backgroundColor: '#ffffff',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
         }}>
@@ -199,7 +199,7 @@ export default function BenefitsManagementPage() {
             <div style={{
               padding: '12px',
               backgroundColor: '#fef3c7',
-              borderRadius: '12px'
+              borderRadius: '20px'
             }}>
               <DollarSign size={32} color="#f59e0b" />
             </div>
@@ -208,7 +208,7 @@ export default function BenefitsManagementPage() {
 
         <div style={{
           backgroundColor: '#ffffff',
-          borderRadius: '12px',
+          borderRadius: '20px',
           padding: '24px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
         }}>
@@ -227,7 +227,7 @@ export default function BenefitsManagementPage() {
             <div style={{
               padding: '12px',
               backgroundColor: '#dcfce7',
-              borderRadius: '12px'
+              borderRadius: '20px'
             }}>
               <Users size={32} color="#10b981" />
             </div>
@@ -238,7 +238,7 @@ export default function BenefitsManagementPage() {
       {/* Benefits List */}
       <div style={{
         backgroundColor: '#ffffff',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
       }}>
@@ -256,7 +256,7 @@ export default function BenefitsManagementPage() {
                 justifyContent: 'space-between',
                 padding: '20px',
                 border: '1px solid #e5e7eb',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 backgroundColor: 'white',
                 transition: 'all 0.2s'
               }}
@@ -266,7 +266,7 @@ export default function BenefitsManagementPage() {
                   width: '48px',
                   height: '48px',
                   backgroundColor: '#f3f4f6',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -302,7 +302,7 @@ export default function BenefitsManagementPage() {
                 
                 <span style={{
                   padding: '4px 8px',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '12px',
                   fontWeight: '500',
                   backgroundColor: '#dcfce7',
@@ -317,7 +317,7 @@ export default function BenefitsManagementPage() {
                     height: '32px',
                     backgroundColor: 'transparent',
                     border: 'none',
-                    borderRadius: '4px',
+                    borderRadius: '20px',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -330,7 +330,7 @@ export default function BenefitsManagementPage() {
                     height: '32px',
                     backgroundColor: 'transparent',
                     border: 'none',
-                    borderRadius: '4px',
+                    borderRadius: '20px',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -362,7 +362,7 @@ export default function BenefitsManagementPage() {
         }}>
           <div style={{
             backgroundColor: 'white',
-            borderRadius: '12px',
+            borderRadius: '20px',
             padding: '24px',
             width: '90%',
             maxWidth: '500px'
@@ -378,7 +378,7 @@ export default function BenefitsManagementPage() {
                   height: '32px',
                   backgroundColor: 'transparent',
                   border: 'none',
-                  borderRadius: '4px',
+                  borderRadius: '20px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -401,7 +401,7 @@ export default function BenefitsManagementPage() {
                     width: '100%',
                     padding: '10px 12px',
                     border: '1px solid #d1d5db',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     outline: 'none'
                   }}
@@ -416,7 +416,7 @@ export default function BenefitsManagementPage() {
                   width: '100%',
                   padding: '10px 12px',
                   border: '1px solid #d1d5db',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   backgroundColor: 'white',
                   outline: 'none'
@@ -440,7 +440,7 @@ export default function BenefitsManagementPage() {
                       width: '100%',
                       padding: '10px 12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       outline: 'none'
                     }}
@@ -457,7 +457,7 @@ export default function BenefitsManagementPage() {
                       width: '100%',
                       padding: '10px 12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '6px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       outline: 'none'
                     }}
@@ -474,7 +474,7 @@ export default function BenefitsManagementPage() {
                   backgroundColor: '#f3f4f6',
                   color: '#6b7280',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'
@@ -489,7 +489,7 @@ export default function BenefitsManagementPage() {
                   backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer'

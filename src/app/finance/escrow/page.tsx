@@ -101,7 +101,7 @@ export default function EscrowPage() {
           backgroundColor: 'var(--mc-sidebar-bg)',
           color: 'white',
           border: 'none',
-          borderRadius: '8px',
+          borderRadius: '20px',
           fontSize: '14px',
           fontWeight: '500',
           cursor: 'pointer',
@@ -117,7 +117,7 @@ export default function EscrowPage() {
       {/* Tab Navigation */}
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         border: '1px solid #e5e7eb',
         overflow: 'hidden',
         marginBottom: '32px'
@@ -218,7 +218,7 @@ export default function EscrowPage() {
       }}>
         <div style={{ 
           backgroundColor: 'white', 
-          borderRadius: '12px', 
+          borderRadius: '20px', 
           padding: '20px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
@@ -232,7 +232,7 @@ export default function EscrowPage() {
         </div>
         <div style={{ 
           backgroundColor: 'white', 
-          borderRadius: '12px', 
+          borderRadius: '20px', 
           padding: '20px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
@@ -246,7 +246,7 @@ export default function EscrowPage() {
         </div>
         <div style={{ 
           backgroundColor: 'white', 
-          borderRadius: '12px', 
+          borderRadius: '20px', 
           padding: '20px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
@@ -260,7 +260,7 @@ export default function EscrowPage() {
         </div>
         <div style={{ 
           backgroundColor: 'white', 
-          borderRadius: '12px', 
+          borderRadius: '20px', 
           padding: '20px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
@@ -277,7 +277,7 @@ export default function EscrowPage() {
       {/* Escrow Accounts */}
       <div style={{ 
         backgroundColor: 'white', 
-        borderRadius: '12px', 
+        borderRadius: '20px', 
         padding: '24px',
         border: '1px solid #e5e7eb',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'

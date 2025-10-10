@@ -81,7 +81,7 @@ export default function HRReportsPage() {
                 backgroundColor: '#10b981',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '16px',
                 fontWeight: '500',
                 cursor: 'pointer',
@@ -98,7 +98,7 @@ export default function HRReportsPage() {
       {/* Reports Grid */}
       <div style={{
         backgroundColor: '#ffffff',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
         marginBottom: '32px'
@@ -117,7 +117,7 @@ export default function HRReportsPage() {
               style={{
                 padding: '24px',
                 border: '1px solid #e5e7eb',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 backgroundColor: 'white',
                 cursor: 'pointer',
                 transition: 'all 0.2s'
@@ -159,7 +159,7 @@ export default function HRReportsPage() {
                 marginBottom: '16px',
                 padding: '12px',
                 backgroundColor: '#f9fafb',
-                borderRadius: '8px'
+                borderRadius: '20px'
               }}>
                 <div>
                   <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 4px 0' }}>
@@ -186,7 +186,7 @@ export default function HRReportsPage() {
                     backgroundColor: report.color,
                     color: 'white',
                     padding: '10px 16px',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     fontSize: '14px',
                     fontWeight: '500',
                     border: 'none',
@@ -209,7 +209,7 @@ export default function HRReportsPage() {
                     backgroundColor: '#f3f4f6',
                     color: '#6b7280',
                     border: 'none',
-                    borderRadius: '6px',
+                    borderRadius: '20px',
                     cursor: 'pointer',
                     transition: 'background-color 0.2s'
                   }}
@@ -232,7 +232,7 @@ export default function HRReportsPage() {
       {/* Recent Reports */}
       <div style={{
         backgroundColor: '#ffffff',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
       }}>
@@ -246,7 +246,7 @@ export default function HRReportsPage() {
             justifyContent: 'space-between',
             padding: '16px',
             border: '1px solid #e5e7eb',
-            borderRadius: '8px',
+            borderRadius: '20px',
             backgroundColor: '#f9fafb'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -265,7 +265,7 @@ export default function HRReportsPage() {
               backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: '20px',
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer'
@@ -280,7 +280,7 @@ export default function HRReportsPage() {
             justifyContent: 'space-between',
             padding: '16px',
             border: '1px solid #e5e7eb',
-            borderRadius: '8px',
+            borderRadius: '20px',
             backgroundColor: '#f9fafb'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -299,7 +299,7 @@ export default function HRReportsPage() {
               backgroundColor: '#10b981',
               color: 'white',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: '20px',
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer'

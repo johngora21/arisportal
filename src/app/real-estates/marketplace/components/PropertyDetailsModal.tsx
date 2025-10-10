@@ -111,7 +111,7 @@ export default function PropertyDetailsModal({ isOpen, onClose, property, isSelf
     }}>
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         width: '90vw',
         maxWidth: '800px',
         maxHeight: '90vh',
@@ -146,7 +146,7 @@ export default function PropertyDetailsModal({ isOpen, onClose, property, isSelf
                 alignItems: 'center',
                 gap: '4px',
                 padding: '4px 8px',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 fontSize: '12px',
                 fontWeight: '500',
                 backgroundColor: getVerificationBadge(property.verificationStatus).backgroundColor,
@@ -164,7 +164,7 @@ export default function PropertyDetailsModal({ isOpen, onClose, property, isSelf
               border: 'none',
               cursor: 'pointer',
               padding: '8px',
-              borderRadius: '6px',
+              borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -183,7 +183,7 @@ export default function PropertyDetailsModal({ isOpen, onClose, property, isSelf
               gridTemplateColumns: '2fr 1fr 1fr',
               gap: '8px',
               height: '300px',
-              borderRadius: '8px',
+              borderRadius: '20px',
               overflow: 'hidden'
             }}>
               <div style={{
@@ -509,7 +509,7 @@ export default function PropertyDetailsModal({ isOpen, onClose, property, isSelf
                     backgroundColor: '#f3f4f6',
                     color: '#374151',
                     border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '16px',
                     fontWeight: '600',
                     cursor: 'pointer'
@@ -521,7 +521,7 @@ export default function PropertyDetailsModal({ isOpen, onClose, property, isSelf
                     backgroundColor: 'var(--mc-sidebar-bg)',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     fontSize: '16px',
                     fontWeight: '600',
                     cursor: 'pointer'
@@ -535,7 +535,7 @@ export default function PropertyDetailsModal({ isOpen, onClose, property, isSelf
                   backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   fontSize: '16px',
                   fontWeight: '600',
                   cursor: 'pointer'

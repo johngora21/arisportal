@@ -70,7 +70,7 @@ export default function InvestmentProjectDetailsModal({ isOpen, onClose, project
     }}>
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         width: '90vw',
         maxWidth: '800px',
         maxHeight: '90vh',
@@ -109,7 +109,7 @@ export default function InvestmentProjectDetailsModal({ isOpen, onClose, project
               backgroundImage: `url(${project.image})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              borderRadius: '8px',
+              borderRadius: '20px',
               overflow: 'hidden'
             }} />
             {/* Status Badge */}
@@ -120,7 +120,7 @@ export default function InvestmentProjectDetailsModal({ isOpen, onClose, project
               backgroundColor: getStatusColor(project.status),
               color: 'white',
               padding: '8px 12px',
-              borderRadius: '8px',
+              borderRadius: '20px',
               fontSize: '14px',
               fontWeight: '600'
             }}>
@@ -324,7 +324,7 @@ export default function InvestmentProjectDetailsModal({ isOpen, onClose, project
               backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '20px',
               fontSize: '16px',
               fontWeight: '600',
               cursor: 'pointer'

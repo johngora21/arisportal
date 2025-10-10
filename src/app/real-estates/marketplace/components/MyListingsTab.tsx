@@ -27,7 +27,7 @@ export default function MyListingsTab({ properties, onPropertyClick }: MyListing
       {properties.length === 0 ? (
         <div style={{
           backgroundColor: '#f9fafb',
-          borderRadius: '8px',
+          borderRadius: '20px',
           padding: '24px',
           textAlign: 'center',
           border: '2px dashed #d1d5db'
@@ -51,7 +51,7 @@ export default function MyListingsTab({ properties, onPropertyClick }: MyListing
               key={property.id}
               style={{
                 backgroundColor: 'white',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 border: '1px solid #e5e7eb',
                 overflow: 'hidden',
                 boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',

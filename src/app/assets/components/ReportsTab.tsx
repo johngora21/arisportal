@@ -66,7 +66,7 @@ export default function ReportsTab({ properties, tenants, payments, assetStats }
       {/* Financial Performance Chart */}
       <div style={{ 
         backgroundColor: 'white', 
-        borderRadius: '12px', 
+        borderRadius: '20px', 
         padding: '24px', 
         marginBottom: '24px',
         border: '1px solid #e5e7eb'
@@ -81,7 +81,7 @@ export default function ReportsTab({ properties, tenants, payments, assetStats }
         <div style={{ 
           height: '300px', 
           backgroundColor: '#f8fafc', 
-          borderRadius: '8px',
+          borderRadius: '20px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -127,7 +127,7 @@ export default function ReportsTab({ properties, tenants, payments, assetStats }
         {/* Occupancy Analysis */}
         <div style={{ 
           backgroundColor: 'white', 
-          borderRadius: '12px', 
+          borderRadius: '20px', 
           padding: '24px',
           border: '1px solid #e5e7eb'
         }}>
@@ -189,7 +189,7 @@ export default function ReportsTab({ properties, tenants, payments, assetStats }
         {/* Payment Status Breakdown */}
         <div style={{ 
           backgroundColor: 'white', 
-          borderRadius: '12px', 
+          borderRadius: '20px', 
           padding: '24px',
           border: '1px solid #e5e7eb'
         }}>
@@ -225,7 +225,7 @@ export default function ReportsTab({ properties, tenants, payments, assetStats }
             marginTop: '20px', 
             height: '120px', 
             backgroundColor: '#f8fafc', 
-            borderRadius: '8px',
+            borderRadius: '20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -241,7 +241,7 @@ export default function ReportsTab({ properties, tenants, payments, assetStats }
         {/* Top Performing Properties */}
         <div style={{ 
           backgroundColor: 'white', 
-          borderRadius: '12px', 
+          borderRadius: '20px', 
           padding: '24px',
           border: '1px solid #e5e7eb'
         }}>
@@ -256,14 +256,14 @@ export default function ReportsTab({ properties, tenants, payments, assetStats }
                 alignItems: 'center',
                 padding: '12px',
                 backgroundColor: '#f8fafc',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 border: '1px solid #e2e8f0'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{
                     width: '32px',
                     height: '32px',
-                    borderRadius: '8px',
+                    borderRadius: '20px',
                     backgroundColor: index === 0 ? '#fbbf24' : index === 1 ? '#9ca3af' : '#cd7c2f',
                     display: 'flex',
                     alignItems: 'center',

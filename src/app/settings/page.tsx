@@ -25,7 +25,7 @@ import {
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('sms');
   const [smsSettings, setSmsSettings] = useState({
-    senderName: 'MERITPORTAL',
+    senderName: 'ARISPORTAL',
     smsType: 'bulk', // 'bulk' or 'two-way'
     apiKey: '',
     apiSecret: '',
@@ -48,7 +48,7 @@ export default function SettingsPage() {
     username: '',
     password: '',
     fromEmail: '',
-    fromName: 'Merit Portal',
+    fromName: 'Aris Portal',
     showCredentials: false
   });
 
@@ -106,7 +106,7 @@ export default function SettingsPage() {
 
         {/* Stats Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <Smartphone size={20} color="var(--mc-sidebar-bg)" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>SMS Provider</span>
@@ -116,7 +116,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <CreditCard size={20} color="#10b981" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Payment Methods</span>
@@ -126,7 +126,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <Mail size={20} color="#8b5cf6" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Email Service</span>
@@ -139,7 +139,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Settings Container */}
-      <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+      <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
         {/* Tabs */}
         <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb' }}>
           {tabs.map((tab) => (
@@ -195,7 +195,7 @@ export default function SettingsPage() {
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
-                      borderRadius: '8px',
+                      borderRadius: '20px',
                       fontSize: '14px',
                       maxWidth: '300px'
                     }}
@@ -277,7 +277,7 @@ export default function SettingsPage() {
                         width: '100%',
                         padding: '12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         fontSize: '14px'
                       }}
                     />
@@ -290,7 +290,7 @@ export default function SettingsPage() {
                         width: '100%',
                         padding: '12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         fontSize: '14px'
                       }}
                     />
@@ -302,7 +302,7 @@ export default function SettingsPage() {
                   padding: '16px',
                   backgroundColor: '#f0f9ff',
                   border: '1px solid #bae6fd',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   display: 'flex',
                   gap: '12px'
                 }}>
@@ -407,7 +407,7 @@ export default function SettingsPage() {
                       style={{
                         padding: '12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         fontSize: '14px',
                         backgroundColor: 'white',
                         maxWidth: '300px'
@@ -488,7 +488,7 @@ export default function SettingsPage() {
                         width: '100%',
                         padding: '12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         fontSize: '14px'
                       }}
                     />
@@ -501,7 +501,7 @@ export default function SettingsPage() {
                         width: '100%',
                         padding: '12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         fontSize: '14px'
                       }}
                     />
@@ -513,7 +513,7 @@ export default function SettingsPage() {
                   padding: '16px',
                   backgroundColor: '#f0fdf4',
                   border: '1px solid #bbf7d0',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   display: 'flex',
                   gap: '12px'
                 }}>
@@ -559,7 +559,7 @@ export default function SettingsPage() {
                         width: '100%',
                         padding: '12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         fontSize: '14px'
                       }}
                     />
@@ -577,7 +577,7 @@ export default function SettingsPage() {
                         width: '100%',
                         padding: '12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         fontSize: '14px'
                       }}
                     />
@@ -619,7 +619,7 @@ export default function SettingsPage() {
                         width: '100%',
                         padding: '12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         fontSize: '14px'
                       }}
                     />
@@ -632,7 +632,7 @@ export default function SettingsPage() {
                         width: '100%',
                         padding: '12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         fontSize: '14px'
                       }}
                     />
@@ -649,12 +649,12 @@ export default function SettingsPage() {
                       type="email"
                       value={emailSettings.fromEmail}
                       onChange={(e) => setEmailSettings(prev => ({ ...prev, fromEmail: e.target.value }))}
-                      placeholder="noreply@meritportal.com"
+                      placeholder="noreply@arisportal.com"
                       style={{
                         width: '100%',
                         padding: '12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         fontSize: '14px'
                       }}
                     />
@@ -667,12 +667,12 @@ export default function SettingsPage() {
                       type="text"
                       value={emailSettings.fromName}
                       onChange={(e) => setEmailSettings(prev => ({ ...prev, fromName: e.target.value }))}
-                      placeholder="Merit Portal"
+                      placeholder="Aris Portal"
                       style={{
                         width: '100%',
                         padding: '12px',
                         border: '1px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: '20px',
                         fontSize: '14px'
                       }}
                     />
@@ -684,7 +684,7 @@ export default function SettingsPage() {
                   padding: '16px',
                   backgroundColor: '#fef3c7',
                   border: '1px solid #fde68a',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   display: 'flex',
                   gap: '12px'
                 }}>
@@ -737,7 +737,7 @@ export default function SettingsPage() {
                 backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '20px',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: isSaving ? 'not-allowed' : 'pointer',

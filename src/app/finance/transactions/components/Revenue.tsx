@@ -82,7 +82,7 @@ export default function Revenue({}: RevenueProps) {
       {/* Revenue Trend Chart */}
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         border: '1px solid #e5e7eb',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -190,7 +190,7 @@ export default function Revenue({}: RevenueProps) {
       {/* Revenue Sources */}
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         border: '1px solid #e5e7eb',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -227,14 +227,14 @@ export default function Revenue({}: RevenueProps) {
                 width: '100%',
                 height: '8px',
                 backgroundColor: '#f3f4f6',
-                borderRadius: '4px',
+                borderRadius: '20px',
                 overflow: 'hidden'
               }}>
                 <div style={{
                   width: `${source.percentage}%`,
                   height: '100%',
                   backgroundColor: source.color,
-                  borderRadius: '4px'
+                  borderRadius: '20px'
                 }}></div>
               </div>
             </div>
@@ -245,7 +245,7 @@ export default function Revenue({}: RevenueProps) {
       {/* Top Clients */}
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         border: '1px solid #e5e7eb',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -258,7 +258,7 @@ export default function Revenue({}: RevenueProps) {
             padding: '8px 12px',
             backgroundColor: '#f3f4f6',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: '20px',
             fontSize: '14px',
             fontWeight: '500',
             color: '#374151',
@@ -280,14 +280,14 @@ export default function Revenue({}: RevenueProps) {
               alignItems: 'center',
               padding: '16px',
               backgroundColor: '#f9fafb',
-              borderRadius: '8px',
+              borderRadius: '20px',
               border: '1px solid #f3f4f6'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{
                   width: '40px',
                   height: '40px',
-                  borderRadius: '8px',
+                  borderRadius: '20px',
                   backgroundColor: '#e0f2fe',
                   color: 'var(--mc-sidebar-bg)',
                   display: 'flex',
@@ -327,7 +327,7 @@ export default function Revenue({}: RevenueProps) {
                 
                 <div style={{
                   padding: '4px 8px',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   fontSize: '12px',
                   fontWeight: '500',
                   backgroundColor: getStatusColor(client.status) + '20',
@@ -339,7 +339,7 @@ export default function Revenue({}: RevenueProps) {
                 <button style={{
                   padding: '6px',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   backgroundColor: '#f3f4f6',
                   color: '#6b7280',
                   cursor: 'pointer'
@@ -355,7 +355,7 @@ export default function Revenue({}: RevenueProps) {
       {/* Revenue Goals */}
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '20px',
         padding: '24px',
         border: '1px solid #e5e7eb',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -365,7 +365,7 @@ export default function Revenue({}: RevenueProps) {
         </h3>
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
-          <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+          <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
                 Monthly Target
@@ -381,19 +381,19 @@ export default function Revenue({}: RevenueProps) {
               width: '100%',
               height: '8px',
               backgroundColor: '#e5e7eb',
-              borderRadius: '4px',
+              borderRadius: '20px',
               overflow: 'hidden'
             }}>
               <div style={{
                 width: '85%',
                 height: '100%',
                 backgroundColor: '#10b981',
-                borderRadius: '4px'
+                borderRadius: '20px'
               }}></div>
             </div>
           </div>
           
-          <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+          <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
                 Quarterly Target
@@ -409,19 +409,19 @@ export default function Revenue({}: RevenueProps) {
               width: '100%',
               height: '8px',
               backgroundColor: '#e5e7eb',
-              borderRadius: '4px',
+              borderRadius: '20px',
               overflow: 'hidden'
             }}>
               <div style={{
                 width: '92%',
                 height: '100%',
                 backgroundColor: '#10b981',
-                borderRadius: '4px'
+                borderRadius: '20px'
               }}></div>
             </div>
           </div>
           
-          <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+          <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
                 Annual Target
@@ -437,14 +437,14 @@ export default function Revenue({}: RevenueProps) {
               width: '100%',
               height: '8px',
               backgroundColor: '#e5e7eb',
-              borderRadius: '4px',
+              borderRadius: '20px',
               overflow: 'hidden'
             }}>
               <div style={{
                 width: '78%',
                 height: '100%',
                 backgroundColor: '#f59e0b',
-                borderRadius: '4px'
+                borderRadius: '20px'
               }}></div>
             </div>
           </div>
