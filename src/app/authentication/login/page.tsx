@@ -1,95 +1,340 @@
-"use client";
-import React from 'react';
-import { useRouter } from 'next/navigation';
+'use client';
 
-export default function AuthenticationLoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [submitting, setSubmitting] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const API_BASE = '';
+import React, { useState } from 'react';
+import { 
+  Eye, 
+  EyeOff, 
+  Mail, 
+  Lock, 
+  ArrowRight,
+  Building2
+} from 'lucide-react';
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError(null);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.message || 'Login failed');
-      }
-      router.replace('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
-    } finally {
-      setSubmitting(false);
+export default function LoginPage() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    rememberMe: false
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
     }
   };
 
+  const validateForm = () => {
+    const newErrors: {[key: string]: string} = {};
+    
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
+    
+    setIsLoading(true);
+    
+    setTimeout(() => {
+      setIsLoading(false);
+      window.location.href = '/';
+    }, 2000);
+  };
+
   return (
-    <div className="auth-wrap">
-      <div className="auth-split">
-        <section className="auth-side">
-          <div className="auth-side__header">
-            <div className="auth-logo">MC</div>
-            <div className="auth-name">Aris Portal</div>
-          </div>
-          <h2>Fueling innovation with smart capital</h2>
-          <p>Connect with investors, mentors, and resources to grow your startup.</p>
-        </section>
-        <section className="auth-card">
-          <h1>Login</h1>
-          <p className="auth-sub">Access your account</p>
-          {error && <div className="auth-alert">{error}</div>}
-          <form onSubmit={onSubmit}>
-            <label>Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <label>Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            <div className="auth-inline">
-              <a className="auth-link" href="/authentication/forgot-password">Forgot password?</a>
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#f9fafb',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px',
+      fontFamily: 'Poppins, system-ui, sans-serif'
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: '400px',
+        backgroundColor: 'white',
+        borderRadius: '20px',
+        padding: '40px',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+        border: '1px solid #e5e7eb'
+      }}>
+        {/* Header */}
+        <div style={{ marginBottom: '32px' }}>
+          <h1 style={{
+            fontSize: '24px',
+            fontWeight: '600',
+            color: '#1f2937',
+            margin: '0 0 8px 0'
+          }}>
+            Login
+          </h1>
+          
+          <p style={{
+            fontSize: '16px',
+            color: '#6b7280',
+            margin: 0
+          }}>
+            Enter your credentials to access your account
+          </p>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Email Field */}
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '6px'
+            }}>
+              Email
+            </label>
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#9ca3af'
+              }}>
+                <Mail size={18} />
+              </div>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="Enter your email"
+                style={{
+                  width: '100%',
+                  padding: '10px 10px 10px 38px',
+                  border: `1px solid ${errors.email ? '#ef4444' : '#d1d5db'}`,
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                  backgroundColor: 'white',
+                  boxSizing: 'border-box'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--mc-sidebar-bg)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = errors.email ? '#ef4444' : '#d1d5db';
+                }}
+              />
             </div>
-            <button type="submit" disabled={submitting}>{submitting ? 'Logging in...' : 'Login'}</button>
-          </form>
-          <div className="auth-actions">
-            <a className="ghost" href="/authentication/signup">Signup</a>
+            {errors.email && (
+              <p style={{
+                fontSize: '12px',
+                color: '#ef4444',
+                margin: '4px 0 0 0'
+              }}>
+                {errors.email}
+              </p>
+            )}
           </div>
-        </section>
+
+          {/* Password Field */}
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '6px'
+            }}>
+              Password
+            </label>
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#9ca3af'
+              }}>
+                <Lock size={18} />
+              </div>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="Enter your password"
+                style={{
+                  width: '100%',
+                  padding: '10px 38px 10px 38px',
+                  border: `1px solid ${errors.password ? '#ef4444' : '#d1d5db'}`,
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                  backgroundColor: 'white',
+                  boxSizing: 'border-box'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--mc-sidebar-bg)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = errors.password ? '#ef4444' : '#d1d5db';
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: '#9ca3af',
+                  cursor: 'pointer',
+                  padding: '4px'
+                }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {errors.password && (
+              <p style={{
+                fontSize: '12px',
+                color: '#ef4444',
+                margin: '4px 0 0 0'
+              }}>
+                {errors.password}
+              </p>
+            )}
+          </div>
+
+          {/* Remember Me & Forgot Password */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              color: '#4b5563'
+            }}>
+              <input
+                type="checkbox"
+                name="rememberMe"
+                checked={formData.rememberMe}
+                onChange={handleInputChange}
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  accentColor: 'var(--mc-sidebar-bg)'
+                }}
+              />
+              Remember me
+            </label>
+            
+            <a href="/forgot-password" style={{
+              fontSize: '14px',
+              color: 'var(--mc-sidebar-bg)',
+              textDecoration: 'none'
+            }}>
+              Forgot password?
+            </a>
+          </div>
+
+          {/* Login Button */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            style={{
+              width: '100%',
+              padding: '12px',
+              backgroundColor: isLoading ? '#9ca3af' : 'var(--mc-sidebar-bg)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '20px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              transition: 'background-color 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+            onMouseEnter={(e) => {
+              if (!isLoading) {
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isLoading) {
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+              }
+            }}
+          >
+            {isLoading ? (
+              'Signing in...'
+            ) : (
+              'Login'
+            )}
+          </button>
+        </form>
+
+        {/* Sign Up Link */}
+        <div style={{
+          textAlign: 'center',
+          marginTop: '24px',
+          paddingTop: '24px',
+          borderTop: '1px solid #e5e7eb'
+        }}>
+          <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 4px 0' }}>
+            Don't have an account?
+          </p>
+          <a href="/authentication/signup" style={{
+            fontSize: '14px',
+            color: 'var(--mc-sidebar-bg)',
+            textDecoration: 'none',
+            fontWeight: '500'
+          }}>
+            Create Account
+          </a>
+        </div>
       </div>
-      <style jsx>{`
-        .auth-wrap { min-height: 100vh; background: #ffffff; display: grid; place-items: center; padding: 24px; }
-        .auth-split { width: 100%; max-width: 980px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 0; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(17,24,39,.06); }
-        .auth-side { background: #0b1220; color: #e5e7eb; padding: 36px; display: grid; align-content: start; gap: 12px; }
-        .auth-side__header { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.08); padding-bottom: 12px; margin-bottom: 12px; }
-        .auth-logo { width: 46px; height: 46px; border-radius: 12px; background: var(--mc-sidebar-bg); color: #fff; font-weight: 800; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.08); }
-        .auth-name { font-weight: 900; letter-spacing: .2px; font-size: 24px; }
-        .auth-card { background: #fff; color: var(--mc-sidebar-bg); padding: 36px; display: grid; align-content: center; gap: 10px; }
-        .auth-card h1 { margin: 0; font-size: 24px; font-weight: 800; }
-        .auth-sub { margin: 0 0 10px; color: #6b7280; font-size: 13px; }
-        form { display: grid; gap: 8px; }
-        label { font-size: 12px; color: #374151; font-weight: 600; }
-        input { height: 44px; border-radius: 12px; border: 1px solid #d1d5db; padding: 0 14px; outline: none; transition: box-shadow .2s, border-color .2s; }
-        input:focus { border-color: var(--mc-sidebar-bg); box-shadow: 0 0 0 3px rgba(17,24,39,0.1); }
-        button { height: 44px; border-radius: 12px; background: var(--mc-sidebar-bg); color: #fff; border: 1px solid var(--mc-sidebar-bg); font-weight: 800; cursor: pointer; }
-        button:disabled { opacity: .7; cursor: not-allowed; }
-        .auth-alert { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; border-radius: 12px; padding: 12px; font-size: 14px; }
-        .auth-inline { display: flex; justify-content: flex-start; margin: 2px 0 8px; }
-        .auth-link { color: var(--mc-sidebar-bg-hover); text-decoration: none; font-size: 13px; font-weight: 600; }
-        .auth-link:hover { text-decoration: underline; }
-        .auth-actions { margin-top: 8px; display: flex; justify-content: flex-end; gap: 8px; }
-        .ghost { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #e5e7eb; color: var(--mc-sidebar-bg); text-decoration: none; font-weight: 700; }
-        .ghost:hover { background: #f9fafb; }
-        @media (max-width: 900px) { .auth-split { grid-template-columns: 1fr; } .auth-side { display: none; } }
-      `}</style>
     </div>
   );
 }
-
-
