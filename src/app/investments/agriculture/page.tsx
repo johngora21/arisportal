@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Leaf, Plus, Eye, MapPin, Wheat, TrendingUp, TreePine } from 'lucide-react';
+import { Leaf, Plus, Eye, MapPin, Wheat, TrendingUp, TreePine, DollarSign, Target, Award } from 'lucide-react';
 import { AgricultureProject } from './models';
 import InvestmentIcon from '@/components/icons/InvestmentIcon';
 import CropProjectsTab from './components/CropProjectsTab';
@@ -316,37 +316,14 @@ export default function AgriculturePage() {
           e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
         }}
         >
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#3b82f6', marginBottom: '8px' }}>
-            TSh 58,000,000
-          </div>
-          <div style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
-            Total Invested
-          </div>
-        </div>
-
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '20px',
-          padding: '24px',
-          border: '1px solid #e5e7eb',
-          textAlign: 'center',
-          transition: 'all 0.3s ease',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = '0 4px 12px 0 rgba(0, 0, 0, 0.15)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
-        }}
-        >
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#10b981', marginBottom: '8px' }}>
-            TSh 11,380,000
-          </div>
-          <div style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
-            Expected Returns
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <div style={{ padding: '8px', backgroundColor: 'transparent', borderRadius: '20px', color: '#3b82f6' }}>
+              <DollarSign size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: '14px', color: '#6b7280' }}>Total Invested</div>
+              <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>TSh 58,000,000</div>
+            </div>
           </div>
         </div>
 
@@ -368,11 +345,14 @@ export default function AgriculturePage() {
           e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
         }}
         >
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#f59e0b', marginBottom: '8px' }}>
-            TSh 1,950,000
-          </div>
-          <div style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
-            Actual Returns
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <div style={{ padding: '8px', backgroundColor: 'transparent', borderRadius: '20px', color: '#10b981' }}>
+              <Target size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: '14px', color: '#6b7280' }}>Expected Returns</div>
+              <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>TSh 11,380,000</div>
+            </div>
           </div>
         </div>
 
@@ -394,11 +374,43 @@ export default function AgriculturePage() {
           e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
         }}
         >
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#8b5cf6', marginBottom: '8px' }}>
-            3.4%
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <div style={{ padding: '8px', backgroundColor: 'transparent', borderRadius: '20px', color: '#f59e0b' }}>
+              <TrendingUp size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: '14px', color: '#6b7280' }}>Actual Returns</div>
+              <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>TSh 1,950,000</div>
+            </div>
           </div>
-          <div style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
-            Average ROI
+        </div>
+
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '20px',
+          padding: '24px',
+          border: '1px solid #e5e7eb',
+          textAlign: 'center',
+          transition: 'all 0.3s ease',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 4px 12px 0 rgba(0, 0, 0, 0.15)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
+        }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <div style={{ padding: '8px', backgroundColor: 'transparent', borderRadius: '20px', color: '#8b5cf6' }}>
+              <Award size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: '14px', color: '#6b7280' }}>Average ROI</div>
+              <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>3.4%</div>
+            </div>
           </div>
         </div>
       </div>
