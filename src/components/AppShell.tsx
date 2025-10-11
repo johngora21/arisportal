@@ -42,6 +42,7 @@ import {
 import { Database } from 'lucide-react';
 import { FaUserTie, FaSignOutAlt } from 'react-icons/fa';
 import { useRouter, usePathname } from 'next/navigation';
+import InvestmentIcon from './icons/InvestmentIcon';
 
 type CurrentUser = { id: number; email: string; full_name: string; role: 'admin'|'mentor'|'investor'|'entrepreneur' } | null;
 
@@ -105,12 +106,10 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         id: 'investments', 
         label: 'Investments', 
         href: '/investments', 
-        icon: <TrendingUp size={20} />,
+        icon: <InvestmentIcon size={20} />,
         subItems: [
-          { id: 'investments-real-estates', label: 'Real Estates', href: '/investments/real-estates', icon: <Landmark size={16} /> },
-          { id: 'investments-agriculture', label: 'Agriculture', href: '/investments/agriculture', icon: <Trees size={16} /> },
-          { id: 'investments-logistics', label: 'Logistics', href: '/investments/logistics', icon: <Truck size={16} /> },
-          { id: 'investments-energy', label: 'Energy', href: '/investments/energy', icon: <Zap size={16} /> }
+          { id: 'investments-infrastructure', label: 'Infrastructure', href: '/investments/infrastructure', icon: <Landmark size={16} /> },
+          { id: 'investments-agriculture', label: 'Agriculture', href: '/investments/agriculture', icon: <Trees size={16} /> }
         ]
       },
       // { 
@@ -157,7 +156,16 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         ]
       },
       { id: 'real-estates', label: 'Real Estates', href: '/real-estates', icon: <Landmark size={20} /> },
-      { id: 'settings', label: 'Settings', href: '/settings', icon: <Settings size={20} /> },
+      { 
+        id: 'settings', 
+        label: 'Settings', 
+        href: '/settings', 
+        icon: <Settings size={20} />,
+        subItems: [
+          { id: 'settings-configuration', label: 'Configuration', href: '/settings', icon: <Settings size={16} /> },
+          { id: 'settings-apis', label: 'APIs', href: '/settings/apis', icon: <Key size={16} /> }
+        ]
+      },
     ];
     return [{ id: 'main', items: base }];
   }, []);
@@ -193,16 +201,24 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       header={{
         actions: (
           <>
+            {/* SMS Credits Display */}
+            <div style={{
+              fontSize: '14px',
+              fontWeight: '700',
+              color: '#1f2937'
+            }}>
+              SMS Credits: <span style={{ color: '#10b981' }}>1,250</span>
+            </div>
             <button className="mc-icon-btn" aria-label="Chats" onClick={() => router.push('/communications')}>
               <MessageSquare size={18} />
             </button>
             <button className="mc-icon-btn" aria-label="Notifications">
               <Bell size={18} />
             </button>
-            <div className="mc-userchip">
+            <div className="mc-userchip" onClick={() => router.push('/profile')} style={{ cursor: 'pointer' }}>
               <div className="mc-userinfo">
                 <span className="mc-username">{user?.full_name || 'Guest'}</span>
-                <span className="mc-role">{user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ''}</span>
+                <span className="mc-role">{user?.business_name || 'Business Name'}</span>
               </div>
               <span className="mc-avatar">EC</span>
             </div>

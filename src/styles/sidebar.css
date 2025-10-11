@@ -124,15 +124,15 @@ body { font-family: 'Poppins', sans-serif; }
 }
 .mc-userinfo { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
 .mc-avatar {
-  width: 32px;
-  height: 32px;
+  width: 48px;
+  height: 48px;
   border-radius: 999px;
   background: #e2e8f0;
   color: var(--mc-sidebar-bg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
 }
 .mc-username { font-size: 14px; font-weight: 500; color: var(--mc-sidebar-bg); margin-bottom: 2px; }
