@@ -593,7 +593,7 @@ export default function AddTenantModal({
                 alignItems: 'center',
                 gap: '8px',
                 padding: '12px 24px',
-                backgroundColor: 'var(--mc-sidebar-bg)',
+                backgroundColor: 'var(--mc-sidebar-bg-hover)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '20px',

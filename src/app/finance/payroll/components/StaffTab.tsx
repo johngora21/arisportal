@@ -963,7 +963,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
                 transition: 'background-color 0.2s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';

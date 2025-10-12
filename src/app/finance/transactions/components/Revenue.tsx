@@ -20,7 +20,7 @@ interface RevenueProps {
   // Add any props you need for the revenue component
 }
 
-export default function Revenue({}: RevenueProps) {
+function Revenue({}: RevenueProps) {
   const [selectedPeriod, setSelectedPeriod] = useState('current_month');
   const [selectedMetric, setSelectedMetric] = useState('revenue');
 
@@ -453,3 +453,5 @@ export default function Revenue({}: RevenueProps) {
     </div>
   );
 }
+
+export default Revenue;

@@ -162,7 +162,7 @@ export function SalesModule() {
               formRef.gender = '';
               formRef.ageRange = '';
             }}
-            style={{ padding: '10px 16px', backgroundColor: 'var(--mc-sidebar-bg)', color: 'white', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}
+            style={{ padding: '10px 16px', backgroundColor: 'var(--mc-sidebar-bg-hover)', color: 'white', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}
           >
             Save Sale
           </button>

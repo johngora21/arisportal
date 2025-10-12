@@ -321,7 +321,7 @@ export default function InvestmentProjectDetailsModal({ isOpen, onClose, project
           <div style={{ textAlign: 'right' }}>
             <button style={{
               padding: '12px 32px',
-              backgroundColor: 'var(--mc-sidebar-bg)',
+              backgroundColor: 'var(--mc-sidebar-bg-hover)',
               color: 'white',
               border: 'none',
               borderRadius: '20px',

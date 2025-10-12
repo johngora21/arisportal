@@ -384,7 +384,7 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
               padding: '12px 24px',
               borderRadius: '20px',
               border: 'none',
-              backgroundColor: 'var(--mc-sidebar-bg)',
+              backgroundColor: 'var(--mc-sidebar-bg-hover)',
               color: 'white',
               fontSize: '14px',
               fontWeight: '500',

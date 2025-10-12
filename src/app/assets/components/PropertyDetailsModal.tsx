@@ -141,7 +141,7 @@ export default function PropertyDetailsModal({
                 onClick={() => onTabChange(tab.id)}
                 style={{
                   padding: '12px 8px',
-                  backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
+                  backgroundColor: 'var(--mc-sidebar-bg-hover)' : 'transparent',
                   color: activeTab === tab.id ? 'white' : '#6b7280',
                   border: 'none',
                   borderRadius: '20px',
@@ -347,7 +347,7 @@ export default function PropertyDetailsModal({
                       alignItems: 'center',
                       gap: '8px',
                       padding: '8px 16px',
-                      backgroundColor: 'var(--mc-sidebar-bg)',
+                      backgroundColor: 'var(--mc-sidebar-bg-hover)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '20px',
@@ -439,7 +439,7 @@ export default function PropertyDetailsModal({
                         style={{
                           flex: 1,
                           padding: '8px 12px',
-                          backgroundColor: 'var(--mc-sidebar-bg)',
+                          backgroundColor: 'var(--mc-sidebar-bg-hover)',
                           color: 'white',
                           border: 'none',
                           borderRadius: '20px',

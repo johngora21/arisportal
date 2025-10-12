@@ -27,7 +27,8 @@ import {
   Instagram,
   Linkedin,
   Youtube,
-  Music
+  Music,
+  Megaphone
 } from 'lucide-react';
 
 interface Campaign {
@@ -1105,7 +1106,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 style={{
                   flex: 1,
                   height: '4px',
-                  backgroundColor: step.id <= currentStep ? 'var(--mc-sidebar-bg)' : '#e5e7eb',
+                  backgroundColor: step.id <= currentStep ? 'var(--mc-sidebar-bg-hover)' : '#e5e7eb',
                   borderRadius: '2px'
                 }}
               />
@@ -1162,7 +1163,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                   padding: '8px 16px',
                   border: 'none',
                   borderRadius: '20px',
-                  backgroundColor: 'var(--mc-sidebar-bg)',
+                  backgroundColor: 'var(--mc-sidebar-bg-hover)',
                   color: 'white',
                   cursor: 'pointer'
                 }}
@@ -1176,7 +1177,7 @@ const CreateCampaignModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                   padding: '8px 16px',
                   border: 'none',
                   borderRadius: '20px',
-                  backgroundColor: 'var(--mc-sidebar-bg)',
+                  backgroundColor: 'var(--mc-sidebar-bg-hover)',
                   color: 'white',
                   cursor: 'pointer'
                 }}

@@ -287,7 +287,7 @@ export default function LeaseManagementTab({}: LeaseManagementTabProps) {
             </div>
             <button style={{
               padding: '8px 16px',
-              backgroundColor: 'var(--mc-sidebar-bg)',
+              backgroundColor: 'var(--mc-sidebar-bg-hover)',
               color: 'white',
               border: 'none',
               borderRadius: '20px',

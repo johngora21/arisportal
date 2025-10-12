@@ -32,7 +32,7 @@ interface AccountingProps {
   // Add any props you need for the accounting component
 }
 
-export default function Accounting({}: AccountingProps) {
+function Accounting({}: AccountingProps) {
   const [selectedPeriod, setSelectedPeriod] = useState('current_month');
   const [statementType, setStatementType] = useState('income_statement');
 
@@ -427,3 +427,5 @@ export default function Accounting({}: AccountingProps) {
     </div>
   );
 }
+
+export default Accounting;

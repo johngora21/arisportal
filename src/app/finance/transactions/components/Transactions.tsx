@@ -35,7 +35,7 @@ interface TransactionsProps {
   // Add any props you need for the transactions component
 }
 
-export default function Transactions({}: TransactionsProps) {
+function Transactions({}: TransactionsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -511,7 +511,7 @@ export default function Transactions({}: TransactionsProps) {
               padding: '8px 12px',
               border: '1px solid #d1d5db',
               borderRadius: '20px',
-              backgroundColor: 'var(--mc-sidebar-bg)',
+              backgroundColor: 'var(--mc-sidebar-bg-hover)',
               color: 'white',
               fontSize: '14px',
               cursor: 'pointer'
@@ -535,3 +535,5 @@ export default function Transactions({}: TransactionsProps) {
     </div>
   );
 }
+
+export default Transactions;

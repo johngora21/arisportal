@@ -361,7 +361,7 @@ export function BulkOrdersModule() {
       <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
         <button style={{
           padding: '12px 24px',
-          backgroundColor: 'var(--mc-sidebar-bg)',
+          backgroundColor: 'var(--mc-sidebar-bg-hover)',
           color: 'white',
           border: 'none',
           borderRadius: '20px',
@@ -650,7 +650,7 @@ export function BulkOrdersModule() {
                   <span><span style={{ fontWeight: 600, color: '#1f2937' }}>{order.participants.length}</span>&nbsp;people</span>
                 </div>
                 <button style={{
-                  backgroundColor: isClosed ? '#9ca3af' : 'var(--mc-sidebar-bg)',
+                  backgroundColor: 'var(--mc-sidebar-bg-hover)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '20px',
@@ -681,7 +681,7 @@ export function BulkOrdersModule() {
                   if (!isClosed) e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
                 }}
                 onMouseLeave={(e) => {
-                  if (!isClosed) e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+                  if (!isClosed) e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
                 }}
                 >
                   {isClosed ? 'Closed' : 'Join Pool'}
@@ -1040,9 +1040,9 @@ export function BulkOrdersModule() {
                   {joinSuccess && <span style={{ color: '#059669', fontSize: 12 }}>{joinSuccess}</span>}
                 </div>
                 <button
-                  style={{ backgroundColor: 'var(--mc-sidebar-bg)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  style={{ backgroundColor: 'var(--mc-sidebar-bg-hover)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--mc-sidebar-bg-hover)'; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--mc-sidebar-bg)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--mc-sidebar-bg-hover)'; }}
                   onClick={() => {
                     // Open payment modal with selected pool context
                     if (!selectedPool) return;
@@ -1186,9 +1186,9 @@ export function BulkOrdersModule() {
                     handleJoinPool(paymentPool, 1);
                     setShowPaymentModal(false);
                   }}
-                  style={{ backgroundColor: 'var(--mc-sidebar-bg)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 14px', fontWeight: 600, cursor: 'pointer' }}
+                  style={{ backgroundColor: 'var(--mc-sidebar-bg-hover)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 14px', fontWeight: 600, cursor: 'pointer' }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--mc-sidebar-bg-hover)'; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--mc-sidebar-bg)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--mc-sidebar-bg-hover)'; }}
                 >
                   {paymentMethod === 'control' ? 'Confirm Control Number' : 'Pay'}
                 </button>
@@ -1465,7 +1465,7 @@ export function BulkOrdersModule() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
                 <button type="button" onClick={() => setShowCreateModal(false)} style={{ border: '1px solid #e5e7eb', background: '#fff', color: '#374151', borderRadius: 8, padding: '8px 12px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-                <button type="submit" style={{ backgroundColor: 'var(--mc-sidebar-bg)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 14px', fontWeight: 600, cursor: 'pointer' }}>Create Pool</button>
+                <button type="submit" style={{ backgroundColor: 'var(--mc-sidebar-bg-hover)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 14px', fontWeight: 600, cursor: 'pointer' }}>Create Pool</button>
               </div>
             </form>
           </div>

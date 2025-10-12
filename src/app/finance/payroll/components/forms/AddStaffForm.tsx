@@ -10,7 +10,7 @@ interface AddStaffFormProps {
 }
 
 const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches, departments, roles }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<any>({
     // Personal
     firstName: '',
     middleName: '',
@@ -55,10 +55,12 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
     branch: '',
     // Salary
     basicSalary: '',
-    allowances: '',
+    allowances: [],
     bankName: '',
     bankAccount: '',
-    taxId: ''
+    taxId: '',
+    payeEligible: false,
+    sdlEligible: false
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -95,7 +97,7 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev: any) => ({
       ...prev,
       [name]: value
     }));

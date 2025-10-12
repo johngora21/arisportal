@@ -6,14 +6,7 @@ import { Property } from '../types';
 
 // Declare Leaflet types
 declare global {
-  namespace L {
-    interface Map {
-      eachLayer(callback: (layer: any) => void): void;
-    }
-    interface TileLayer {
-      addTo(map: Map): TileLayer;
-    }
-  }
+  var L: any;
 }
 
 interface LandTabProps {
@@ -25,7 +18,7 @@ interface LandTabProps {
   onPropertyClick: (property: Property) => void;
 }
 
-export default function LandTab({ 
+function LandTab({ 
   properties, 
   searchTerm, 
   setSearchTerm, 
@@ -36,8 +29,8 @@ export default function LandTab({
   const [showMapView, setShowMapView] = useState(false);
   const [selectedPropertyForMap, setSelectedPropertyForMap] = useState<Property | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const markerRef = useRef<L.Marker | null>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-TZ', {
       style: 'currency',
@@ -98,7 +91,6 @@ export default function LandTab({
 
     return () => {
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.off();
         mapInstanceRef.current = null;
       }
       markerRef.current = null;
@@ -108,9 +100,9 @@ export default function LandTab({
   const switchMapType = (mapType: string) => {
     if (mapInstanceRef.current) {
       // Remove all existing layers
-      mapInstanceRef.current.eachLayer((layer) => {
-        if (layer instanceof L.TileLayer) {
-          mapInstanceRef.current?.removeLayer(layer);
+      mapInstanceRef.current.eachLayer((layer: any) => {
+        if ((layer as any).options && (layer as any).options.urlTemplate) {
+          (layer as any).remove();
         }
       });
 
@@ -303,7 +295,7 @@ export default function LandTab({
                   gap: '6px'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+                  e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
@@ -479,3 +471,5 @@ export default function LandTab({
     </div>
   );
 }
+
+export default LandTab;

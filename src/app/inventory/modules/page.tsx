@@ -503,7 +503,7 @@ export default function InventoryModulesPage() {
                 transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
                 e.currentTarget.style.color = 'white';
               }}
               onMouseLeave={(e) => {
@@ -515,7 +515,7 @@ export default function InventoryModulesPage() {
               </button>
               
               <button style={{
-                backgroundColor: 'var(--mc-sidebar-bg)',
+                backgroundColor: 'var(--mc-sidebar-bg-hover)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '20px',
@@ -529,7 +529,7 @@ export default function InventoryModulesPage() {
                 e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
               }}
               >
                 Contact Supplier

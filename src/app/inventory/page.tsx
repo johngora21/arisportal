@@ -312,7 +312,7 @@ export default function InventoryPage() {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '12px 24px',
-                backgroundColor: 'var(--mc-sidebar-bg)',
+                backgroundColor: 'var(--mc-sidebar-bg-hover)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '20px',
@@ -833,7 +833,7 @@ export default function InventoryPage() {
                 disabled={formLoading || !newItemForm.name || !newItemForm.sku || !newItemForm.category}
                 style={{
                   padding: '12px 24px',
-                  backgroundColor: 'var(--mc-sidebar-bg)',
+                  backgroundColor: 'var(--mc-sidebar-bg-hover)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '20px',
@@ -951,7 +951,7 @@ export default function InventoryPage() {
                     disabled={categoryLoading || !categoryForm.name.trim()}
                     style={{
                       padding: '12px 24px',
-                      backgroundColor: 'var(--mc-sidebar-bg)',
+                      backgroundColor: 'var(--mc-sidebar-bg-hover)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '20px',
@@ -1208,7 +1208,7 @@ export default function InventoryPage() {
                   onClick={() => setShowOutgoings(false)}
                   style={{
                     padding: '12px 24px',
-                    backgroundColor: 'var(--mc-sidebar-bg)',
+                    backgroundColor: 'var(--mc-sidebar-bg-hover)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '20px',

@@ -271,7 +271,7 @@ const AddBranchForm: React.FC<AddBranchFormProps> = ({ onSave, onCancel }) => {
               padding: '12px 24px',
               borderRadius: '20px',
               border: 'none',
-              backgroundColor: 'var(--mc-sidebar-bg)',
+              backgroundColor: 'var(--mc-sidebar-bg-hover)',
               color: 'white',
               fontSize: '14px',
               fontWeight: '500',

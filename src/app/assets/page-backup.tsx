@@ -491,7 +491,7 @@ export default function AssetsPage() {
                   justifyContent: 'center',
                   gap: '8px',
                   padding: '16px 12px',
-                  backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
+                  backgroundColor: 'var(--mc-sidebar-bg-hover)' : 'transparent',
                   color: activeTab === tab.id ? 'white' : '#6b7280',
                   border: 'none',
                   cursor: 'pointer',
@@ -545,7 +545,7 @@ export default function AssetsPage() {
                   alignItems: 'center',
                   gap: '8px',
                   padding: '12px 24px',
-                  backgroundColor: 'var(--mc-sidebar-bg)',
+                  backgroundColor: 'var(--mc-sidebar-bg-hover)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '20px',
@@ -965,7 +965,7 @@ export default function AssetsPage() {
                   </div>
                   <button style={{
                     padding: '8px 16px',
-                    backgroundColor: 'var(--mc-sidebar-bg)',
+                    backgroundColor: 'var(--mc-sidebar-bg-hover)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '20px',
@@ -1023,7 +1023,7 @@ export default function AssetsPage() {
                   alignItems: 'center',
                   gap: '8px',
                   padding: '12px 24px',
-                  backgroundColor: 'var(--mc-sidebar-bg)',
+                  backgroundColor: 'var(--mc-sidebar-bg-hover)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '20px',
@@ -1737,7 +1737,7 @@ export default function AssetsPage() {
                             alignItems: 'center',
                             gap: '6px',
                             padding: '8px 16px',
-                            backgroundColor: 'var(--mc-sidebar-bg)',
+                            backgroundColor: 'var(--mc-sidebar-bg-hover)',
                             color: 'white',
                             border: 'none',
                             borderRadius: '20px',
@@ -1903,7 +1903,7 @@ export default function AssetsPage() {
                       alignItems: 'center',
                       gap: '8px',
                       padding: '10px 20px',
-                      backgroundColor: 'var(--mc-sidebar-bg)',
+                      backgroundColor: 'var(--mc-sidebar-bg-hover)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '20px',
@@ -2005,7 +2005,7 @@ export default function AssetsPage() {
                     onClick={() => setActivePropertyTab(tab.id)}
                     style={{
                       padding: '12px 8px',
-                      backgroundColor: activePropertyTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
+                      backgroundColor: 'var(--mc-sidebar-bg-hover)' : 'transparent',
                       color: activePropertyTab === tab.id ? 'white' : '#6b7280',
                       border: 'none',
                       borderRadius: '20px',
@@ -2208,7 +2208,7 @@ export default function AssetsPage() {
                       alignItems: 'center',
                       gap: '8px',
                       padding: '8px 16px',
-                      backgroundColor: 'var(--mc-sidebar-bg)',
+                      backgroundColor: 'var(--mc-sidebar-bg-hover)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '20px',
@@ -2293,7 +2293,7 @@ export default function AssetsPage() {
                           <button style={{
                             flex: 1,
                             padding: '8px 12px',
-                            backgroundColor: 'var(--mc-sidebar-bg)',
+                            backgroundColor: 'var(--mc-sidebar-bg-hover)',
                             color: 'white',
                             border: 'none',
                             borderRadius: '20px',
@@ -2631,7 +2631,7 @@ export default function AssetsPage() {
                       }}
                       style={{
                         padding: '6px 12px',
-                        backgroundColor: 'var(--mc-sidebar-bg)',
+                        backgroundColor: 'var(--mc-sidebar-bg-hover)',
                         color: 'white',
                         border: 'none',
                         borderRadius: '20px',
@@ -2668,7 +2668,7 @@ export default function AssetsPage() {
                       }}
                       style={{
                         padding: '6px 12px',
-                        backgroundColor: 'var(--mc-sidebar-bg)',
+                        backgroundColor: 'var(--mc-sidebar-bg-hover)',
                         color: 'white',
                         border: 'none',
                         borderRadius: '20px',
@@ -3498,7 +3498,7 @@ export default function AssetsPage() {
                     alignItems: 'center',
                     gap: '8px',
                     padding: '12px 24px',
-                    backgroundColor: 'var(--mc-sidebar-bg)',
+                    backgroundColor: 'var(--mc-sidebar-bg-hover)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '20px',

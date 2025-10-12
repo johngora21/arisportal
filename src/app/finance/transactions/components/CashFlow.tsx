@@ -20,7 +20,7 @@ interface CashFlowProps {
   // Add any props you need for the cash flow component
 }
 
-export default function CashFlow({}: CashFlowProps) {
+function CashFlow({}: CashFlowProps) {
   const [selectedPeriod, setSelectedPeriod] = useState('current_month');
 
   const formatPrice = (value: number) => new Intl.NumberFormat('en-TZ', {
@@ -325,3 +325,5 @@ export default function CashFlow({}: CashFlowProps) {
     </div>
   );
 }
+
+export default CashFlow;

@@ -373,7 +373,7 @@ export default function AssetsPage() {
                 style={{
                   flex: 1,
                   padding: '16px 20px',
-                  backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
+                  backgroundColor: 'var(--mc-sidebar-bg-hover)' : 'transparent',
                   color: activeTab === tab.id ? 'white' : '#6b7280',
                   border: 'none',
                   fontSize: '14px',

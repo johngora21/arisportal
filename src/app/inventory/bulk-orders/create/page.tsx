@@ -298,7 +298,7 @@ export default function CreatePoolPage() {
               type="submit"
               style={{
                 padding: '12px 24px',
-                backgroundColor: 'var(--mc-sidebar-bg)',
+                backgroundColor: 'var(--mc-sidebar-bg-hover)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '20px',
@@ -311,7 +311,7 @@ export default function CreatePoolPage() {
                 gap: '8px'
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)'}
             >
               <Plus size={16} />
               Create Pool

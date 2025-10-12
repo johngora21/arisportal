@@ -12,7 +12,7 @@ interface InvestmentProjectsTabProps {
   onProjectClick?: (project: InvestmentProject) => void;
 }
 
-export default function InvestmentProjectsTab({ projects = [], onProjectClick }: InvestmentProjectsTabProps) {
+function InvestmentProjectsTab({ projects = [], onProjectClick }: InvestmentProjectsTabProps) {
   const [showMapView, setShowMapView] = useState(false);
   const [selectedProjectForMap, setSelectedProjectForMap] = useState<InvestmentProject | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
@@ -89,7 +89,7 @@ export default function InvestmentProjectsTab({ projects = [], onProjectClick }:
     if (mapInstanceRef.current) {
       // Remove all existing layers
       mapInstanceRef.current.eachLayer((layer: any) => {
-        if (layer instanceof L.TileLayer) {
+        if ((layer as any).options && (layer as any).options.urlTemplate) {
           mapInstanceRef.current?.removeLayer(layer);
         }
       });
@@ -284,7 +284,7 @@ export default function InvestmentProjectsTab({ projects = [], onProjectClick }:
                     gap: '6px'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+                    e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
@@ -443,3 +443,5 @@ export default function InvestmentProjectsTab({ projects = [], onProjectClick }:
     </div>
   );
 }
+
+export default InvestmentProjectsTab;

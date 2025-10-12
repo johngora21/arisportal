@@ -40,6 +40,8 @@ import {
   Zap,
   ChevronDown
 } from 'lucide-react';
+import { PayrollIcon } from './icons/PayrollIcon';
+import { InvoicingIcon } from './icons/InvoicingIcon';
 import { Database } from 'lucide-react';
 import { FaUserTie, FaSignOutAlt } from 'react-icons/fa';
 import { useRouter, usePathname } from 'next/navigation';
@@ -131,12 +133,11 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         href: '/finance', 
         icon: <Wallet size={20} />,
         subItems: [
-          { id: 'finance-transactions', label: 'Transactions', href: '/finance/transactions', icon: <CreditCard size={16} /> },
+          { id: 'finance-transactions', label: 'Accounting', href: '/finance/transactions', icon: <CreditCard size={16} /> },
           { id: 'finance-wallet', label: 'My Wallet', href: '/finance/wallets', icon: <Wallet size={16} /> },
-          { id: 'finance-payroll', label: 'Payroll', href: '/finance/payroll', icon: <Receipt size={16} /> },
-          { id: 'finance-invoicing', label: 'Invoicing', href: '/finance/invoicing', icon: <FileText size={16} /> },
+          { id: 'finance-payroll', label: 'Payroll', href: '/finance/payroll', icon: <PayrollIcon size={16} color="currentColor" /> },
+          { id: 'finance-invoicing', label: 'Invoicing', href: '/finance/invoicing', icon: <InvoicingIcon size={16} color="currentColor" /> },
           { id: 'finance-escrow', label: 'Escrow', href: '/finance/escrow', icon: <Shield size={16} /> },
-          { id: 'finance-insurance', label: 'Insurance', href: '/finance/insurance', icon: <ShieldCheck size={16} /> },
           { id: 'finance-loans', label: 'Loans', href: '/finance/loans', icon: <Banknote size={16} /> }
         ]
       },

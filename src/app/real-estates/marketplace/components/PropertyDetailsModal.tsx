@@ -518,7 +518,7 @@ export default function PropertyDetailsModal({ isOpen, onClose, property, isSelf
                   </button>
                   <button style={{
                     padding: '12px 24px',
-                    backgroundColor: 'var(--mc-sidebar-bg)',
+                    backgroundColor: 'var(--mc-sidebar-bg-hover)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '20px',
@@ -532,7 +532,7 @@ export default function PropertyDetailsModal({ isOpen, onClose, property, isSelf
               ) : (
                 <button style={{
                   padding: '12px 32px',
-                  backgroundColor: 'var(--mc-sidebar-bg)',
+                  backgroundColor: 'var(--mc-sidebar-bg-hover)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '20px',

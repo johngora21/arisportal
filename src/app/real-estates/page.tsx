@@ -1,16 +1,14 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Building, Plus, Eye, MapPin, Home, List, TrendingUp, Warehouse } from 'lucide-react';
+import { Building, Plus, Eye, MapPin, Home, List, Warehouse } from 'lucide-react';
 import { Property, InvestmentProject, UserProperty } from './marketplace/models';
 import LandTab from './marketplace/components/LandTab';
 import HouseTab from './marketplace/components/HouseTab';
-import InvestmentProjectsTab from './marketplace/components/InvestmentProjectsTab';
 import MyListingsTab from './marketplace/components/MyListingsTab';
 import MyPropertiesTab from './marketplace/components/MyPropertiesTab';
 import ListPropertyModal from './marketplace/components/ListPropertyModal';
 import PropertyDetailsModal from './marketplace/components/PropertyDetailsModal';
-import InvestmentProjectDetailsModal from './marketplace/components/InvestmentProjectDetailsModal';
 import { landProperties, buildingProperties, userProperties } from './marketplace/data/mockData';
 
 export default function RealEstatesPage() {
@@ -246,8 +244,6 @@ export default function RealEstatesPage() {
             onPropertyClick={handlePropertyClick}
           />
         );
-      case 'investment-projects':
-        return <InvestmentProjectsTab projects={investmentProjects} onProjectClick={handleProjectClick} />;
       case 'my-listings':
         return (
           <MyListingsTab
@@ -291,7 +287,7 @@ export default function RealEstatesPage() {
         <button
           onClick={() => setShowListPropertyModal(true)}
           style={{
-            backgroundColor: 'var(--mc-sidebar-bg)',
+            backgroundColor: 'var(--mc-sidebar-bg-hover)',
             color: 'white',
             border: 'none',
               borderRadius: '20px',
@@ -308,7 +304,7 @@ export default function RealEstatesPage() {
             e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+            e.currentTarget.style.backgroundColor; 'var(--mc-sidebar-bg-hover)';
           }}
         >
           <Plus size={16} />
@@ -318,47 +314,49 @@ export default function RealEstatesPage() {
 
       {/* Tab Navigation */}
       <div style={{
-        backgroundColor: 'white',
-        borderRadius: '20px',
-        border: '1px solid #e5e7eb',
-        overflow: 'hidden',
+        display: 'flex',
+        gap: '16px',
         marginBottom: '32px'
       }}>
-        <div style={{
-          display: 'flex',
-          borderBottom: '1px solid #e5e7eb'
-        }}>
-          {[
-            { id: 'land', label: 'Plots', icon: <MapPin size={16} /> },
-            { id: 'buildings', label: 'Structures', icon: <Warehouse size={16} /> },
-            { id: 'investment-projects', label: 'Investment Projects', icon: <TrendingUp size={16} /> },
-            { id: 'my-listings', label: 'My Listings', icon: <List size={16} /> },
-            { id: 'my-properties', label: 'My Properties', icon: <Building size={16} /> }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              style={{
-                flex: 1,
-                padding: '16px 20px',
-                backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'transparent',
-                color: activeTab === tab.id ? 'white' : '#6b7280',
-                border: 'none',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {[
+          { id: 'land', label: 'Plots', icon: <MapPin size={16} /> },
+          { id: 'buildings', label: 'Structures', icon: <Warehouse size={16} /> },
+          { id: 'my-listings', label: 'My Listings', icon: <List size={16} /> },
+          { id: 'my-properties', label: 'My Properties', icon: <Building size={16} /> }
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'white',
+              color: activeTab === tab.id ? 'white' : '#6b7280',
+              border: '1px solid #e5e7eb',
+              borderRadius: '20px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== tab.id) {
+                e.currentTarget.style.backgroundColor = '#f9fafb';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== tab.id) {
+                e.currentTarget.style.backgroundColor = 'white';
+              }
+            }}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* Tab Content */}
@@ -378,12 +376,7 @@ export default function RealEstatesPage() {
         isSelfOwned={isSelfOwnedProperty}
       />
 
-      {/* Investment Project Details Modal */}
-      <InvestmentProjectDetailsModal
-        isOpen={showInvestmentProjectModal}
-        onClose={() => setShowInvestmentProjectModal(false)}
-        project={selectedProject}
-      />
+    
     </div>
   );
 }

@@ -19,7 +19,7 @@ interface DashboardProps {
   // Add any props you need for the dashboard
 }
 
-export default function Dashboard({}: DashboardProps) {
+function Dashboard({}: DashboardProps) {
   const formatPrice = (value: number) => new Intl.NumberFormat('en-TZ', {
     style: 'currency', 
     currency: 'TZS', 
@@ -330,3 +330,5 @@ export default function Dashboard({}: DashboardProps) {
     </div>
   );
 }
+
+export default Dashboard;
