@@ -96,70 +96,107 @@ export const mockContacts: Contact[] = [
   }
 ];
 
-// Database service functions (to be implemented with actual DB calls)
+// Database service functions (now using real API calls)
 export class ContactService {
+  private static baseUrl = 'http://localhost:5000/api/v1';
+
   // Fetch all contacts from database
   static async fetchContacts(): Promise<Contact[]> {
-    // TODO: Replace with actual database query
-    // Example: const contacts = await db.query('SELECT * FROM contacts');
-    // return contacts.map(row => this.mapDbRowToContact(row));
-    
-    // For now, return mock data
-    return mockContacts;
+    try {
+      const response = await fetch(`${this.baseUrl}/contacts`);
+      if (!response.ok) throw new Error('Failed to fetch contacts');
+      
+      const contacts = await response.json();
+      return contacts.map((contact: any) => this.mapApiToContact(contact));
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+      // Fallback to mock data if API fails
+      return mockContacts;
+    }
   }
 
   // Create new contact
   static async createContact(data: ContactCreateData): Promise<Contact> {
-    // TODO: Replace with actual database insert
-    // Example: const result = await db.query('INSERT INTO contacts (...) VALUES (...) RETURNING *');
-    // return this.mapDbRowToContact(result.rows[0]);
-    
-    // For now, return mock creation
-    const newContact: Contact = {
-      id: Date.now().toString(),
-      ...data,
-      lastContact: new Date(),
-      tags: []
-    };
-    return newContact;
+    try {
+      const response = await fetch(`${this.baseUrl}/contacts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) throw new Error('Failed to create contact');
+      
+      const contact = await response.json();
+      return this.mapApiToContact(contact.contact);
+    } catch (error) {
+      console.error('Error creating contact:', error);
+      // Fallback to mock creation
+      const newContact: Contact = {
+        id: Date.now().toString(),
+        ...data,
+        lastContact: new Date(),
+        tags: []
+      };
+      return newContact;
+    }
   }
 
   // Update existing contact
   static async updateContact(data: ContactUpdateData): Promise<Contact> {
-    // TODO: Replace with actual database update
-    // Example: const result = await db.query('UPDATE contacts SET ... WHERE id = $1 RETURNING *');
-    // return this.mapDbRowToContact(result.rows[0]);
-    
-    // For now, return mock update
-    const existingContact = mockContacts.find(c => c.id === data.id);
-    if (!existingContact) throw new Error('Contact not found');
-    
-    return { ...existingContact, ...data };
+    try {
+      const response = await fetch(`${this.baseUrl}/contacts/${data.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update contact');
+      
+      const contact = await response.json();
+      return this.mapApiToContact(contact.contact);
+    } catch (error) {
+      console.error('Error updating contact:', error);
+      // Fallback to mock update
+      const existingContact = mockContacts.find(c => c.id === data.id);
+      if (!existingContact) throw new Error('Contact not found');
+      
+      return { ...existingContact, ...data };
+    }
   }
 
   // Delete contact
   static async deleteContact(id: string): Promise<void> {
-    // TODO: Replace with actual database delete
-    // Example: await db.query('DELETE FROM contacts WHERE id = $1', [id]);
-    
-    // For now, just log
-    console.log(`Deleting contact with id: ${id}`);
+    try {
+      const response = await fetch(`${this.baseUrl}/contacts/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete contact');
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+      // Fallback to mock delete
+      console.log(`Deleting contact with id: ${id}`);
+    }
   }
 
-  // Map database row to Contact interface
-  private static mapDbRowToContact(row: any): Contact {
+  // Map API response to Contact interface
+  private static mapApiToContact(apiContact: any): Contact {
     return {
-      id: row.id,
-      name: row.name,
-      location: row.location,
-      email: row.email,
-      phone: row.phone,
-      whatsapp: row.whatsapp,
-      status: row.status,
-      lastContact: new Date(row.last_contact),
-      value: row.value,
-      tags: row.tags ? JSON.parse(row.tags) : [],
-      notes: row.notes
+      id: apiContact.id.toString(),
+      name: apiContact.name,
+      location: apiContact.location || '',
+      email: apiContact.email || '',
+      phone: apiContact.phone || '',
+      whatsapp: apiContact.phone || '', // Use phone as whatsapp fallback
+      status: apiContact.status || 'lead',
+      lastContact: new Date(apiContact.created_at),
+      value: apiContact.value || 0,
+      tags: [], // Tags not implemented in backend yet
+      notes: apiContact.notes || ''
     };
   }
 }

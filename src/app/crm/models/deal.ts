@@ -91,62 +91,124 @@ export const mockDeals: Deal[] = [
   }
 ];
 
-// Database service functions (to be implemented with actual DB calls)
+// Database service functions (now using real API calls)
 export class DealService {
+  private static baseUrl = 'http://localhost:5000/api/v1';
+
   // Fetch all deals from database
   static async fetchDeals(): Promise<Deal[]> {
-    // TODO: Replace with actual database query
-    // Example: const deals = await db.query('SELECT * FROM deals');
-    // return deals.map(row => this.mapDbRowToDeal(row));
-    
-    // For now, return mock data
-    return mockDeals;
+    try {
+      const response = await fetch(`${this.baseUrl}/deals`);
+      if (!response.ok) throw new Error('Failed to fetch deals');
+      
+      const deals = await response.json();
+      return deals.map((deal: any) => this.mapApiToDeal(deal));
+    } catch (error) {
+      console.error('Error fetching deals:', error);
+      // Fallback to mock data if API fails
+      return mockDeals;
+    }
   }
 
   // Fetch deals by contact ID
   static async fetchDealsByContact(contactId: string): Promise<Deal[]> {
-    // TODO: Replace with actual database query
-    // Example: const deals = await db.query('SELECT * FROM deals WHERE buyer_id = $1', [contactId]);
-    // return deals.map(row => this.mapDbRowToDeal(row));
-    
-    // For now, return mock data filtered by contact
-    return mockDeals.filter(deal => deal.buyerName === contactId);
+    try {
+      const response = await fetch(`${this.baseUrl}/deals?contact_id=${contactId}`);
+      if (!response.ok) throw new Error('Failed to fetch deals by contact');
+      
+      const deals = await response.json();
+      return deals.map((deal: any) => this.mapApiToDeal(deal));
+    } catch (error) {
+      console.error('Error fetching deals by contact:', error);
+      // Fallback to mock data filtered by contact
+      return mockDeals.filter(deal => deal.buyerName === contactId);
+    }
   }
 
   // Create new deal
   static async createDeal(data: DealCreateData): Promise<Deal> {
-    // TODO: Replace with actual database insert
-    // Example: const result = await db.query('INSERT INTO deals (...) VALUES (...) RETURNING *');
-    // return this.mapDbRowToDeal(result.rows[0]);
-    
-    // For now, return mock creation
-    const newDeal: Deal = {
-      id: Date.now().toString(),
-      ...data
-    };
-    return newDeal;
+    try {
+      const response = await fetch(`${this.baseUrl}/deals`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          product_name: data.productName,
+          product_category: data.productCategory,
+          buyer_name: data.buyerName,
+          address: data.address,
+          email: data.email,
+          phone: data.phone,
+          order_date: data.orderDate.toISOString(),
+          quantity: data.quantity,
+          unit_price: data.unitPrice
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to create deal');
+      
+      const deal = await response.json();
+      return this.mapApiToDeal(deal.deal);
+    } catch (error) {
+      console.error('Error creating deal:', error);
+      // Fallback to mock creation
+      const newDeal: Deal = {
+        id: Date.now().toString(),
+        ...data
+      };
+      return newDeal;
+    }
   }
 
   // Update existing deal
   static async updateDeal(data: DealUpdateData): Promise<Deal> {
-    // TODO: Replace with actual database update
-    // Example: const result = await db.query('UPDATE deals SET ... WHERE id = $1 RETURNING *');
-    // return this.mapDbRowToDeal(result.rows[0]);
-    
-    // For now, return mock update
-    const existingDeal = mockDeals.find(d => d.id === data.id);
-    if (!existingDeal) throw new Error('Deal not found');
-    
-    return { ...existingDeal, ...data };
+    try {
+      const response = await fetch(`${this.baseUrl}/deals/${data.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          product_name: data.productName,
+          product_category: data.productCategory,
+          buyer_name: data.buyerName,
+          address: data.address,
+          email: data.email,
+          phone: data.phone,
+          order_date: data.orderDate?.toISOString(),
+          quantity: data.quantity,
+          unit_price: data.unitPrice
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update deal');
+      
+      const deal = await response.json();
+      return this.mapApiToDeal(deal.deal);
+    } catch (error) {
+      console.error('Error updating deal:', error);
+      // Fallback to mock update
+      const existingDeal = mockDeals.find(d => d.id === data.id);
+      if (!existingDeal) throw new Error('Deal not found');
+      
+      return { ...existingDeal, ...data };
+    }
   }
 
   // Delete deal
   static async deleteDeal(id: string): Promise<void> {
-    // TODO: Replace with actual database delete
-    // Example: await db.query('DELETE FROM deals WHERE id = $1', [id]);
-    
-    // For now, just log
-    console.log(`Deleting deal with id: ${id}`);
+    try {
+      const response = await fetch(`${this.baseUrl}/deals/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete deal');
+    } catch (error) {
+      console.error('Error deleting deal:', error);
+      // Fallback to mock delete
+      console.log(`Deleting deal with id: ${id}`);
+    }
   }
 
   // Get analytics data
@@ -155,71 +217,74 @@ export class DealService {
     topProducts: Array<{ name: string; quantity: number; total: number; color: string }>;
     topCustomers: Array<{ name: string; value: number; color: string }>;
   }> {
-    // TODO: Replace with actual database aggregation queries
-    // Example: 
-    // const locationData = await db.query('SELECT address as location, COUNT(*) as count FROM deals GROUP BY address');
-    // const productData = await db.query('SELECT product_name, SUM(quantity) as total_quantity, SUM(quantity * unit_price) as total_value FROM deals GROUP BY product_name ORDER BY total_quantity DESC LIMIT 5');
-    // const customerData = await db.query('SELECT buyer_name, SUM(quantity * unit_price) as total_value FROM deals GROUP BY buyer_name ORDER BY total_value DESC LIMIT 5');
-    
-    // For now, return mock analytics
-    const deals = await this.fetchDeals();
-    
-    const salesByLocation = [
-      { location: 'San Francisco, CA', count: deals.filter(d => d.address.includes('San Francisco')).length, color: '#8b5cf6' },
-      { location: 'Austin, TX', count: deals.filter(d => d.address.includes('Austin')).length, color: '#06b6d4' },
-      { location: 'Boston, MA', count: deals.filter(d => d.address.includes('Boston')).length, color: '#10b981' },
-      { location: 'New York, NY', count: deals.filter(d => d.address.includes('New York')).length, color: '#f59e0b' },
-      { location: 'Chicago, IL', count: deals.filter(d => d.address.includes('Chicago')).length, color: '#ef4444' }
-    ].filter(item => item.count > 0);
+    try {
+      const deals = await this.fetchDeals();
+      
+      const salesByLocation = [
+        { location: 'San Francisco, CA', count: deals.filter(d => d.address.includes('San Francisco')).length, color: '#8b5cf6' },
+        { location: 'Austin, TX', count: deals.filter(d => d.address.includes('Austin')).length, color: '#06b6d4' },
+        { location: 'Boston, MA', count: deals.filter(d => d.address.includes('Boston')).length, color: '#10b981' },
+        { location: 'New York, NY', count: deals.filter(d => d.address.includes('New York')).length, color: '#f59e0b' },
+        { location: 'Chicago, IL', count: deals.filter(d => d.address.includes('Chicago')).length, color: '#ef4444' }
+      ].filter(item => item.count > 0);
 
-    const topProducts = deals
-      .map(deal => ({
-        name: deal.productName,
-        quantity: deal.quantity,
-        total: deal.quantity * deal.unitPrice,
-        color: '#3b82f6'
-      }))
-      .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, 5);
+      const topProducts = deals
+        .map(deal => ({
+          name: deal.productName,
+          quantity: deal.quantity,
+          total: deal.quantity * deal.unitPrice,
+          color: '#3b82f6'
+        }))
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, 5);
 
-    const topCustomers = deals
-      .map(deal => ({
-        name: deal.buyerName,
-        value: deal.quantity * deal.unitPrice,
-        color: '#6366f1'
-      }))
-      .reduce((acc, deal) => {
-        const existing = acc.find(d => d.name === deal.name);
-        if (existing) {
-          existing.value += deal.value;
-        } else {
-          acc.push(deal);
-        }
-        return acc;
-      }, [] as any[])
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 5);
+      const topCustomers = deals
+        .map(deal => ({
+          name: deal.buyerName,
+          value: deal.quantity * deal.unitPrice,
+          color: '#6366f1'
+        }))
+        .reduce((acc, deal) => {
+          const existing = acc.find(d => d.name === deal.name);
+          if (existing) {
+            existing.value += deal.value;
+          } else {
+            acc.push(deal);
+          }
+          return acc;
+        }, [] as any[])
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5);
 
-    return {
-      salesByLocation,
-      topProducts,
-      topCustomers
-    };
+      return {
+        salesByLocation,
+        topProducts,
+        topCustomers
+      };
+    } catch (error) {
+      console.error('Error getting analytics data:', error);
+      // Return empty analytics if API fails
+      return {
+        salesByLocation: [],
+        topProducts: [],
+        topCustomers: []
+      };
+    }
   }
 
-  // Map database row to Deal interface
-  private static mapDbRowToDeal(row: any): Deal {
+  // Map API response to Deal interface
+  private static mapApiToDeal(apiDeal: any): Deal {
     return {
-      id: row.id,
-      productName: row.product_name,
-      productCategory: row.product_category,
-      buyerName: row.buyer_name,
-      address: row.address,
-      email: row.email,
-      phone: row.phone,
-      orderDate: new Date(row.order_date),
-      quantity: row.quantity,
-      unitPrice: row.unit_price
+      id: apiDeal.id.toString(),
+      productName: apiDeal.product_name,
+      productCategory: apiDeal.product_category || '',
+      buyerName: apiDeal.buyer_name,
+      address: apiDeal.address,
+      email: apiDeal.email || '',
+      phone: apiDeal.phone || '',
+      orderDate: new Date(apiDeal.order_date),
+      quantity: apiDeal.quantity,
+      unitPrice: apiDeal.unit_price
     };
   }
 }

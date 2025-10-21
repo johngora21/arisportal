@@ -92,17 +92,29 @@ const useDeals = () => {
     loadDeals();
   }, []);
 
-  return { deals, loading };
+  const addDeal = async (dealData: any) => {
+    try {
+      const newDeal = await DealService.createDeal(dealData);
+      setDeals(prev => [...prev, newDeal]);
+      return newDeal;
+    } catch (error) {
+      console.error('Failed to create deal:', error);
+      throw error;
+    }
+  };
+
+  return { deals, loading, addDeal };
 };
 
 export default function CRMPage() {
   const { contacts, loading: contactsLoading, addContact, deleteContact } = useContacts();
-  const { deals, loading: dealsLoading } = useDeals();
+  const { deals, loading: dealsLoading, addDeal } = useDeals();
   const [contactsSearchQuery, setContactsSearchQuery] = useState('');
   const [salesSearchQuery, setSalesSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'contacts' | 'deals' | 'analytics'>('contacts');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddSaleModal, setShowAddSaleModal] = useState(false);
   const [addMode, setAddMode] = useState<'manual' | 'import' | null>(null);
   const [newContact, setNewContact] = useState({
     name: '',
@@ -113,6 +125,17 @@ export default function CRMPage() {
     status: 'lead' as Contact['status'],
     value: 0,
     notes: ''
+  });
+  const [newSale, setNewSale] = useState({
+    productName: '',
+    productCategory: '',
+    buyerName: '',
+    address: '',
+    email: '',
+    phone: '',
+    orderDate: new Date(),
+    quantity: 1,
+    unitPrice: 0
   });
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -204,6 +227,39 @@ export default function CRMPage() {
     }
   };
 
+  const handleAddSale = async () => {
+    if (newSale.productName && newSale.buyerName && newSale.address) {
+      try {
+        await addDeal({
+          productName: newSale.productName,
+          productCategory: newSale.productCategory,
+          buyerName: newSale.buyerName,
+          address: newSale.address,
+          email: newSale.email,
+          phone: newSale.phone,
+          orderDate: newSale.orderDate,
+          quantity: newSale.quantity,
+          unitPrice: newSale.unitPrice
+        });
+        setNewSale({
+          productName: '',
+          productCategory: '',
+          buyerName: '',
+          address: '',
+          email: '',
+          phone: '',
+          orderDate: new Date(),
+          quantity: 1,
+          unitPrice: 0
+        });
+        setShowAddSaleModal(false);
+      } catch (error) {
+        console.error('Failed to add sale:', error);
+        // Handle error (show notification, etc.)
+      }
+    }
+  };
+
   const handleImportContacts = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -247,26 +303,48 @@ export default function CRMPage() {
               Manage your contacts, leads, and deals effectively
             </p>
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '12px 24px',
-              backgroundColor: 'var(--mc-sidebar-bg)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '20px',
-              fontSize: '16px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-            }}
-          >
-            <Plus size={20} />
-            Add Contact
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={() => setShowAddModal(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 24px',
+                backgroundColor: 'var(--mc-sidebar-bg)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '20px',
+                fontSize: '16px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+              }}
+            >
+              <Plus size={20} />
+              Add Contact
+            </button>
+            <button
+              onClick={() => setShowAddSaleModal(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 24px',
+                backgroundColor: '#10b981',
+                color: 'white',
+                border: 'none',
+                borderRadius: '20px',
+                fontSize: '16px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+              }}
+            >
+              <DollarSign size={20} />
+              Add Sale
+            </button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -1637,6 +1715,324 @@ export default function CRMPage() {
                 </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Add Sale Modal */}
+      {showAddSaleModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '24px',
+            width: '90%',
+            maxWidth: '600px',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
+                Add New Sale
+              </h2>
+              <button
+                onClick={() => {
+                  setShowAddSaleModal(false);
+                  setNewSale({
+                    productName: '',
+                    productCategory: '',
+                    buyerName: '',
+                    address: '',
+                    email: '',
+                    phone: '',
+                    orderDate: new Date(),
+                    quantity: 1,
+                    unitPrice: 0
+                  });
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#6b7280'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '100%', boxSizing: 'border-box' }}>
+              {/* Product Information */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                    Product Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={newSale.productName}
+                    onChange={(e) => setNewSale({...newSale, productName: e.target.value})}
+                    placeholder="e.g., Dell Latitude 5520 Laptop"
+                    style={{
+                      width: '100%',
+                      maxWidth: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                    Product Category
+                  </label>
+                  <input
+                    type="text"
+                    value={newSale.productCategory}
+                    onChange={(e) => setNewSale({...newSale, productCategory: e.target.value})}
+                    placeholder="e.g., Electronics, Furniture"
+                    style={{
+                      width: '100%',
+                      maxWidth: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Buyer Information */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                    Buyer Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={newSale.buyerName}
+                    onChange={(e) => setNewSale({...newSale, buyerName: e.target.value})}
+                    placeholder="e.g., Sarah Johnson"
+                    style={{
+                      width: '100%',
+                      maxWidth: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                    Address *
+                  </label>
+                  <input
+                    type="text"
+                    value={newSale.address}
+                    onChange={(e) => setNewSale({...newSale, address: e.target.value})}
+                    placeholder="e.g., San Francisco, CA"
+                    style={{
+                      width: '100%',
+                      maxWidth: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={newSale.email}
+                    onChange={(e) => setNewSale({...newSale, email: e.target.value})}
+                    placeholder="sarah.johnson@techcorp.com"
+                    style={{
+                      width: '100%',
+                      maxWidth: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={newSale.phone}
+                    onChange={(e) => setNewSale({...newSale, phone: e.target.value})}
+                    placeholder="+1 (555) 123-4567"
+                    style={{
+                      width: '100%',
+                      maxWidth: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Sale Details */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                    Sale Date
+                  </label>
+                  <input
+                    type="date"
+                    value={newSale.orderDate.toISOString().split('T')[0]}
+                    onChange={(e) => setNewSale({...newSale, orderDate: new Date(e.target.value)})}
+                    style={{
+                      width: '100%',
+                      maxWidth: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                    Quantity
+                  </label>
+                  <input
+                    type="number"
+                    value={newSale.quantity}
+                    onChange={(e) => setNewSale({...newSale, quantity: parseInt(e.target.value) || 1})}
+                    min="1"
+                    style={{
+                      width: '100%',
+                      maxWidth: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                    Unit Price ($)
+                  </label>
+                  <input
+                    type="text"
+                    value={newSale.unitPrice}
+                    onChange={(e) => setNewSale({...newSale, unitPrice: parseFloat(e.target.value) || 0})}
+                    style={{
+                      width: '100%',
+                      maxWidth: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Total Price Display */}
+              <div style={{ 
+                padding: '16px', 
+                backgroundColor: '#f9fafb', 
+                borderRadius: '20px', 
+                border: '1px solid #e5e7eb',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Total Price</div>
+                <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
+                  {formatCurrency(newSale.quantity * newSale.unitPrice)}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
+                <button
+                  onClick={() => {
+                    setShowAddSaleModal(false);
+                    setNewSale({
+                      productName: '',
+                      productCategory: '',
+                      buyerName: '',
+                      address: '',
+                      email: '',
+                      phone: '',
+                      orderDate: new Date(),
+                      quantity: 1,
+                      unitPrice: 0
+                    });
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '20px',
+                    background: 'white',
+                    color: '#374151',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddSale}
+                  style={{
+                    padding: '10px 20px',
+                    border: 'none',
+                    borderRadius: '20px',
+                    background: '#10b981',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Add Sale
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
