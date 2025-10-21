@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { Plus, Users, Calendar, DollarSign, TrendingUp, Globe, Facebook, Twitter, Linkedin } from 'lucide-react';
+import BulkOrdersService, { CreatePoolData, JoinPoolData, PaymentData } from './models/bulkOrdersService';
 
 // Data model for bulk order pools (modal-friendly)
-type BulkOrderParticipant = { name: string; company: string; quantity: number; joinedDate: string };
+type BulkOrderParticipant = { name: string; company?: string; quantity: number; joinedDate: string };
 type BulkOrderPool = {
   id: string;
   title: string;
@@ -46,9 +47,12 @@ type BulkOrderPool = {
   description?: string;
   participants: BulkOrderParticipant[];
   status: 'active' | 'closed' | 'ready';
+  currentQuantity?: number;
 };
 
-export function BulkOrdersModule() {
+export default function BulkOrdersPage() {
+  const [pools, setPools] = useState<BulkOrderPool[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [activePool, setActivePool] = useState<string | null>(null);
   const [showPoolModal, setShowPoolModal] = useState(false);
   const [selectedPool, setSelectedPool] = useState<BulkOrderPool | null>(null);
@@ -115,8 +119,6 @@ export function BulkOrdersModule() {
   const [createImages, setCreateImages] = useState<string[]>([]);
   const [createVideos, setCreateVideos] = useState<string[]>([]);
   const [createTags, setCreateTags] = useState<string[]>([]);
-  const [newImage, setNewImage] = useState<string>('');
-  const [newVideo, setNewVideo] = useState<string>('');
   const [newTag, setNewTag] = useState<string>('');
   const [createSpecs, setCreateSpecs] = useState<string[]>([]);
   const [createIncluded, setCreateIncluded] = useState<string[]>([]);
@@ -135,224 +137,167 @@ export function BulkOrdersModule() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCountry, setSelectedCountry] = useState<string>('');
 
+  // Load pools from backend
+  useEffect(() => {
+    const loadPools = async () => {
+      try {
+        setLoading(true);
+        const poolsData = await BulkOrdersService.fetchPools(searchQuery, selectedCountry);
+        setPools(poolsData);
+      } catch (error) {
+        console.error('Error loading pools:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPools();
+  }, [searchQuery, selectedCountry]);
+
   useEffect(() => {
     const handler = () => setShowCreateModal(true);
     window.addEventListener('open-create-pool', handler as any);
     return () => window.removeEventListener('open-create-pool', handler as any);
   }, []);
 
-  const initialBulkOrders: BulkOrderPool[] = [
-    {
-      id: 'pool1',
-      title: 'Office Chairs Bulk Order',
-      category: 'Furniture',
-      image: 'https://images.unsplash.com/photo-1582582494700-1bf86bd7b98a?q=80&w=1200&auto=format&fit=crop',
-      images: [
-        'https://images.unsplash.com/photo-1582582494700-1bf86bd7b98a?q=80&w=800&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=800&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1519967480003-f1f117a06f76?q=80&w=800&auto=format&fit=crop'
-      ],
-      tags: ['Ergonomic', 'Mesh', 'Armrest', 'Adjustable'],
-      manufacturer: 'ErgoMakers Ltd',
-      supplierContactName: 'Aisha Mwinyi',
-      supplierContactPhone: '+255 712 345 678',
-      supplierContactEmail: 'sales@ergomakers.example',
-      supplierLocation: 'Dar es Salaam, Tanzania',
-      supplierWebsite: 'https://ergomakers.example',
-      supplierFacebook: 'https://facebook.com/ergomakers',
-      supplierTwitter: 'https://twitter.com/ergomakers',
-      supplierLinkedIn: 'https://linkedin.com/company/ergomakers',
-      leadTimeDays: 14,
-      paymentTerms: '50% deposit, 50% on dispatch',
-      returnPolicy: '7 days DOA replacement',
-      logisticsDelivery: ['Door delivery (city centers)', 'Regional freight'],
-      logisticsPickup: ['Dar es Salaam Hub', 'Arusha Hub'],
-      specs: ['Ergonomic mesh back', 'Adjustable height & tilt', 'Max load 120kg'],
-      included: ['Chair unit', 'Assembly kit', 'User guide'],
-      organizerRating: 4.7,
-      organizerContactName: 'Moses Kimaro',
-      organizerContactPhone: '+255 713 222 111',
-      organizerContactEmail: 'moses@techhub.example',
-      organizerLocation: 'Dar es Salaam, Tanzania',
-      organizerWebsite: 'https://techhub.example',
-      organizerFacebook: 'https://facebook.com/techhub',
-      organizerTwitter: 'https://twitter.com/techhub',
-      organizerLinkedIn: 'https://linkedin.com/company/techhub',
-      targetQuantity: 100,
-      
-      pricePerUnit: 150000,
-      
-      deadline: '2025-01-15',
-      organizer: 'TechHub Ltd',
-      description: 'High-quality ergonomic office chairs with bulk pricing. Join this pool to get better rates.',
-      participants: [
-        { name: 'John M.', company: 'ABC Corp', quantity: 5, joinedDate: '2025-01-05' },
-        { name: 'Sarah K.', company: 'XYZ Ltd', quantity: 10, joinedDate: '2025-01-06' },
-        { name: 'Ahmed H.', company: 'Tech Solutions', quantity: 8, joinedDate: '2025-01-07' }
-      ],
-      status: 'active'
-    },
-    {
-      id: 'pool2',
-      title: 'Laptop Bulk Purchase',
-      category: 'Electronics',
-      image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1200&auto=format&fit=crop',
-      images: [
-        'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=800&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=700&auto=format&fit=crop'
-      ],
-      tags: ['15-inch', '8GB RAM', 'SSD', 'Business'],
-      manufacturer: 'CompTech Manufacturing',
-      supplierContactName: 'John Doe',
-      supplierContactPhone: '+255 714 555 000',
-      supplierContactEmail: 'orders@comptech.example',
-      supplierLocation: 'Arusha, Tanzania',
-      supplierWebsite: 'https://comptech.example',
-      supplierFacebook: 'https://facebook.com/comptech',
-      supplierTwitter: 'https://twitter.com/comptech',
-      supplierLinkedIn: 'https://linkedin.com/company/comptech',
-      leadTimeDays: 10,
-      paymentTerms: '30% deposit, balance Net 7',
-      returnPolicy: '14 days limited return',
-      logisticsDelivery: ['Courier (major cities)', 'Air freight (bulk)'],
-      logisticsPickup: ['Dar es Salaam IT Hub'],
-      specs: ['15" IPS display', 'Intel i5, 8GB RAM, 512GB SSD', 'Aluminum chassis'],
-      included: ['Laptop', 'Charger', 'Carrying sleeve'],
-      organizerRating: 4.8,
-      organizerContactName: 'Neema Joseph',
-      organizerContactPhone: '+255 715 444 333',
-      organizerContactEmail: 'neema@soundmax.example',
-      organizerLocation: 'Arusha, Tanzania',
-      organizerWebsite: 'https://soundmax.example',
-      organizerFacebook: 'https://facebook.com/soundmax',
-      organizerTwitter: 'https://twitter.com/soundmax',
-      organizerLinkedIn: 'https://linkedin.com/company/soundmax',
-      targetQuantity: 50,
-      
-      pricePerUnit: 800000,
-      
-      deadline: '2025-01-20',
-      organizer: 'SoundMax',
-      description: '',
-      participants: [
-        { name: 'Maria L.', company: 'Design Studio', quantity: 3, joinedDate: '2025-01-08' },
-        { name: 'Peter W.', company: 'Consulting Firm', quantity: 5, joinedDate: '2025-01-09' }
-      ],
-      status: 'active'
-    },
-    {
-      id: 'pool3',
-      title: 'Audio Equipment Pool',
-      category: 'Electronics',
-      image: 'https://images.unsplash.com/photo-1483412033650-1015ddeb83d1?q=80&w=1200&auto=format&fit=crop',
-      images: [
-        'https://images.unsplash.com/photo-1483412033650-1015ddeb83d1?q=80&w=800&auto=format&fit=crop'
-      ],
-      tags: ['Speakers', 'Microphones', 'Studio', 'Pro'],
-      manufacturer: 'ProSound Corp',
-      supplierContactName: 'Peter Mushi',
-      supplierContactPhone: '+255 716 777 888',
-      supplierContactEmail: 'peter@prosound.example',
-      supplierLocation: 'Mwanza, Tanzania',
-      supplierWebsite: 'https://prosound.example',
-      supplierFacebook: 'https://facebook.com/prosound',
-      supplierTwitter: 'https://twitter.com/prosound',
-      supplierLinkedIn: 'https://linkedin.com/company/prosound',
-      leadTimeDays: 12,
-      paymentTerms: 'Full payment on order',
-      returnPolicy: 'No returns after unboxing',
-      logisticsDelivery: ['Regional freight'],
-      logisticsPickup: ['Mwanza Depot'],
-      specs: ['2.1 Speaker set', 'Studio microphones', 'Balanced audio cables'],
-      included: ['Speaker pair', 'Mic set', 'Cables'],
-      organizerRating: 4.6,
-      organizerContactName: 'Zainab Ali',
-      organizerContactPhone: '+255 717 999 222',
-      organizerContactEmail: 'zainab@comfortzone.example',
-      organizerLocation: 'Mwanza, Tanzania',
-      organizerWebsite: 'https://comfortzone.example',
-      organizerFacebook: 'https://facebook.com/comfortzone',
-      organizerTwitter: 'https://twitter.com/comfortzone',
-      organizerLinkedIn: 'https://linkedin.com/company/comfortzone',
-      targetQuantity: 200,
-      
-      pricePerUnit: 45000,
-      
-      deadline: '2025-01-10',
-      organizer: 'ComfortZone',
-      description: 'Professional audio equipment for offices and conference rooms.',
-      participants: [
-        { name: 'David K.', company: 'Media House', quantity: 15, joinedDate: '2025-01-03' },
-        { name: 'Grace M.', company: 'Event Company', quantity: 20, joinedDate: '2025-01-04' },
-        { name: 'James R.', company: 'Studio Inc', quantity: 10, joinedDate: '2025-01-05' }
-      ],
-      status: 'active'
-    }
-  ];
 
-  const completedOrders = [
-    {
-      id: 'completed1',
-      title: 'Desk Lamps Bulk Order',
-      category: 'Electronics',
-      finalQuantity: 75,
-      finalParticipants: 15,
-      finalDiscount: '18%',
-      finalPricePerUnit: 20500,
-      completedDate: '2024-12-20',
-      organizer: 'OfficePro',
-      status: 'completed'
-    }
-  ];
+  // Use pools directly since filtering is handled by the backend
+  const filteredPools = pools;
 
-  const [pools, setPools] = useState<BulkOrderPool[]>(initialBulkOrders);
-
-  // Filter pools based on search query and country
-  const filteredPools = pools.filter(pool => {
-    const matchesSearch = searchQuery === '' || 
-      pool.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pool.organizer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pool.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pool.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCountry = selectedCountry === '' || 
-      pool.supplierLocation?.toLowerCase().includes(selectedCountry.toLowerCase()) ||
-      pool.organizerLocation?.toLowerCase().includes(selectedCountry.toLowerCase());
-    
-    return matchesSearch && matchesCountry;
-  });
-
-  const handleJoinPool = (pool: BulkOrderPool, qty: number) => {
+  const handleJoinPool = async (pool: BulkOrderPool, qty: number) => {
     try {
       setJoinError('');
       setJoinSuccess('');
-      // Prevent joining if target is reached
-      const currentQty = pool.participants.reduce((sum, p) => sum + (p.quantity || 0), 0);
-      if (currentQty >= pool.targetQuantity) {
-        setJoinError('This pool is closed. Target quantity reached.');
-        return;
-      }
+      
       if (!qty || qty < 1 || !Number.isFinite(qty)) {
         setJoinError('Enter a valid quantity (1 or more).');
         return;
       }
-      const remaining = pool.targetQuantity - currentQty;
-      if (qty > remaining) {
-        setJoinError(`Only ${remaining} units remaining.`);
-        return;
-      }
-      const updated: BulkOrderPool = {
-        ...pool,
-        participants: [
-          ...pool.participants,
-          { name: 'You', company: '—', quantity: Math.floor(qty), joinedDate: new Date().toISOString().slice(0, 10) }
-        ]
+
+      const joinData: JoinPoolData = {
+        name: 'You',
+        company: '—',
+        quantity: Math.floor(qty),
+        email: 'user@example.com',
+        phone: '+255 123 456 789'
       };
-      setPools(prev => prev.map(p => (p.id === pool.id ? updated : p)));
-      setSelectedPool(updated);
+
+      await BulkOrdersService.joinPool(pool.id, joinData);
+      
+      // Reload pools to get updated data
+      const updatedPools = await BulkOrdersService.fetchPools(searchQuery, selectedCountry);
+      setPools(updatedPools);
+      
+      // Update selected pool if it's the same one
+      const updatedPool = updatedPools.find(p => p.id === pool.id);
+      if (updatedPool) {
+        setSelectedPool(updatedPool);
+      }
+      
       setJoinSuccess(`Joined pool with ${Math.floor(qty)} unit${qty > 1 ? 's' : ''}.`);
-    } catch (e) {
-      setJoinError('Failed to join. Please try again.');
+    } catch (error: any) {
+      setJoinError(error.message || 'Failed to join. Please try again.');
+    }
+  };
+
+  const handleCreatePool = async () => {
+    try {
+      const poolData: CreatePoolData = {
+        title: createForm.product,
+        category: createForm.category,
+        description: createForm.description,
+        image: createForm.image,
+        images: createImages,
+        videos: createVideos,
+        tags: createTags,
+        manufacturer: createForm.manufacturer,
+        supplierContactName: createForm.supplierContactName,
+        supplierContactPhone: createForm.supplierContactPhone,
+        supplierContactEmail: createForm.supplierContactEmail,
+        supplierLocation: createForm.supplierLocation,
+        supplierWebsite: createSupplierLinks.find(l => l.type === 'Website')?.url || '',
+        supplierFacebook: createSupplierLinks.find(l => l.type === 'Facebook')?.url || '',
+        supplierTwitter: createSupplierLinks.find(l => l.type === 'Twitter')?.url || '',
+        supplierLinkedIn: createSupplierLinks.find(l => l.type === 'LinkedIn')?.url || '',
+        organizer: createForm.organizer,
+        organizerContactName: createForm.organizerContactName,
+        organizerContactPhone: createForm.organizerContactPhone,
+        organizerContactEmail: createForm.organizerContactEmail,
+        organizerLocation: createForm.organizerLocation,
+        organizerWebsite: createOrganizerLinks.find(l => l.type === 'Website')?.url || '',
+        organizerFacebook: createOrganizerLinks.find(l => l.type === 'Facebook')?.url || '',
+        organizerTwitter: createOrganizerLinks.find(l => l.type === 'Twitter')?.url || '',
+        organizerLinkedIn: createOrganizerLinks.find(l => l.type === 'LinkedIn')?.url || '',
+        specs: createSpecs,
+        included: createIncluded,
+        leadTimeDays: createForm.leadTimeDays ? parseInt(createForm.leadTimeDays) : undefined,
+        paymentTerms: createForm.paymentTerms,
+        returnPolicy: createForm.returnPolicy,
+        logisticsDelivery: createDelivery,
+        logisticsPickup: createPickup,
+        targetQuantity: parseInt(createForm.targetQuantity),
+        pricePerUnit: parseFloat(createForm.targetPrice),
+        deadline: createForm.deadline
+      };
+
+      await BulkOrdersService.createPool(poolData);
+      
+      // Reload pools
+      const updatedPools = await BulkOrdersService.fetchPools(searchQuery, selectedCountry);
+      setPools(updatedPools);
+      
+      // Reset form
+      setCreateForm({
+        product: '',
+        category: '',
+        description: '',
+        targetQuantity: '',
+        targetPrice: '',
+        deadline: '',
+        image: '',
+        images: '',
+        videos: '',
+        tags: '',
+        manufacturer: '',
+        supplierContactName: '',
+        supplierContactPhone: '',
+        supplierContactEmail: '',
+        supplierLocation: '',
+        supplierWebsite: '',
+        supplierFacebook: '',
+        supplierTwitter: '',
+        supplierLinkedIn: '',
+        organizer: '',
+        organizerContactName: '',
+        organizerContactPhone: '',
+        organizerContactEmail: '',
+        organizerLocation: '',
+        organizerWebsite: '',
+        organizerFacebook: '',
+        organizerTwitter: '',
+        organizerLinkedIn: '',
+        specs: '',
+        included: '',
+        logisticsDelivery: '',
+        logisticsPickup: '',
+        paymentTerms: '',
+        returnPolicy: '',
+        leadTimeDays: ''
+      });
+      setCreateImages([]);
+      setCreateVideos([]);
+      setCreateTags([]);
+      setCreateSpecs([]);
+      setCreateIncluded([]);
+      setCreateDelivery([]);
+      setCreatePickup([]);
+      setCreateSupplierLinks([]);
+      setCreateOrganizerLinks([]);
+      setShowCreateModal(false);
+      
+      alert('Pool created successfully!');
+    } catch (error: any) {
+      alert('Error creating pool: ' + (error.message || 'Unknown error'));
     }
   };
 
@@ -492,11 +437,18 @@ export function BulkOrdersModule() {
           Active Bulk Orders {filteredPools.length !== pools.length && `(${filteredPools.length} of ${pools.length})`}
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
-          {filteredPools.map((order) => {
+          {loading ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#6b7280' }}>
+              Loading pools...
+            </div>
+          ) : filteredPools.length === 0 ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#6b7280' }}>
+              No pools found. Create the first pool to get started!
+            </div>
+          ) : (
+            filteredPools.map((order) => {
             const targetQty = order.targetQuantity;
-            const currentQty = Array.isArray(order.participants)
-              ? order.participants.reduce((sum: number, p: any) => sum + (p.quantity || 0), 0)
-              : 0;
+              const currentQty = order.currentQuantity || 0;
             const isClosed = currentQty >= targetQty;
             return (
             <div
@@ -690,7 +642,9 @@ export function BulkOrdersModule() {
 
               {/* Removed participants display */}
             </div>
-          );})}
+            );
+          })
+          )}
         </div>
       </div>
 
@@ -792,7 +746,6 @@ export function BulkOrdersModule() {
                     <div style={{ marginTop: 2, fontSize: 12, color: '#6b7280' }}>Supplier: <span style={{ color: '#111827', fontWeight: 600 }}>{selectedPool.manufacturer}</span></div>
                   )}
                 </div>
-                {/* Close moved to image */}
               </div>
 
               {/* Description directly under title/supplier */}
@@ -914,7 +867,6 @@ export function BulkOrdersModule() {
                   <div>
                     <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 2 }}>Supplier</div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{selectedPool.manufacturer}</div>
-                    {(selectedPool.supplierContactName || selectedPool.supplierContactPhone || selectedPool.supplierContactEmail) && (
                       <div style={{ marginTop: 4 }}>
                         {selectedPool.supplierContactName && (
                           <div style={{ fontSize: 12, color: '#4b5563' }}>Contact: {selectedPool.supplierContactName}</div>
@@ -928,17 +880,17 @@ export function BulkOrdersModule() {
                         {selectedPool.supplierLocation && (
                           <div style={{ fontSize: 12, color: '#4b5563' }}>Location: {selectedPool.supplierLocation}</div>
                         )}
-                        {(selectedPool.supplierWebsite || selectedPool.supplierFacebook || selectedPool.supplierTwitter || selectedPool.supplierLinkedIn) && (() => {
+                        {((selectedPool.supplierWebsite && selectedPool.supplierWebsite.trim() && selectedPool.supplierWebsite !== 'None') || (selectedPool.supplierFacebook && selectedPool.supplierFacebook.trim() && selectedPool.supplierFacebook !== 'None') || (selectedPool.supplierTwitter && selectedPool.supplierTwitter.trim() && selectedPool.supplierTwitter !== 'None') || (selectedPool.supplierLinkedIn && selectedPool.supplierLinkedIn.trim() && selectedPool.supplierLinkedIn !== 'None')) && (() => {
                           const iconProps = { size: 12, strokeWidth: 1.75 } as const;
                           const iconStyle: React.CSSProperties = { flexShrink: 0 };
                           const socials: Array<{ label: string; href: string; icon: JSX.Element }> = [];
-                          if (selectedPool.supplierFacebook) socials.push({ label: 'Facebook', href: selectedPool.supplierFacebook, icon: <Facebook {...iconProps} style={iconStyle} /> });
-                          if (selectedPool.supplierTwitter) socials.push({ label: 'Twitter', href: selectedPool.supplierTwitter, icon: <Twitter {...iconProps} style={iconStyle} /> });
-                          if (selectedPool.supplierLinkedIn) socials.push({ label: 'LinkedIn', href: selectedPool.supplierLinkedIn, icon: <Linkedin {...iconProps} style={iconStyle} /> });
+                          if (selectedPool.supplierFacebook && selectedPool.supplierFacebook.trim() && selectedPool.supplierFacebook !== 'None') socials.push({ label: 'Facebook', href: selectedPool.supplierFacebook, icon: <Facebook {...iconProps} style={iconStyle} /> });
+                          if (selectedPool.supplierTwitter && selectedPool.supplierTwitter.trim() && selectedPool.supplierTwitter !== 'None') socials.push({ label: 'Twitter', href: selectedPool.supplierTwitter, icon: <Twitter {...iconProps} style={iconStyle} /> });
+                          if (selectedPool.supplierLinkedIn && selectedPool.supplierLinkedIn.trim() && selectedPool.supplierLinkedIn !== 'None') socials.push({ label: 'LinkedIn', href: selectedPool.supplierLinkedIn, icon: <Linkedin {...iconProps} style={iconStyle} /> });
                           const limitedSocials = socials.slice(0, 2);
                           return (
                             <div style={{ fontSize: 12, marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              {selectedPool.supplierWebsite && (
+                              {selectedPool.supplierWebsite && selectedPool.supplierWebsite.trim() && selectedPool.supplierWebsite !== 'None' && (
                                 <a href={selectedPool.supplierWebsite} target="_blank" rel="noopener noreferrer" style={{ color: '#1d4ed8', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: 6, lineHeight: 1 }}>
                                   <span style={{ width: 18, height: 18, borderRadius: 9999, backgroundColor: '#1d4ed8', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <Globe {...iconProps} style={{ ...iconStyle, color: '#fff' }} />
@@ -958,12 +910,10 @@ export function BulkOrdersModule() {
                           );
                         })()}
                       </div>
-                    )}
                   </div>
                   <div>
                     <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 2 }}>Organizer</div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{selectedPool.organizer}</div>
-                    {(selectedPool.organizerContactName || selectedPool.organizerContactPhone || selectedPool.organizerContactEmail) && (
                       <div style={{ marginTop: 4 }}>
                         {selectedPool.organizerContactName && (
                           <div style={{ fontSize: 12, color: '#4b5563' }}>Contact: {selectedPool.organizerContactName}</div>
@@ -977,17 +927,17 @@ export function BulkOrdersModule() {
                         {selectedPool.organizerLocation && (
                           <div style={{ fontSize: 12, color: '#4b5563' }}>Location: {selectedPool.organizerLocation}</div>
                         )}
-                        {(selectedPool.organizerWebsite || selectedPool.organizerFacebook || selectedPool.organizerTwitter || selectedPool.organizerLinkedIn) && (() => {
+                        {((selectedPool.organizerWebsite && selectedPool.organizerWebsite.trim() && selectedPool.organizerWebsite !== 'None') || (selectedPool.organizerFacebook && selectedPool.organizerFacebook.trim() && selectedPool.organizerFacebook !== 'None') || (selectedPool.organizerTwitter && selectedPool.organizerTwitter.trim() && selectedPool.organizerTwitter !== 'None') || (selectedPool.organizerLinkedIn && selectedPool.organizerLinkedIn.trim() && selectedPool.organizerLinkedIn !== 'None')) && (() => {
                           const iconProps = { size: 12, strokeWidth: 1.75 } as const;
                           const iconStyle: React.CSSProperties = { flexShrink: 0 };
                           const socials: Array<{ label: string; href: string; icon: JSX.Element }> = [];
-                          if (selectedPool.organizerFacebook) socials.push({ label: 'Facebook', href: selectedPool.organizerFacebook, icon: <Facebook {...iconProps} style={iconStyle} /> });
-                          if (selectedPool.organizerTwitter) socials.push({ label: 'Twitter', href: selectedPool.organizerTwitter, icon: <Twitter {...iconProps} style={iconStyle} /> });
-                          if (selectedPool.organizerLinkedIn) socials.push({ label: 'LinkedIn', href: selectedPool.organizerLinkedIn, icon: <Linkedin {...iconProps} style={iconStyle} /> });
+                          if (selectedPool.organizerFacebook && selectedPool.organizerFacebook.trim() && selectedPool.organizerFacebook !== 'None') socials.push({ label: 'Facebook', href: selectedPool.organizerFacebook, icon: <Facebook {...iconProps} style={iconStyle} /> });
+                          if (selectedPool.organizerTwitter && selectedPool.organizerTwitter.trim() && selectedPool.organizerTwitter !== 'None') socials.push({ label: 'Twitter', href: selectedPool.organizerTwitter, icon: <Twitter {...iconProps} style={iconStyle} /> });
+                          if (selectedPool.organizerLinkedIn && selectedPool.organizerLinkedIn.trim() && selectedPool.organizerLinkedIn !== 'None') socials.push({ label: 'LinkedIn', href: selectedPool.organizerLinkedIn, icon: <Linkedin {...iconProps} style={iconStyle} /> });
                           const limitedSocials = socials.slice(0, 2);
                           return (
                             <div style={{ fontSize: 12, marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              {selectedPool.organizerWebsite && (
+                              {selectedPool.organizerWebsite && selectedPool.organizerWebsite.trim() && selectedPool.organizerWebsite !== 'None' && (
                                 <a href={selectedPool.organizerWebsite} target="_blank" rel="noopener noreferrer" style={{ color: '#1d4ed8', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: 6, lineHeight: 1 }}>
                                   <span style={{ width: 18, height: 18, borderRadius: 9999, backgroundColor: '#1d4ed8', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <Globe {...iconProps} style={{ ...iconStyle, color: '#fff' }} />
@@ -1007,7 +957,6 @@ export function BulkOrdersModule() {
                           );
                         })()}
                       </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -1021,10 +970,10 @@ export function BulkOrdersModule() {
                 <div>
                   <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 2 }}>Active Units</div>
                   <div style={{ fontSize: 16, fontWeight: 700 }}>
-                    {(() => {
-                      const curr = selectedPool.participants.reduce((s, p) => s + (p.quantity || 0), 0);
-                      return <><span style={{ color: '#059669' }}>{curr}</span><span style={{ color: '#6b7280' }}> / </span><span style={{ color: '#111827' }}>{selectedPool.targetQuantity}</span><span style={{ color: '#6b7280' }}> units</span></>;
-                    })()}
+                    <span style={{ color: '#059669' }}>{selectedPool.currentQuantity || 0}</span>
+                    <span style={{ color: '#6b7280' }}> / </span>
+                    <span style={{ color: '#111827' }}>{selectedPool.targetQuantity}</span>
+                    <span style={{ color: '#6b7280' }}> units</span>
                   </div>
                 </div>
                 <div>
@@ -1158,7 +1107,7 @@ export function BulkOrdersModule() {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                 <button onClick={() => setShowPaymentModal(false)} style={{ border: '1px solid #e5e7eb', background: '#fff', color: '#374151', borderRadius: 8, padding: '8px 12px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     setPaymentError('');
                     setPaymentSuccess('');
                     if (paymentMethod === 'mno') {
@@ -1183,7 +1132,7 @@ export function BulkOrdersModule() {
                       setShowPaymentModal(false);
                       return;
                     }
-                    handleJoinPool(paymentPool, 1);
+                    await handleJoinPool(paymentPool, paymentQty);
                     setShowPaymentModal(false);
                   }}
                   style={{ backgroundColor: 'var(--mc-sidebar-bg-hover)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 14px', fontWeight: 600, cursor: 'pointer' }}
@@ -1206,7 +1155,7 @@ export function BulkOrdersModule() {
               <div style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>Create Pool</div>
               <button onClick={() => setShowCreateModal(false)} style={{ width: 32, height: 32, borderRadius: 9999, border: 'none', background: 'rgba(0,0,0,0.06)', cursor: 'pointer' }}>✕</button>
             </div>
-            <form onSubmit={(e) => { e.preventDefault(); setShowCreateModal(false); }} style={{ padding: 16, display: 'grid', gap: 12, maxHeight: '80vh', overflow: 'auto' }}>
+            <form onSubmit={(e) => { e.preventDefault(); handleCreatePool(); }} style={{ padding: 16, display: 'grid', gap: 12, maxHeight: '80vh', overflow: 'auto' }}>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 <label style={{ fontSize: 12, color: '#6b7280' }}>Product Name
                   <input value={createForm.product} onChange={(e) => setCreateForm(f => ({ ...f, product: e.target.value }))} placeholder="e.g., Office Chairs" required style={{ display: 'block', marginTop: 4, width: 280, height: 34, border: '1px solid #e5e7eb', borderRadius: 8, padding: '0 10px', fontSize: 13 }} />
@@ -1220,20 +1169,48 @@ export function BulkOrdersModule() {
               </label>
               <div style={{ display: 'grid', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <label style={{ fontSize: 12, color: '#6b7280' }}>Main Image URL</label>
-                  <input value={createForm.image} onChange={(e) => setCreateForm(f => ({ ...f, image: e.target.value }))} placeholder="https://..." style={{ width: 300, height: 34, border: '1px solid #e5e7eb', borderRadius: 8, padding: '0 10px', fontSize: 13 }} />
+                  <label style={{ fontSize: 12, color: '#6b7280' }}>Main Image</label>
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          setCreateForm(f => ({ ...f, image: event.target?.result as string }));
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    style={{ width: 300, height: 34, border: '1px solid #e5e7eb', borderRadius: 8, padding: '0 10px', fontSize: 13 }} 
+                  />
                 </div>
                 <div>
                   <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Additional Images</div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <input value={newImage} onChange={(e) => setNewImage(e.target.value)} placeholder="https://..." style={{ width: 300, height: 34, border: '1px solid #e5e7eb', borderRadius: 8, padding: '0 10px', fontSize: 13 }} />
-                    <button type="button" onClick={() => { if (newImage.trim()) { setCreateImages(arr => [...arr, newImage.trim()]); setNewImage(''); } }} style={{ border: '1px solid #e5e7eb', background: '#fff', borderRadius: 8, padding: '8px 12px', height: 34, cursor: 'pointer', fontWeight: 600 }}>Add</button>
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        files.forEach(file => {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            setCreateImages(arr => [...arr, event.target?.result as string]);
+                          };
+                          reader.readAsDataURL(file);
+                        });
+                      }}
+                      style={{ width: 300, height: 34, border: '1px solid #e5e7eb', borderRadius: 8, padding: '0 10px', fontSize: 13 }} 
+                    />
                   </div>
                   {createImages.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
                       {createImages.map((url, idx) => (
                         <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: 9999, fontSize: 12, color: '#374151' }}>
-                          {url}
+                          Image {idx + 1}
                           <button type="button" onClick={() => setCreateImages(arr => arr.filter((_, i) => i !== idx))} style={{ border: 'none', background: 'transparent', color: '#dc2626', cursor: 'pointer' }}>✕</button>
                         </span>
                       ))}
@@ -1243,14 +1220,28 @@ export function BulkOrdersModule() {
                 <div>
                   <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Videos</div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <input value={newVideo} onChange={(e) => setNewVideo(e.target.value)} placeholder="https://..." style={{ width: 300, height: 34, border: '1px solid #e5e7eb', borderRadius: 8, padding: '0 10px', fontSize: 13 }} />
-                    <button type="button" onClick={() => { if (newVideo.trim()) { setCreateVideos(arr => [...arr, newVideo.trim()]); setNewVideo(''); } }} style={{ border: '1px solid #e5e7eb', background: '#fff', borderRadius: 8, padding: '8px 12px', height: 34, cursor: 'pointer', fontWeight: 600 }}>Add</button>
+                    <input 
+                      type="file" 
+                      accept="video/*"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        files.forEach(file => {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            setCreateVideos(arr => [...arr, event.target?.result as string]);
+                          };
+                          reader.readAsDataURL(file);
+                        });
+                      }}
+                      style={{ width: 300, height: 34, border: '1px solid #e5e7eb', borderRadius: 8, padding: '0 10px', fontSize: 13 }} 
+                    />
                   </div>
                   {createVideos.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
                       {createVideos.map((url, idx) => (
                         <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: 9999, fontSize: 12, color: '#374151' }}>
-                          {url}
+                          Video {idx + 1}
                           <button type="button" onClick={() => setCreateVideos(arr => arr.filter((_, i) => i !== idx))} style={{ border: 'none', background: 'transparent', color: '#dc2626', cursor: 'pointer' }}>✕</button>
                         </span>
                       ))}
@@ -1476,10 +1467,3 @@ export function BulkOrdersModule() {
   );
 }
 
-export default function BulkOrdersPage() {
-  return (
-    <div style={{ padding: '24px', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
-      <BulkOrdersModule />
-    </div>
-  );
-}

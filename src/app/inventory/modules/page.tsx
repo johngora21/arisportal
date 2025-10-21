@@ -3,10 +3,10 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { DollarSign, BarChart3, Package, Star, MapPin, Clock, TrendingUp, CheckCircle, Phone, Mail, Calendar, Users, Award, Shield, Truck, CreditCard, Globe, Plus } from 'lucide-react';
 import Link from 'next/link';
-import { SalesModule } from '../sales/page';
+import SalesPage from '../sales/page';
 import { ReportsModule } from '../reports/page';
 import { SuppliersModule } from '../suppliers/page';
-import { BulkOrdersModule } from '../bulk-orders/page';
+import BulkOrdersModule from '../bulk-orders/page';
 
 // Declare Leaflet types
 declare const L: any;
@@ -259,7 +259,7 @@ export default function InventoryModulesPage() {
         </div>
       </div>
 
-      {activeTab === 'sales' && <SalesModule />}
+      {activeTab === 'sales' && <SalesPage />}
 
 
       {activeTab === 'suppliers' && <SuppliersModule />}

@@ -39,8 +39,10 @@ export default function InventoryPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [showAddItem, setShowAddItem] = useState(false);
+  const [showViewItem, setShowViewItem] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [formLoading, setFormLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [showOutgoings, setShowOutgoings] = useState(false);
   const [outgoingsForm, setOutgoingsForm] = useState({
     itemId: '',
@@ -63,6 +65,8 @@ export default function InventoryPage() {
     category: '',
     description: '',
     supplier: '',
+    supplierContact: '',
+    supplierSocial: '',
     unit: '',
     quantity: '',
     minQuantity: '',
@@ -110,14 +114,48 @@ export default function InventoryPage() {
   const handleAddItem = async () => {
     setFormLoading(true);
     try {
-      const newItem = await InventoryService.createItem(newItemForm);
+      // Validate required fields
+      if (!newItemForm.name || !newItemForm.sku || !newItemForm.category || !newItemForm.unit) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      // Convert numeric fields - use 0 as default for empty values
+      const quantity = parseInt(newItemForm.quantity) || 0;
+      const minQuantity = parseInt(newItemForm.minQuantity) || 0;
+      const maxQuantity = parseInt(newItemForm.maxQuantity) || 0;
+      const unitPrice = parseFloat(newItemForm.unitPrice) || 0;
+
+      // Prepare data for API
+      const itemData = {
+        ...newItemForm,
+        quantity: quantity.toString(),
+        minQuantity: minQuantity.toString(),
+        maxQuantity: maxQuantity.toString(),
+        unitPrice: unitPrice.toString()
+      };
+
+      if (isEditing && selectedItem) {
+        // Update existing item
+        const updatedItem = await InventoryService.updateItem(selectedItem.id, itemData);
+        setInventoryItems(prev => prev.map(item => 
+          item.id === selectedItem.id ? updatedItem : item
+        ));
+      } else {
+        // Create new item
+        const newItem = await InventoryService.createItem(itemData);
       setInventoryItems(prev => [...prev, newItem]);
+      }
+
+      // Reset form and close modal
       setNewItemForm({
         name: '',
         sku: '',
         category: '',
         description: '',
         supplier: '',
+        supplierContact: '',
+        supplierSocial: '',
         unit: '',
         quantity: '',
         minQuantity: '',
@@ -126,12 +164,15 @@ export default function InventoryPage() {
         location: ''
       });
       setShowAddItem(false);
+      setIsEditing(false);
+      setSelectedItem(null);
+      
       // Reload stats
       const statsData = await InventoryService.getStats();
       setStats(statsData);
     } catch (error) {
-      console.error('Error adding item:', error);
-      alert('Error adding item: ' + (error as Error).message);
+      console.error('Error saving item:', error);
+      alert('Error saving item: ' + (error as Error).message);
     } finally {
       setFormLoading(false);
     }
@@ -141,7 +182,7 @@ export default function InventoryPage() {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
         await InventoryService.deleteItem(id);
-        setInventoryItems(prev => prev.filter(item => item.id !== id));
+      setInventoryItems(prev => prev.filter(item => item.id !== id));
         // Reload stats
         const statsData = await InventoryService.getStats();
         setStats(statsData);
@@ -150,6 +191,32 @@ export default function InventoryPage() {
         alert('Error deleting item: ' + (error as Error).message);
       }
     }
+  };
+
+  const handleEditItem = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setIsEditing(true);
+    setNewItemForm({
+      name: item.name,
+      sku: item.sku,
+      category: item.category,
+      description: item.description,
+      supplier: item.supplier || '',
+      supplierContact: (item as any).supplierContact || '',
+      supplierSocial: (item as any).supplierSocial || '',
+      unit: item.unit,
+      quantity: item.quantity.toString(),
+      minQuantity: item.minQuantity.toString(),
+      maxQuantity: item.maxQuantity.toString(),
+      unitPrice: item.unitPrice.toString(),
+      location: item.location
+    });
+    setShowAddItem(true);
+  };
+
+  const handleViewItem = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setShowViewItem(true);
   };
 
   const handleAddCategory = async () => {
@@ -397,12 +464,12 @@ export default function InventoryPage() {
             <thead>
               <tr style={{ backgroundColor: '#f9fafb' }}>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Item</th>
-                <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>SKU</th>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Category</th>
+                <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Supplier</th>
+                <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>SKU</th>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Quantity</th>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Unit Price</th>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Status</th>
-                <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Location</th>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Actions</th>
               </tr>
             </thead>
@@ -410,20 +477,18 @@ export default function InventoryPage() {
               {filteredItems.map((item) => (
                 <tr key={item.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
                   <td style={{ padding: '16px' }}>
-                    <div>
-                      <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>
+                    <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
                         {item.name}
-                      </div>
-                      <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                        {item.description}
-                      </div>
                     </div>
                   </td>
                   <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
-                    {item.sku}
+                    {item.category}
                   </td>
                   <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
-                    {item.category}
+                    {item.supplier || 'No supplier'}
+                  </td>
+                  <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
+                    {item.sku}
                   </td>
                   <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
                     {item.quantity} {item.unit}
@@ -444,12 +509,10 @@ export default function InventoryPage() {
                       {getStatusText(item.status)}
                     </div>
                   </td>
-                  <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
-                    {item.location}
-                  </td>
                   <td style={{ padding: '16px' }}>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
+                        onClick={() => handleEditItem(item)}
                         style={{
                           padding: '6px',
                           backgroundColor: 'transparent',
@@ -468,6 +531,27 @@ export default function InventoryPage() {
                         }}
                       >
                         <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleViewItem(item)}
+                        style={{
+                          padding: '6px',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          borderRadius: '20px',
+                          color: '#6b7280'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f0f9ff';
+                          e.currentTarget.style.color = '#0369a1';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.color = '#6b7280';
+                        }}
+                      >
+                        <Eye size={16} />
                       </button>
                       <button
                         onClick={() => handleDeleteItem(item.id)}
@@ -523,10 +607,14 @@ export default function InventoryPage() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h2 style={{ fontSize: '24px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-                Add New Inventory Item
+                {isEditing ? 'Edit Inventory Item' : 'Add New Inventory Item'}
               </h2>
               <button
-                onClick={() => setShowAddItem(false)}
+                onClick={() => {
+                  setShowAddItem(false);
+                  setIsEditing(false);
+                  setSelectedItem(null);
+                }}
                 style={{
                   padding: '8px',
                   backgroundColor: 'transparent',
@@ -555,7 +643,8 @@ export default function InventoryPage() {
                       padding: '12px',
                       border: '1px solid #d1d5db',
                       borderRadius: '20px',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
                     }}
                   />
                 </div>
@@ -572,7 +661,8 @@ export default function InventoryPage() {
                       padding: '12px',
                       border: '1px solid #d1d5db',
                       borderRadius: '20px',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
                     }}
                   />
                 </div>
@@ -615,7 +705,8 @@ export default function InventoryPage() {
                       padding: '12px',
                       border: '1px solid #d1d5db',
                       borderRadius: '20px',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
                     }}
                   />
                 </div>
@@ -643,21 +734,45 @@ export default function InventoryPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                    Supplier
+                    Supplier Name
                   </label>
                   <input
                     type="text"
                     value={newItemForm.supplier}
                     onChange={(e) => setNewItemForm(prev => ({ ...prev, supplier: e.target.value }))}
+                    placeholder="e.g., ABC Suppliers"
                     style={{
                       width: '100%',
                       padding: '12px',
                       border: '1px solid #d1d5db',
                       borderRadius: '20px',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
                     }}
                   />
                 </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+                    Phone
+                  </label>
+                  <input
+                    type="text"
+                    value={newItemForm.supplierContact}
+                    onChange={(e) => setNewItemForm(prev => ({ ...prev, supplierContact: e.target.value }))}
+                    placeholder="e.g., +255 123 456 789"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
                     Location
@@ -671,13 +786,33 @@ export default function InventoryPage() {
                       padding: '12px',
                       border: '1px solid #d1d5db',
                       borderRadius: '20px',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+                    Portfolio
+                  </label>
+                  <input
+                    type="text"
+                    value={newItemForm.supplierSocial}
+                    onChange={(e) => setNewItemForm(prev => ({ ...prev, supplierSocial: e.target.value }))}
+                    placeholder="e.g., https://supplier.com, @supplier_company"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
                     }}
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
                     Quantity *
@@ -691,10 +826,32 @@ export default function InventoryPage() {
                       padding: '12px',
                       border: '1px solid #d1d5db',
                       borderRadius: '20px',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
                     }}
                   />
                 </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+                  Unit Price *
+                  </label>
+                  <input
+                    type="text"
+                  value={newItemForm.unitPrice}
+                  onChange={(e) => setNewItemForm(prev => ({ ...prev, unitPrice: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
                     Min Quantity
@@ -708,45 +865,29 @@ export default function InventoryPage() {
                       padding: '12px',
                       border: '1px solid #d1d5db',
                       borderRadius: '20px',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
                     }}
                   />
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
                     Max Quantity
-                  </label>
-                  <input
+                </label>
+                <input
                     type="text"
                     value={newItemForm.maxQuantity}
                     onChange={(e) => setNewItemForm(prev => ({ ...prev, maxQuantity: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '20px',
-                      fontSize: '14px'
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                  Unit Price *
-                </label>
-                <input
-                  type="text"
-                  value={newItemForm.unitPrice}
-                  onChange={(e) => setNewItemForm(prev => ({ ...prev, unitPrice: e.target.value }))}
                   style={{
                     width: '100%',
                     padding: '12px',
                     border: '1px solid #d1d5db',
                     borderRadius: '20px',
-                    fontSize: '14px'
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
                   }}
                 />
+                </div>
               </div>
             </div>
 
@@ -781,8 +922,238 @@ export default function InventoryPage() {
                   opacity: formLoading ? 0.6 : 1
                 }}
               >
-                {formLoading ? 'Adding...' : 'Add Item'}
+                {formLoading ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update Item' : 'Add Item')}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Item Modal */}
+      {showViewItem && selectedItem && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            width: 'min(700px, 90vw)',
+            maxHeight: '90vh',
+            borderRadius: '20px',
+            padding: '32px',
+            overflowY: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
+                Item Details
+              </h2>
+              <button
+                onClick={() => {
+                  setShowViewItem(false);
+                  setSelectedItem(null);
+                }}
+                style={{
+                  padding: '8px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  borderRadius: '20px',
+                  color: '#6b7280'
+                }}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gap: '24px' }}>
+              {/* Basic Information */}
+              <div style={{ display: 'grid', gap: '16px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#374151', margin: 0 }}>
+                  Basic Information
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      Item Name
+                    </label>
+                    <div style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', padding: '12px 0' }}>
+                      {selectedItem.name}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      SKU
+                    </label>
+                    <div style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', padding: '12px 0' }}>
+                      {selectedItem.sku}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      Category
+                    </label>
+                    <div style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', padding: '12px 0' }}>
+                      {selectedItem.category}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      Unit
+                    </label>
+                    <div style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', padding: '12px 0' }}>
+                      {selectedItem.unit}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                    Description
+                  </label>
+                  <div style={{ fontSize: '16px', color: '#1f2937', padding: '12px 0', minHeight: '60px' }}>
+                    {selectedItem.description || 'No description provided'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Supplier Information */}
+              <div style={{ display: 'grid', gap: '16px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#374151', margin: 0 }}>
+                  Supplier Information
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      Supplier Name
+                    </label>
+                    <div style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', padding: '12px 0' }}>
+                      {selectedItem.supplier || 'No supplier assigned'}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      Location
+                    </label>
+                    <div style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', padding: '12px 0' }}>
+                      {selectedItem.location || 'No location specified'}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      Phone
+                    </label>
+                    <div style={{ fontSize: '16px', color: '#1f2937', padding: '12px 0' }}>
+                      {(selectedItem as any).supplierContact ? (selectedItem as any).supplierContact.split(' - ')[1] || (selectedItem as any).supplierContact : 'No contact information'}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      Portfolio
+                    </label>
+                    <div style={{ fontSize: '16px', color: '#1f2937', padding: '12px 0', minHeight: '60px' }}>
+                      {(selectedItem as any).supplierSocial || 'No portfolio information'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Inventory Details */}
+              <div style={{ display: 'grid', gap: '16px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#374151', margin: 0 }}>
+                  Inventory Details
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      Current Quantity
+                    </label>
+                    <div style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', padding: '12px 0' }}>
+                      {selectedItem.quantity} {selectedItem.unit}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      Unit Price
+                    </label>
+                    <div style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', padding: '12px 0' }}>
+                      ${selectedItem.unitPrice.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      Minimum Quantity
+                    </label>
+                    <div style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', padding: '12px 0' }}>
+                      {selectedItem.minQuantity} {selectedItem.unit}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      Maximum Quantity
+                    </label>
+                    <div style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', padding: '12px 0' }}>
+                      {selectedItem.maxQuantity} {selectedItem.unit}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      Status
+                    </label>
+                    <div style={{ 
+                      fontSize: '16px', 
+                      fontWeight: '500', 
+                      padding: '12px 0', 
+                      color: getStatusColor(selectedItem.status),
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      {getStatusIcon(selectedItem.status)}
+                      {getStatusText(selectedItem.status)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timestamps */}
+              <div style={{ display: 'grid', gap: '16px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#374151', margin: 0 }}>
+                  Record Information
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      Created At
+                    </label>
+                    <div style={{ fontSize: '16px', color: '#1f2937', padding: '12px 0' }}>
+                      {new Date(selectedItem.createdAt).toLocaleDateString()} at {new Date(selectedItem.createdAt).toLocaleTimeString()}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                      Last Updated
+                    </label>
+                    <div style={{ fontSize: '16px', color: '#1f2937', padding: '12px 0' }}>
+                      {new Date(selectedItem.lastUpdated).toLocaleDateString()} at {new Date(selectedItem.lastUpdated).toLocaleTimeString()}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -849,7 +1220,8 @@ export default function InventoryPage() {
                       padding: '12px',
                       border: '1px solid #d1d5db',
                       borderRadius: '20px',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
                     }}
                   />
                 </div>

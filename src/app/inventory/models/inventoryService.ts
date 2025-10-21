@@ -41,6 +41,8 @@ export interface NewInventoryForm {
   category: string;
   description: string;
   supplier: string;
+  supplierContact: string;
+  supplierSocial: string;
   unit: string;
   quantity: string;
   minQuantity: string;
