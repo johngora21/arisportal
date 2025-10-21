@@ -37,8 +37,186 @@ const useContacts = () => {
   useEffect(() => {
     const loadContacts = async () => {
       try {
-        const data = await ContactService.fetchContacts();
-        setContacts(data);
+        // First load existing contacts from API
+        const apiContacts = await ContactService.fetchContacts();
+        
+        // Then get deals to create contacts from sales data
+        const deals = await DealService.fetchDeals();
+        
+        // Remove duplicate deals first
+        const uniqueDeals: Deal[] = [];
+        const seenDeals = new Set();
+        
+        deals.forEach(deal => {
+          const dealKey = `${deal.buyerName}-${deal.address}-${deal.productName}-${deal.quantity}-${deal.unitPrice}-${deal.orderDate}`;
+          if (!seenDeals.has(dealKey)) {
+            seenDeals.add(dealKey);
+            uniqueDeals.push(deal);
+          } else {
+            console.log(`Removed duplicate deal: ${deal.productName} for ${deal.buyerName}`);
+          }
+        });
+        
+        console.log(`Original deals: ${deals.length}, Unique deals: ${uniqueDeals.length}`);
+        
+        // Create contacts from unique buyers in deals
+        const uniqueBuyers = new Map();
+        
+        uniqueDeals.forEach(deal => {
+          const buyerKey = `${deal.buyerName}-${deal.address}`.toLowerCase();
+          
+          // Debug for jameson raey
+          if (deal.buyerName.toLowerCase().includes('jameson')) {
+            console.log(`Processing deal for jameson: ${deal.productName} - ${deal.quantity} × $${deal.unitPrice} = $${deal.quantity * deal.unitPrice}`);
+          }
+          
+          if (!uniqueBuyers.has(buyerKey)) {
+            uniqueBuyers.set(buyerKey, {
+              name: deal.buyerName,
+              address: deal.address,
+              email: deal.email || '',
+              phone: deal.phone || '',
+              totalValue: deal.quantity * deal.unitPrice,
+              deals: [deal]
+            });
+            
+            // Debug for jameson raey
+            if (deal.buyerName.toLowerCase().includes('jameson')) {
+              console.log(`Created new jameson buyer with total: ${deal.quantity * deal.unitPrice}`);
+            }
+          } else {
+            const existing = uniqueBuyers.get(buyerKey);
+            const dealValue = deal.quantity * deal.unitPrice;
+            existing.totalValue += dealValue;
+            existing.deals.push(deal);
+            
+            // Debug for jameson raey
+            if (deal.buyerName.toLowerCase().includes('jameson')) {
+              console.log(`Added deal value ${dealValue} to existing jameson total: ${existing.totalValue}`);
+            }
+          }
+        });
+
+        // Convert unique buyers to contacts
+        const salesContacts: Contact[] = Array.from(uniqueBuyers.values()).map(buyerData => {
+          // Debug for jameson raey
+          if (buyerData.name.toLowerCase().includes('jameson')) {
+            console.log(`Final jameson contact calculation:`);
+            console.log(`- Name: ${buyerData.name}`);
+            console.log(`- Address: ${buyerData.address}`);
+            console.log(`- Total Value: ${buyerData.totalValue}`);
+            console.log(`- Number of deals: ${buyerData.deals.length}`);
+            console.log(`- Deal breakdown:`, buyerData.deals.map((d: Deal) => `${d.productName}: ${d.quantity} × $${d.unitPrice} = $${d.quantity * d.unitPrice}`));
+          }
+          
+          return {
+            id: `sales-${buyerData.name}-${buyerData.address}`.replace(/\s+/g, '-').toLowerCase(),
+            name: buyerData.name,
+            company: '',
+            location: buyerData.address,
+            email: buyerData.email,
+            phone: buyerData.phone,
+            whatsapp: '',
+            status: 'customer' as const,
+            lastContact: new Date(Math.max(...buyerData.deals.map((d: Deal) => new Date(d.orderDate).getTime()))),
+            value: buyerData.totalValue,
+            tags: [],
+            notes: `Customer from ${buyerData.deals.length} sale(s)`
+          };
+        });
+
+        // Combine API contacts and sales contacts, avoiding duplicates
+        const allContacts = [...apiContacts];
+        salesContacts.forEach(salesContact => {
+          const exists = apiContacts.some(apiContact => 
+            apiContact.name.toLowerCase() === salesContact.name.toLowerCase() &&
+            apiContact.location.toLowerCase() === salesContact.location.toLowerCase()
+          );
+          if (!exists) {
+            allContacts.push(salesContact);
+          } else {
+            // Update existing contact with sales data
+            const existingContact = apiContacts.find(apiContact => 
+              apiContact.name.toLowerCase() === salesContact.name.toLowerCase() &&
+              apiContact.location.toLowerCase() === salesContact.location.toLowerCase()
+            );
+            if (existingContact) {
+              // Debug for jameson raey
+              if (salesContact.name.toLowerCase().includes('jameson')) {
+                console.log(`Merging jameson contact:`);
+                console.log(`- Existing contact value: ${existingContact.value}`);
+                console.log(`- Sales contact value: ${salesContact.value}`);
+                console.log(`- Combined value: ${existingContact.value + salesContact.value}`);
+              }
+              
+              // Update the existing contact in allContacts
+              const index = allContacts.findIndex(c => c.id === existingContact.id);
+              if (index !== -1) {
+                allContacts[index] = {
+                  ...existingContact,
+                  value: salesContact.value, // Use sales-calculated value instead of adding
+                  lastContact: salesContact.lastContact > existingContact.lastContact ? 
+                    salesContact.lastContact : existingContact.lastContact, // Keep most recent
+                  notes: existingContact.notes ? 
+                    `${existingContact.notes}; ${salesContact.notes}` : 
+                    salesContact.notes // Combine notes
+                };
+              }
+            }
+          }
+        });
+
+        // Remove any remaining duplicates from the final list
+        const finalContacts: Contact[] = [];
+        const seenKeys = new Set();
+        
+        allContacts.forEach(contact => {
+          const key = `${contact.name.toLowerCase()}-${contact.location.toLowerCase()}`;
+          
+          // Debug for jameson raey
+          if (contact.name.toLowerCase().includes('jameson')) {
+            console.log(`Processing jameson in final merge: ${contact.name} - Value: ${contact.value}`);
+          }
+          
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            finalContacts.push(contact);
+          } else {
+            // Merge with existing contact
+            const existingIndex = finalContacts.findIndex(c => 
+              c.name.toLowerCase() === contact.name.toLowerCase() &&
+              c.location.toLowerCase() === contact.location.toLowerCase()
+            );
+            if (existingIndex !== -1) {
+              // Debug for jameson raey
+              if (contact.name.toLowerCase().includes('jameson')) {
+                console.log(`Final merge for jameson:`);
+                console.log(`- Existing value: ${finalContacts[existingIndex].value}`);
+                console.log(`- New contact value: ${contact.value}`);
+                console.log(`- Final combined value: ${finalContacts[existingIndex].value + contact.value}`);
+              }
+              
+              // Use the higher value instead of adding them together
+              const higherValue = Math.max(finalContacts[existingIndex].value, contact.value);
+              finalContacts[existingIndex] = {
+                ...finalContacts[existingIndex],
+                value: higherValue,
+                lastContact: finalContacts[existingIndex].lastContact > contact.lastContact ? 
+                  finalContacts[existingIndex].lastContact : contact.lastContact,
+                notes: finalContacts[existingIndex].notes && contact.notes ? 
+                  `${finalContacts[existingIndex].notes}; ${contact.notes}` : 
+                  (finalContacts[existingIndex].notes || contact.notes)
+              };
+            }
+          }
+        });
+
+        // Sort contacts by last contact date (most recent first)
+        const sortedContacts = finalContacts.sort((a, b) => 
+          new Date(b.lastContact).getTime() - new Date(a.lastContact).getTime()
+        );
+        
+        setContacts(sortedContacts);
       } catch (error) {
         console.error('Failed to load contacts:', error);
       } finally {
@@ -60,6 +238,17 @@ const useContacts = () => {
     }
   };
 
+  const updateContact = async (contactData: any) => {
+    try {
+      const updatedContact = await ContactService.updateContact(contactData);
+      setContacts(prev => prev.map(c => c.id === contactData.id ? updatedContact : c));
+      return updatedContact;
+    } catch (error) {
+      console.error('Failed to update contact:', error);
+      throw error;
+    }
+  };
+
   const deleteContact = async (id: string) => {
     try {
       await ContactService.deleteContact(id);
@@ -70,7 +259,7 @@ const useContacts = () => {
     }
   };
 
-  return { contacts, loading, addContact, deleteContact };
+  return { contacts, loading, addContact, updateContact, deleteContact, setContacts };
 };
 
 const useDeals = () => {
@@ -107,17 +296,19 @@ const useDeals = () => {
 };
 
 export default function CRMPage() {
-  const { contacts, loading: contactsLoading, addContact, deleteContact } = useContacts();
+  const { contacts, loading: contactsLoading, addContact, updateContact, deleteContact, setContacts } = useContacts();
   const { deals, loading: dealsLoading, addDeal } = useDeals();
   const [contactsSearchQuery, setContactsSearchQuery] = useState('');
   const [salesSearchQuery, setSalesSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'contacts' | 'deals' | 'analytics'>('contacts');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showAddSaleModal, setShowAddSaleModal] = useState(false);
   const [addMode, setAddMode] = useState<'manual' | 'import' | null>(null);
   const [newContact, setNewContact] = useState({
     name: '',
+    company: '',
     location: '',
     email: '',
     phone: '',
@@ -134,19 +325,122 @@ export default function CRMPage() {
     email: '',
     phone: '',
     orderDate: new Date(),
-    quantity: 1,
-    unitPrice: 0
+    quantity: '',
+    unitPrice: ''
   });
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState<'email' | 'sms' | 'whatsapp'>('email');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showBuyerSuggestions, setShowBuyerSuggestions] = useState(false);
+  const [buyerSuggestions, setBuyerSuggestions] = useState<Contact[]>([]);
   
   const availableChannels = [
     { id: 'email', label: 'Email', icon: <Mail size={16} /> },
     { id: 'sms', label: 'SMS', icon: <Phone size={16} /> },
     { id: 'whatsapp', label: 'WhatsApp', icon: <MessageSquare size={16} /> }
   ];
+
+  // Clean up duplicate contacts
+  const cleanupDuplicateContacts = () => {
+    console.log('Starting cleanup with', contacts.length, 'contacts');
+    
+    const contactMap = new Map();
+    
+    contacts.forEach((contact, index) => {
+      const key = `${contact.name.toLowerCase()}-${contact.location.toLowerCase()}`;
+      console.log(`Processing contact ${index + 1}: ${contact.name} (${contact.location}) - Key: ${key}`);
+      
+      if (contactMap.has(key)) {
+        const existing = contactMap.get(key);
+        console.log(`Found duplicate for ${contact.name}! Existing value: ${existing.value}, New value: ${contact.value}`);
+        
+        // Merge contacts by combining their values and keeping the most recent data
+        const mergedContact = {
+          ...existing,
+          value: existing.value + contact.value, // Add values together
+          lastContact: existing.lastContact > contact.lastContact ? existing.lastContact : contact.lastContact, // Keep most recent
+          email: existing.email || contact.email, // Keep non-empty email
+          phone: existing.phone || contact.phone, // Keep non-empty phone
+          whatsapp: existing.whatsapp || contact.whatsapp, // Keep non-empty whatsapp
+          notes: existing.notes && contact.notes ? 
+            `${existing.notes}; ${contact.notes}` : 
+            (existing.notes || contact.notes) // Combine notes
+        };
+        contactMap.set(key, mergedContact);
+        console.log(`Merged contact ${contact.name} - New total value: ${mergedContact.value}`);
+      } else {
+        contactMap.set(key, contact);
+        console.log(`Added new contact: ${contact.name}`);
+      }
+    });
+    
+    const uniqueContacts = Array.from(contactMap.values());
+    console.log('Final unique contacts:', uniqueContacts.length);
+    console.log('Unique contacts:', uniqueContacts.map(c => `${c.name} (${c.location}) - $${c.value}`));
+    
+    setContacts(uniqueContacts);
+    
+    // Show which contacts were merged
+    const duplicates = contacts.length - uniqueContacts.length;
+    if (duplicates > 0) {
+      alert(`Merged ${duplicates} duplicate contacts! Total contacts reduced from ${contacts.length} to ${uniqueContacts.length}.`);
+    } else {
+      alert('No duplicates found!');
+    }
+  };
+
+  // Handle buyer name input with autocomplete
+  const handleBuyerNameChange = (value: string) => {
+    setNewSale({...newSale, buyerName: value});
+    
+    if (value.length > 0) {
+      // Filter contacts that match the input
+      const suggestions = contacts.filter(contact => 
+        contact.name.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 5); // Show max 5 suggestions
+      
+      setBuyerSuggestions(suggestions);
+      setShowBuyerSuggestions(suggestions.length > 0);
+    } else {
+      setShowBuyerSuggestions(false);
+      setBuyerSuggestions([]);
+    }
+  };
+
+  // Handle selecting a suggestion
+  const handleSelectBuyer = (contact: Contact) => {
+    setNewSale({
+      ...newSale, 
+      buyerName: contact.name,
+      address: contact.location,
+      email: contact.email,
+      phone: contact.phone
+    });
+    setShowBuyerSuggestions(false);
+    setBuyerSuggestions([]);
+    
+    // Show a brief success message
+    console.log(`Selected contact: ${contact.name} - Auto-filled address, email, and phone`);
+  };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // Don't close if clicking on the suggestions dropdown
+      if (showBuyerSuggestions && !target.closest('[data-suggestions]')) {
+        setShowBuyerSuggestions(false);
+        setBuyerSuggestions([]);
+      }
+    };
+
+    if (showBuyerSuggestions) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showBuyerSuggestions]);
 
   const filteredContacts = contacts.filter(contact => {
     const matchesSearch = contact.name.toLowerCase().includes(contactsSearchQuery.toLowerCase()) ||
@@ -155,12 +449,44 @@ export default function CRMPage() {
     return matchesSearch && matchesStatus;
   });
 
+  // Function to get deals for a specific contact
+  const getContactDeals = (contactId: string) => {
+    // Find the contact to get their name and location
+    const contact = contacts.find(c => c.id === contactId);
+    if (!contact) return [];
+    
+    // Match deals by buyer name and address
+    const matchedDeals = deals.filter(deal => 
+      deal.buyerName.toLowerCase() === contact.name.toLowerCase() &&
+      deal.address.toLowerCase() === contact.location.toLowerCase()
+    );
+    
+    // Sort deals by order date (most recent first)
+    const sortedDeals = matchedDeals.sort((a, b) => 
+      new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
+    );
+    
+    console.log(`Contact: ${contact.name} (${contact.location})`);
+    console.log(`Contact value: $${contact.value}`);
+    console.log(`Found ${sortedDeals.length} deals:`, sortedDeals.map(d => `${d.productName}: ${d.quantity} × $${d.unitPrice} = $${d.quantity * d.unitPrice}`));
+    
+    return sortedDeals;
+  };
+
+  // Function to calculate total sales for a contact
+  const getContactTotalSales = (contactId: string) => {
+    const contactDeals = getContactDeals(contactId);
+    return contactDeals.reduce((total, deal) => total + (deal.quantity * deal.unitPrice), 0);
+  };
+
   const filteredDeals = deals.filter(deal => {
     const matchesSearch = deal.productName.toLowerCase().includes(salesSearchQuery.toLowerCase()) ||
                          deal.buyerName.toLowerCase().includes(salesSearchQuery.toLowerCase()) ||
                          deal.address.toLowerCase().includes(salesSearchQuery.toLowerCase());
     return matchesSearch;
-  });
+  }).sort((a, b) => 
+    new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -209,15 +535,17 @@ export default function CRMPage() {
       try {
         await addContact({
         name: newContact.name,
+        company: '', // Add company field
         location: newContact.location,
         email: newContact.email,
         phone: newContact.phone,
           whatsapp: newContact.whatsapp,
         status: newContact.status,
         value: newContact.value,
-        notes: newContact.notes
+        notes: newContact.notes,
+        owner_id: 1 // Add required owner_id
         });
-        setNewContact({ name: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
+        setNewContact({ name: '', company: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
       setShowAddModal(false);
       setAddMode(null);
       } catch (error) {
@@ -230,7 +558,8 @@ export default function CRMPage() {
   const handleAddSale = async () => {
     if (newSale.productName && newSale.buyerName && newSale.address) {
       try {
-        await addDeal({
+        // First create the deal
+        const createdDeal = await addDeal({
           productName: newSale.productName,
           productCategory: newSale.productCategory,
           buyerName: newSale.buyerName,
@@ -238,9 +567,52 @@ export default function CRMPage() {
           email: newSale.email,
           phone: newSale.phone,
           orderDate: newSale.orderDate,
-          quantity: newSale.quantity,
-          unitPrice: newSale.unitPrice
+          quantity: parseInt(newSale.quantity) || 0,
+          unitPrice: parseFloat(newSale.unitPrice) || 0
         });
+
+        // Then create/update contact from the deal information
+        try {
+          // Check if contact already exists
+          const existingContact = contacts.find(contact => 
+            contact.name.toLowerCase() === newSale.buyerName.toLowerCase() &&
+            contact.location.toLowerCase() === newSale.address.toLowerCase()
+          );
+
+          if (existingContact) {
+            // Update existing contact's value
+            const newValue = (parseInt(newSale.quantity) || 0) * (parseFloat(newSale.unitPrice) || 0);
+            const updatedValue = existingContact.value + newValue;
+            
+            // Update the contact in the contacts list
+            setContacts(prev => prev.map(c => 
+              c.id === existingContact.id 
+                ? { ...c, value: updatedValue, lastContact: new Date() }
+                : c
+            ));
+            
+            console.log(`Updated existing contact: ${existingContact.name} - New total value: ${formatCurrency(updatedValue)}`);
+          } else {
+            // Create new contact
+            await addContact({
+              name: newSale.buyerName,
+              company: '', // No company info from sales
+              location: newSale.address,
+              email: newSale.email || '',
+              phone: newSale.phone || '',
+              whatsapp: '', // No WhatsApp from sales
+              status: 'customer', // Anyone who buys becomes a customer
+              value: (parseInt(newSale.quantity) || 0) * (parseFloat(newSale.unitPrice) || 0), // Set value to the purchase amount
+              notes: `Customer from sale: ${newSale.productName}`,
+              owner_id: 1
+            });
+            console.log(`Created new contact: ${newSale.buyerName}`);
+          }
+        } catch (contactError) {
+          // If contact creation fails, it might already exist - that's okay
+          console.log('Contact creation/update failed:', contactError);
+        }
+
         setNewSale({
           productName: '',
           productCategory: '',
@@ -249,8 +621,8 @@ export default function CRMPage() {
           email: '',
           phone: '',
           orderDate: new Date(),
-          quantity: 1,
-          unitPrice: 0
+          quantity: '',
+          unitPrice: ''
         });
         setShowAddSaleModal(false);
       } catch (error) {
@@ -279,13 +651,80 @@ export default function CRMPage() {
     setShowChatModal(true);
   };
 
-  const handleDeleteContact = async (contactId: string) => {
-    if (confirm('Are you sure you want to delete this contact?')) {
+  const handleEditContact = (contact: Contact) => {
+    setNewContact({
+      name: contact.name,
+      company: contact.company,
+      location: contact.location,
+      email: contact.email,
+      phone: contact.phone,
+      whatsapp: contact.whatsapp,
+      status: contact.status,
+      value: contact.value,
+      notes: contact.notes
+    });
+    setSelectedContact(contact);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateContact = async () => {
+    if (selectedContact && newContact.name && newContact.location) {
       try {
+        // Check if this is a sales-generated contact (ID starts with "sales-")
+        if (selectedContact.id.startsWith('sales-')) {
+          // For sales-generated contacts, we can't update them via API
+          // Just close the modal and show a message
+          alert('Sales-generated contacts cannot be updated. They are automatically created from sales data.');
+          setNewContact({ name: '', company: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
+          setShowEditModal(false);
+          setSelectedContact(null);
+        } else {
+          // For API contacts, call the update API
+          await updateContact({
+            id: selectedContact.id,
+            name: newContact.name,
+            company: newContact.company,
+            location: newContact.location,
+            email: newContact.email,
+            phone: newContact.phone,
+            whatsapp: newContact.whatsapp,
+            status: newContact.status,
+            value: newContact.value,
+            notes: newContact.notes,
+            owner_id: 1
+          });
+          
+          setNewContact({ name: '', company: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
+          setShowEditModal(false);
+          setSelectedContact(null);
+        }
+      } catch (error) {
+        console.error('Failed to update contact:', error);
+      }
+    }
+  };
+
+  const handleDeleteContact = async (contactId: string) => {
+    if (confirm('Are you sure you want to delete this contact? This will permanently remove the contact and ALL their sales history (deals, revenue, etc.). This action cannot be undone.')) {
+      try {
+        // Check if this is a sales-generated contact (ID starts with "sales-")
+        if (contactId.startsWith('sales-')) {
+          // For sales-generated contacts, we can't delete them via API
+          // Just show a message
+          alert('Sales-generated contacts cannot be deleted. They are automatically created from sales data.');
+          setErrorMessage(null);
+        } else {
+          // For API contacts, call the delete API
         await deleteContact(contactId);
+          setErrorMessage(null);
+        }
       } catch (error) {
         console.error('Failed to delete contact:', error);
-        // Handle error (show notification, etc.)
+        // Show error message to user
+        const message = error instanceof Error ? error.message : 'Failed to delete contact';
+        setErrorMessage(message);
+        // Also try alert as fallback
+        alert(message);
       }
     }
   };
@@ -389,6 +828,53 @@ export default function CRMPage() {
             </div>
           </div>
         </div>
+
+      {/* Error Message */}
+      {errorMessage && (
+        <div style={{
+          backgroundColor: '#fef2f2',
+          border: '1px solid #fecaca',
+          borderRadius: '12px',
+          padding: '16px',
+          marginBottom: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              backgroundColor: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}>
+              !
+            </div>
+            <span style={{ color: '#dc2626', fontSize: '14px', fontWeight: '500' }}>
+              {errorMessage}
+            </span>
+          </div>
+          <button
+            onClick={() => setErrorMessage(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#dc2626',
+              fontSize: '18px',
+              cursor: 'pointer',
+              padding: '4px'
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
@@ -543,6 +1029,29 @@ export default function CRMPage() {
                           title="View Contact Details"
                         >
                           <Eye size={16} />
+                        </button>
+                        <button 
+                          onClick={() => handleEditContact(contact)}
+                          style={{ 
+                            padding: '6px', 
+                            border: 'none', 
+                            borderRadius: '20px', 
+                            background: '#f3f4f6', 
+                            color: '#6b7280', 
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }} 
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.background = '#f0f9ff';
+                            e.currentTarget.style.color = '#0ea5e9';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.background = '#f3f4f6';
+                            e.currentTarget.style.color = '#6b7280';
+                          }}
+                          title="Edit Contact"
+                        >
+                          <Edit size={16} />
                         </button>
                         <button 
                           onClick={() => handleChatContact(contact)}
@@ -1061,7 +1570,7 @@ export default function CRMPage() {
                 onClick={() => {
                   setShowAddModal(false);
                   setAddMode(null);
-                  setNewContact({ name: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
+                  setNewContact({ name: '', company: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
                 }}
                 style={{
                   background: 'none',
@@ -1249,7 +1758,7 @@ export default function CRMPage() {
                       Value ($)
                     </label>
                     <input
-                      type="number"
+                      type="text"
                       value={newContact.value}
                       onChange={(e) => setNewContact({...newContact, value: parseInt(e.target.value) || 0})}
                       placeholder="0"
@@ -1292,7 +1801,7 @@ export default function CRMPage() {
                   <button
                   onClick={() => {
                     setAddMode(null);
-                    setNewContact({ name: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
+                    setNewContact({ name: '', company: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
                   }}
                     style={{
                       padding: '10px 20px',
@@ -1376,6 +1885,243 @@ export default function CRMPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Contact Modal */}
+      {showEditModal && selectedContact && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '24px',
+            width: '90%',
+            maxWidth: '500px',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
+                Edit Contact
+              </h2>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setSelectedContact(null);
+                  setNewContact({ name: '', company: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#6b7280'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  value={newContact.name}
+                  onChange={(e) => setNewContact({...newContact, name: e.target.value})}
+                  placeholder="Enter contact name"
+                  style={{
+                    width: '100%',
+                    maxWidth: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Location *
+                </label>
+                <input
+                  type="text"
+                  value={newContact.location}
+                  onChange={(e) => setNewContact({...newContact, location: e.target.value})}
+                  placeholder="e.g., San Francisco, CA"
+                  style={{
+                    width: '100%',
+                    maxWidth: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={newContact.email}
+                  onChange={(e) => setNewContact({...newContact, email: e.target.value})}
+                  placeholder="contact@example.com"
+                  style={{
+                    width: '100%',
+                    maxWidth: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={newContact.phone}
+                  onChange={(e) => setNewContact({...newContact, phone: e.target.value})}
+                  placeholder="+1 (555) 123-4567"
+                  style={{
+                    width: '100%',
+                    maxWidth: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  WhatsApp
+                </label>
+                <input
+                  type="tel"
+                  value={newContact.whatsapp}
+                  onChange={(e) => setNewContact({...newContact, whatsapp: e.target.value})}
+                  placeholder="+1 (555) 123-4567"
+                  style={{
+                    width: '100%',
+                    maxWidth: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                    Value ($)
+                  </label>
+                  <input
+                    type="text"
+                    value={newContact.value}
+                    onChange={(e) => setNewContact({...newContact, value: parseInt(e.target.value) || 0})}
+                    placeholder="0"
+                    style={{
+                      width: '100%',
+                      maxWidth: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Notes
+                </label>
+                <textarea
+                  value={newContact.notes}
+                  onChange={(e) => setNewContact({...newContact, notes: e.target.value})}
+                  placeholder="Add any notes about this contact..."
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    maxWidth: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    resize: 'vertical',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setSelectedContact(null);
+                    setNewContact({ name: '', company: '', location: '', email: '', phone: '', whatsapp: '', status: 'lead', value: 0, notes: '' });
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '20px',
+                    background: 'white',
+                    color: '#374151',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateContact}
+                  style={{
+                    padding: '12px 24px',
+                    border: 'none',
+                    borderRadius: '20px',
+                    background: 'var(--mc-sidebar-bg-hover)',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Update Contact
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1529,6 +2275,84 @@ export default function CRMPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Sales History Section */}
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', margin: '0 0 16px 0' }}>
+                  Sales History
+                </h3>
+                {(() => {
+                  const contactDeals = getContactDeals(selectedContact.id);
+                  const totalSales = getContactTotalSales(selectedContact.id);
+                  
+                  return (
+                    <div>
+                      {contactDeals.length > 0 ? (
+                 <div>
+                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                     {contactDeals.map((deal, index) => (
+                              <div key={index} style={{ 
+                                padding: '16px',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '12px',
+                                marginBottom: '12px',
+                                backgroundColor: '#fafafa'
+                              }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
+                                    {deal.productName}
+                                  </div>
+                                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#059669' }}>
+                                    {formatCurrency(deal.quantity * deal.unitPrice)}
+                                  </div>
+                                </div>
+                                
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '8px' }}>
+                                  <div>
+                                    <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>Quantity</div>
+                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>{deal.quantity}</div>
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>Unit Price</div>
+                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>{formatCurrency(deal.unitPrice)}</div>
+                                  </div>
+                                </div>
+                                
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                  <div>
+                                    <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>Category</div>
+                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>{deal.productCategory}</div>
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>Order Date</div>
+                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>{formatDate(deal.orderDate)}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ 
+                          textAlign: 'center', 
+                          padding: '32px', 
+                          backgroundColor: '#f9fafb', 
+                          borderRadius: '12px',
+                          border: '1px solid #e5e7eb'
+                        }}>
+                          <Target size={48} color="#9ca3af" style={{ marginBottom: '16px' }} />
+                          <div style={{ fontSize: '16px', fontWeight: '500', color: '#6b7280', marginBottom: '8px' }}>
+                            No Sales Yet
+                          </div>
+                          <div style={{ fontSize: '14px', color: '#9ca3af' }}>
+                            This contact hasn't made any purchases yet
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
@@ -1757,8 +2581,8 @@ export default function CRMPage() {
                     email: '',
                     phone: '',
                     orderDate: new Date(),
-                    quantity: 1,
-                    unitPrice: 0
+                    quantity: '1',
+                    unitPrice: '0'
                   });
                 }}
                 style={{
@@ -1821,14 +2645,14 @@ export default function CRMPage() {
 
               {/* Buyer Information */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
+                <div style={{ position: 'relative' }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
                     Buyer Name *
                   </label>
                   <input
                     type="text"
                     value={newSale.buyerName}
-                    onChange={(e) => setNewSale({...newSale, buyerName: e.target.value})}
+                    onChange={(e) => handleBuyerNameChange(e.target.value)}
                     placeholder="e.g., Sarah Johnson"
                     style={{
                       width: '100%',
@@ -1840,6 +2664,60 @@ export default function CRMPage() {
                       boxSizing: 'border-box'
                     }}
                   />
+                  
+                  {/* Autocomplete Suggestions */}
+                  {showBuyerSuggestions && buyerSuggestions.length > 0 && (
+                    <div 
+                      data-suggestions
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        backgroundColor: 'white',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        zIndex: 1000,
+                        maxHeight: '200px',
+                        overflowY: 'auto'
+                      }}
+                    >
+                      {buyerSuggestions.map((contact, index) => (
+                        <div
+                          key={contact.id}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSelectBuyer(contact);
+                          }}
+                          style={{
+                            padding: '12px 16px',
+                            cursor: 'pointer',
+                            borderBottom: index < buyerSuggestions.length - 1 ? '1px solid #f3f4f6' : 'none',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            transition: 'background-color 0.2s'
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                        >
+                          <div>
+                            <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>
+                              {contact.name}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                              {contact.location} • {contact.status}
+                            </div>
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#059669', fontWeight: '500' }}>
+                            {formatCurrency(contact.value)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1936,10 +2814,10 @@ export default function CRMPage() {
                     Quantity
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     value={newSale.quantity}
-                    onChange={(e) => setNewSale({...newSale, quantity: parseInt(e.target.value) || 1})}
-                    min="1"
+                    onChange={(e) => setNewSale({...newSale, quantity: e.target.value})}
+                    placeholder="Enter quantity"
                     style={{
                       width: '100%',
                       maxWidth: '100%',
@@ -1959,7 +2837,8 @@ export default function CRMPage() {
                   <input
                     type="text"
                     value={newSale.unitPrice}
-                    onChange={(e) => setNewSale({...newSale, unitPrice: parseFloat(e.target.value) || 0})}
+                    onChange={(e) => setNewSale({...newSale, unitPrice: e.target.value})}
+                    placeholder="Enter unit price"
                     style={{
                       width: '100%',
                       maxWidth: '100%',
@@ -1983,7 +2862,7 @@ export default function CRMPage() {
               }}>
                 <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Total Price</div>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-                  {formatCurrency(newSale.quantity * newSale.unitPrice)}
+                  {formatCurrency(parseInt(newSale.quantity) * parseFloat(newSale.unitPrice))}
                 </div>
               </div>
 
@@ -1999,8 +2878,8 @@ export default function CRMPage() {
                       email: '',
                       phone: '',
                       orderDate: new Date(),
-                      quantity: 1,
-                      unitPrice: 0
+                      quantity: '1',
+                      unitPrice: '0'
                     });
                   }}
                   style={{
