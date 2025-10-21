@@ -27,117 +27,13 @@ import {
   X,
   XCircle
 } from 'lucide-react';
-
-// Mock data types
-interface InventoryItem {
-  id: string;
-  name: string;
-  sku: string;
-  category: string;
-  description: string;
-  supplier: string;
-  unit: string;
-  quantity: number;
-  minQuantity: number;
-  maxQuantity: number;
-  unitPrice: number;
-  location: string;
-  status: string;
-  lastUpdated: Date;
-}
-
-interface InventoryStats {
-  totalItems: number;
-  totalValue: number;
-  lowStockItems: number;
-  outOfStockItems: number;
-  categories: number;
-}
-
-interface InventoryCategory {
-  id: string;
-  name: string;
-  description: string;
-  itemCount: number;
-}
-
-interface NewInventoryForm {
-  name: string;
-  sku: string;
-  category: string;
-  description: string;
-  supplier: string;
-  unit: string;
-  quantity: string;
-  minQuantity: string;
-  maxQuantity: string;
-  unitPrice: string;
-  location: string;
-}
+import InventoryService, { InventoryItem, InventoryCategory, InventoryStats, NewInventoryForm } from './models/inventoryService';
 
 export default function InventoryPage() {
-  // Mock data
-  const mockInventoryItems: InventoryItem[] = [
-    {
-      id: '1',
-      name: 'Office Chairs',
-      sku: 'CHAIR-001',
-      category: 'Furniture',
-      description: 'Ergonomic office chairs with lumbar support',
-      supplier: 'Office Supplies Co.',
-      unit: 'pieces',
-      quantity: 25,
-      minQuantity: 10,
-      maxQuantity: 50,
-      unitPrice: 150.00,
-      location: 'Warehouse A',
-      status: 'In Stock',
-      lastUpdated: new Date('2024-01-15')
-    },
-    {
-      id: '2',
-      name: 'Laptop Computers',
-      sku: 'LAPTOP-002',
-      category: 'Electronics',
-      description: 'Dell Inspiron 15 3000 Series',
-      supplier: 'Tech Solutions Ltd.',
-      unit: 'units',
-      quantity: 8,
-      minQuantity: 5,
-      maxQuantity: 20,
-      unitPrice: 800.00,
-      location: 'IT Storage',
-      status: 'Low Stock',
-      lastUpdated: new Date('2024-01-14')
-    },
-    {
-      id: '3',
-      name: 'Printer Paper',
-      sku: 'PAPER-003',
-      category: 'Office Supplies',
-      description: 'A4 White Copy Paper 80gsm',
-      supplier: 'Paper World',
-      unit: 'reams',
-      quantity: 0,
-      minQuantity: 20,
-      maxQuantity: 100,
-      unitPrice: 12.50,
-      location: 'Storage Room',
-      status: 'Out of Stock',
-      lastUpdated: new Date('2024-01-10')
-    }
-  ];
-
-  const mockCategories: InventoryCategory[] = [
-    { id: '1', name: 'Furniture', description: 'Office furniture and equipment', itemCount: 1 },
-    { id: '2', name: 'Electronics', description: 'Computers, phones, and electronic devices', itemCount: 1 },
-    { id: '3', name: 'Office Supplies', description: 'Stationery and office consumables', itemCount: 1 }
-  ];
-
   // State
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(mockInventoryItems);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [stats, setStats] = useState<InventoryStats | null>(null);
-  const [categories, setCategories] = useState<InventoryCategory[]>(mockCategories);
+  const [categories, setCategories] = useState<InventoryCategory[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -175,22 +71,29 @@ export default function InventoryPage() {
     location: ''
   });
 
-  // Calculate stats
+  // Load data from backend
   useEffect(() => {
-    const totalItems = inventoryItems.length;
-    const totalValue = inventoryItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-    const lowStockItems = inventoryItems.filter(item => item.quantity <= item.minQuantity && item.quantity > 0).length;
-    const outOfStockItems = inventoryItems.filter(item => item.quantity === 0).length;
-    const categoriesCount = categories.length;
+    loadData();
+  }, []);
 
-    setStats({
-      totalItems,
-      totalValue,
-      lowStockItems,
-      outOfStockItems,
-      categories: categoriesCount
-    });
-  }, [inventoryItems, categories]);
+  const loadData = async () => {
+    setDataLoading(true);
+    try {
+      const [itemsData, categoriesData, statsData] = await Promise.all([
+        InventoryService.fetchItems(),
+        InventoryService.fetchCategories(),
+        InventoryService.getStats()
+      ]);
+      
+      setInventoryItems(itemsData);
+      setCategories(categoriesData);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setDataLoading(false);
+    }
+  };
 
   // Filter items
   const filteredItems = inventoryItems.filter(item => {
@@ -207,24 +110,7 @@ export default function InventoryPage() {
   const handleAddItem = async () => {
     setFormLoading(true);
     try {
-      const newItem: InventoryItem = {
-        id: Date.now().toString(),
-        name: newItemForm.name,
-        sku: newItemForm.sku,
-        category: newItemForm.category,
-        description: newItemForm.description,
-        supplier: newItemForm.supplier,
-        unit: newItemForm.unit,
-        quantity: parseInt(newItemForm.quantity),
-        minQuantity: parseInt(newItemForm.minQuantity),
-        maxQuantity: parseInt(newItemForm.maxQuantity),
-        unitPrice: parseFloat(newItemForm.unitPrice),
-        location: newItemForm.location,
-        status: parseInt(newItemForm.quantity) === 0 ? 'Out of Stock' : 
-                parseInt(newItemForm.quantity) <= parseInt(newItemForm.minQuantity) ? 'Low Stock' : 'In Stock',
-        lastUpdated: new Date()
-      };
-      
+      const newItem = await InventoryService.createItem(newItemForm);
       setInventoryItems(prev => [...prev, newItem]);
       setNewItemForm({
         name: '',
@@ -240,34 +126,87 @@ export default function InventoryPage() {
         location: ''
       });
       setShowAddItem(false);
+      // Reload stats
+      const statsData = await InventoryService.getStats();
+      setStats(statsData);
     } catch (error) {
       console.error('Error adding item:', error);
+      alert('Error adding item: ' + (error as Error).message);
     } finally {
       setFormLoading(false);
     }
   };
 
-  const handleDeleteItem = async (id: string) => {
+  const handleDeleteItem = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
-      setInventoryItems(prev => prev.filter(item => item.id !== id));
+      try {
+        await InventoryService.deleteItem(id);
+        setInventoryItems(prev => prev.filter(item => item.id !== id));
+        // Reload stats
+        const statsData = await InventoryService.getStats();
+        setStats(statsData);
+      } catch (error) {
+        console.error('Error deleting item:', error);
+        alert('Error deleting item: ' + (error as Error).message);
+      }
+    }
+  };
+
+  const handleAddCategory = async () => {
+    setCategoryLoading(true);
+    try {
+      const newCategory = await InventoryService.createCategory(
+        categoryForm.name,
+        categoryForm.description
+      );
+      setCategories(prev => [...prev, newCategory]);
+      setCategoryForm({ name: '', description: '' });
+    } catch (error) {
+      console.error('Error adding category:', error);
+      alert('Error adding category: ' + (error as Error).message);
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+
+  const handleDeleteCategory = async (id: number) => {
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      try {
+        await InventoryService.deleteCategory(id);
+        setCategories(prev => prev.filter(c => c.id !== id));
+        // Also remove items in this category
+        setInventoryItems(prev => prev.filter(item => item.category !== categories.find(c => c.id === id)?.name));
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        alert('Error deleting category: ' + (error as Error).message);
+      }
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'in stock': return '#10b981';
-      case 'low stock': return '#f59e0b';
-      case 'out of stock': return '#ef4444';
+      case 'in_stock': return '#10b981';
+      case 'low_stock': return '#f59e0b';
+      case 'out_of_stock': return '#ef4444';
       default: return '#6b7280';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'in stock': return <CheckCircle size={16} />;
-      case 'low stock': return <AlertTriangle size={16} />;
-      case 'out of stock': return <XCircle size={16} />;
+      case 'in_stock': return <CheckCircle size={16} />;
+      case 'low_stock': return <AlertTriangle size={16} />;
+      case 'out_of_stock': return <XCircle size={16} />;
       default: return <Clock size={16} />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'in_stock': return 'In Stock';
+      case 'low_stock': return 'Low Stock';
+      case 'out_of_stock': return 'Out of Stock';
+      default: return status;
     }
   };
 
@@ -443,9 +382,9 @@ export default function InventoryPage() {
             }}
           >
             <option value="all">All Status</option>
-            <option value="in stock">In Stock</option>
-            <option value="low stock">Low Stock</option>
-            <option value="out of stock">Out of Stock</option>
+            <option value="in_stock">In Stock</option>
+            <option value="low_stock">Low Stock</option>
+            <option value="out_of_stock">Out of Stock</option>
           </select>
         </div>
       </div>
@@ -502,7 +441,7 @@ export default function InventoryPage() {
                       fontWeight: '500'
                     }}>
                       {getStatusIcon(item.status)}
-                      {item.status}
+                      {getStatusText(item.status)}
                     </div>
                   </td>
                   <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
@@ -744,7 +683,7 @@ export default function InventoryPage() {
                     Quantity *
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     value={newItemForm.quantity}
                     onChange={(e) => setNewItemForm(prev => ({ ...prev, quantity: e.target.value }))}
                     style={{
@@ -761,7 +700,7 @@ export default function InventoryPage() {
                     Min Quantity
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     value={newItemForm.minQuantity}
                     onChange={(e) => setNewItemForm(prev => ({ ...prev, minQuantity: e.target.value }))}
                     style={{
@@ -778,7 +717,7 @@ export default function InventoryPage() {
                     Max Quantity
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     value={newItemForm.maxQuantity}
                     onChange={(e) => setNewItemForm(prev => ({ ...prev, maxQuantity: e.target.value }))}
                     style={{
@@ -797,8 +736,7 @@ export default function InventoryPage() {
                   Unit Price *
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="text"
                   value={newItemForm.unitPrice}
                   onChange={(e) => setNewItemForm(prev => ({ ...prev, unitPrice: e.target.value }))}
                   style={{
@@ -936,18 +874,7 @@ export default function InventoryPage() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <button
-                    onClick={() => {
-                      if (categoryForm.name.trim()) {
-                        const newCategory: InventoryCategory = {
-                          id: Date.now().toString(),
-                          name: categoryForm.name.trim(),
-                          description: categoryForm.description.trim(),
-                          itemCount: 0
-                        };
-                        setCategories(prev => [...prev, newCategory]);
-                        setCategoryForm({ name: '', description: '' });
-                      }
-                    }}
+                    onClick={handleAddCategory}
                     disabled={categoryLoading || !categoryForm.name.trim()}
                     style={{
                       padding: '12px 24px',
@@ -1014,13 +941,7 @@ export default function InventoryPage() {
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
-                          onClick={() => {
-                            if (window.confirm(`Are you sure you want to delete the category "${category.name}"? This action cannot be undone.`)) {
-                              setCategories(prev => prev.filter(c => c.id !== category.id));
-                              // Also remove items in this category
-                              setInventoryItems(prev => prev.filter(item => item.category !== category.name));
-                            }
-                          }}
+                          onClick={() => handleDeleteCategory(category.id)}
                           style={{
                             padding: '8px',
                             backgroundColor: 'transparent',
@@ -1047,185 +968,6 @@ export default function InventoryPage() {
           </div>
         </div>
       )}
-
-      {/* Update Outgoings Modal */}
-      {showOutgoings && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            width: 'min(560px, 90vw)',
-            maxHeight: '90vh',
-            borderRadius: '20px',
-            padding: '28px',
-            overflowY: 'auto'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '22px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-                Update Outgoings
-              </h2>
-              <button
-                onClick={() => setShowOutgoings(false)}
-                style={{
-                  padding: '8px',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  borderRadius: '20px',
-                  color: '#6b7280'
-                }}
-              >
-                <X size={22} />
-              </button>
-            </div>
-
-            <div style={{ display: 'grid', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                  Item
-                </label>
-                <select
-                  value={outgoingsForm.itemId}
-                  onChange={(e) => setOutgoingsForm(prev => ({ ...prev, itemId: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '20px',
-                    fontSize: '14px',
-                    backgroundColor: 'white'
-                  }}
-                >
-                  <option value="">Select item</option>
-                  {inventoryItems.map(i => (
-                    <option key={i.id} value={i.id}>{i.name} — {i.sku}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                    Quantity
-                  </label>
-                  <input
-                    type="number"
-                    value={outgoingsForm.quantity}
-                    onChange={(e) => setOutgoingsForm(prev => ({ ...prev, quantity: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '20px',
-                      fontSize: '14px'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                    Destination
-                  </label>
-                  <input
-                    type="text"
-                    value={outgoingsForm.destination}
-                    onChange={(e) => setOutgoingsForm(prev => ({ ...prev, destination: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '20px',
-                      fontSize: '14px'
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                  Reason
-                </label>
-                <input
-                  type="text"
-                  value={outgoingsForm.reason}
-                  onChange={(e) => setOutgoingsForm(prev => ({ ...prev, reason: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '20px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                  Notes
-                </label>
-                <textarea
-                  rows={3}
-                  value={outgoingsForm.notes}
-                  onChange={(e) => setOutgoingsForm(prev => ({ ...prev, notes: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '20px',
-                    fontSize: '14px',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
-                <button
-                  onClick={() => setShowOutgoings(false)}
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: 'transparent',
-                    color: '#6b7280',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '20px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  disabled={outgoingsLoading || !outgoingsForm.itemId || !outgoingsForm.quantity}
-                  onClick={() => setShowOutgoings(false)}
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: 'var(--mc-sidebar-bg-hover)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '20px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: outgoingsLoading ? 'not-allowed' : 'pointer',
-                    opacity: outgoingsLoading ? 0.6 : 1
-                  }}
-                >
-                  {outgoingsLoading ? 'Updating...' : 'Save'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
-
