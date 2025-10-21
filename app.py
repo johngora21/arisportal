@@ -32,6 +32,7 @@ from models.user import User
 from models.property import Property
 from models.investment import InvestmentProject
 from models.transaction import Transaction
+from models.supplier import Supplier
 
 # Import routes
 from routes.auth import auth_bp
@@ -39,6 +40,7 @@ from routes.properties import properties_bp
 from routes.investments import investments_bp
 from routes.finance import finance_bp
 from routes.inventory import inventory_bp
+from routes.suppliers import suppliers_bp
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/v1/auth')
@@ -46,6 +48,7 @@ app.register_blueprint(properties_bp, url_prefix='/api/v1/properties')
 app.register_blueprint(investments_bp, url_prefix='/api/v1/investments')
 app.register_blueprint(finance_bp, url_prefix='/api/v1/finance')
 app.register_blueprint(inventory_bp, url_prefix='/api/v1/inventory')
+app.register_blueprint(suppliers_bp, url_prefix='/api/v1/suppliers')
 
 @app.route('/api/v1/health')
 def health_check():

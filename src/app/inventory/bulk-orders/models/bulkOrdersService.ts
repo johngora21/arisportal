@@ -144,7 +144,7 @@ export interface AnalyticsData {
 }
 
 class BulkOrdersService {
-  private static baseUrl = 'http://localhost:5002/api/v1';
+  private static baseUrl = 'http://localhost:5000/api/v1';
 
   // Get all pools with optional filtering
   static async fetchPools(search?: string, country?: string, status?: string): Promise<BulkOrderPool[]> {

@@ -83,6 +83,9 @@ export default function InventoryPage() {
   const loadData = async () => {
     setDataLoading(true);
     try {
+      // Test API config
+      InventoryService.testApiConfig();
+      
       const [itemsData, categoriesData, statsData] = await Promise.all([
         InventoryService.fetchItems(),
         InventoryService.fetchCategories(),

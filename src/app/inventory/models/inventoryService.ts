@@ -1,4 +1,6 @@
 // Inventory Service - Handles API calls to inventory backend
+import { getApiUrl } from '../../../config/api';
+
 export interface InventoryItem {
   id: number;
   name: string;
@@ -52,11 +54,17 @@ export interface NewInventoryForm {
 }
 
 class InventoryService {
-  private static baseUrl = 'http://localhost:5001/api/v1';
+  // Test method to verify API config
+  static testApiConfig() {
+    console.log('API Config Test:');
+    console.log('INVENTORY.CATEGORIES URL:', getApiUrl('INVENTORY.CATEGORIES'));
+    console.log('INVENTORY.ITEMS URL:', getApiUrl('INVENTORY.ITEMS'));
+    console.log('INVENTORY.ANALYTICS URL:', getApiUrl('INVENTORY.ANALYTICS'));
+  }
 
   // Categories
   static async fetchCategories(): Promise<InventoryCategory[]> {
-    const response = await fetch(`${this.baseUrl}/categories`);
+    const response = await fetch(getApiUrl('INVENTORY.CATEGORIES'));
     if (!response.ok) {
       throw new Error('Failed to fetch categories');
     }
@@ -64,7 +72,9 @@ class InventoryService {
   }
 
   static async createCategory(name: string, description: string): Promise<InventoryCategory> {
-    const response = await fetch(`${this.baseUrl}/categories`, {
+    const url = getApiUrl('INVENTORY.CATEGORIES');
+    console.log('Creating category with URL:', url);
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -72,13 +82,14 @@ class InventoryService {
       body: JSON.stringify({ name, description }),
     });
     if (!response.ok) {
-      throw new Error('Failed to create category');
+      const error = await response.json();
+      throw new Error(error.detail || error.error || 'Failed to create category');
     }
     return response.json();
   }
 
   static async updateCategory(id: number, name: string, description: string): Promise<InventoryCategory> {
-    const response = await fetch(`${this.baseUrl}/categories/${id}`, {
+    const response = await fetch(`${getApiUrl('INVENTORY.CATEGORIES')}/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -92,7 +103,7 @@ class InventoryService {
   }
 
   static async deleteCategory(id: number): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/categories/${id}`, {
+    const response = await fetch(`${getApiUrl('INVENTORY.CATEGORIES')}/${id}`, {
       method: 'DELETE',
     });
     if (!response.ok) {
@@ -102,7 +113,7 @@ class InventoryService {
 
   // Items
   static async fetchItems(): Promise<InventoryItem[]> {
-    const response = await fetch(`${this.baseUrl}/items`);
+    const response = await fetch(getApiUrl('INVENTORY.ITEMS'));
     if (!response.ok) {
       throw new Error('Failed to fetch items');
     }
@@ -110,7 +121,7 @@ class InventoryService {
   }
 
   static async createItem(itemData: NewInventoryForm): Promise<InventoryItem> {
-    const response = await fetch(`${this.baseUrl}/items`, {
+    const response = await fetch(getApiUrl('INVENTORY.ITEMS'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -119,13 +130,13 @@ class InventoryService {
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Failed to create item');
+      throw new Error(error.detail || error.error || 'Failed to create item');
     }
     return response.json();
   }
 
   static async updateItem(id: number, itemData: Partial<NewInventoryForm>): Promise<InventoryItem> {
-    const response = await fetch(`${this.baseUrl}/items/${id}`, {
+    const response = await fetch(`${getApiUrl('INVENTORY.ITEMS')}/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -139,7 +150,7 @@ class InventoryService {
   }
 
   static async deleteItem(id: number): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/items/${id}`, {
+    const response = await fetch(`${getApiUrl('INVENTORY.ITEMS')}/${id}`, {
       method: 'DELETE',
     });
     if (!response.ok) {
@@ -149,7 +160,7 @@ class InventoryService {
 
   // Analytics
   static async getStats(): Promise<InventoryStats> {
-    const response = await fetch(`${this.baseUrl}/analytics/stats`);
+    const response = await fetch(getApiUrl('INVENTORY.ANALYTICS'));
     if (!response.ok) {
       throw new Error('Failed to fetch stats');
     }

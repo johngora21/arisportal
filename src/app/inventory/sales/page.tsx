@@ -42,12 +42,7 @@ export default function SalesPage() {
     );
   }, [inventoryItems, productQuery]);
 
-  const [sales, setSales] = useState<Array<{ id: string; productId: string; qty: number; price: number; date: string; buyerName: string; buyerCity?: string; buyerPhone?: string; buyerEmail?: string }>>([
-    { id: 's1', productId: 'p1', qty: 2, price: 150, date: '2025-09-01', buyerName: 'John D', buyerCity: 'Dar es Salaam', buyerPhone: '+255700000001' },
-    { id: 's2', productId: 'p2', qty: 1, price: 800, date: '2025-09-03', buyerName: 'Asha K', buyerCity: 'Dodoma', buyerEmail: 'asha@example.com' },
-    { id: 's3', productId: 'p3', qty: 20, price: 12.5, date: '2025-09-05', buyerName: 'Kito Ltd', buyerCity: 'Arusha', buyerPhone: '+255700000003' },
-    { id: 's4', productId: 'p4', qty: 5, price: 25, date: '2025-09-06', buyerName: 'Mariam M', buyerCity: 'Mwanza' },
-  ]);
+  const [sales, setSales] = useState<Array<{ id: string; productId: string; qty: number; price: number; date: string; buyerName: string; buyerCity?: string; buyerPhone?: string; buyerEmail?: string }>>([]);
 
   const [formData, setFormData] = useState({
     productId: '',
@@ -63,7 +58,7 @@ export default function SalesPage() {
   return (
     <div style={{ padding: '24px', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
       <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
+    <div>
           <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#1f2937', margin: 0 }}>Sales Management</h1>
           <p style={{ fontSize: '14px', color: '#6b7280', margin: '8px 0 0 0' }}>Record and track sales with buyer details and demographics.</p>
         </div>
@@ -189,9 +184,9 @@ export default function SalesPage() {
                 await DealService.createDeal(dealData);
 
                 // Add to local sales state for display
-                const id = `s${Date.now()}`;
-                setSales(prev => ([...prev, {
-                  id,
+              const id = `s${Date.now()}`;
+              setSales(prev => ([...prev, {
+                id,
                   productId: formData.productId,
                   qty: formData.qty || 0,
                   price: formData.price || selectedProduct.unitPrice,
@@ -200,7 +195,7 @@ export default function SalesPage() {
                   buyerCity: formData.buyerCity || '',
                   buyerPhone: formData.buyerPhone || '',
                   buyerEmail: formData.buyerEmail || ''
-                }]));
+              }]));
 
                 // Reset form
                 setFormData({

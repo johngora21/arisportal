@@ -44,7 +44,8 @@ interface Conversation {
   createdAt: Date;
 }
 
-const mockConversations: Conversation[] = [
+// Mock data removed - using real API data
+const mockConversations: Conversation[] = [];
   {
     id: '1',
     customer: {
@@ -261,39 +262,10 @@ const mockConversations: Conversation[] = [
     status: 'active',
     tags: ['partnership', 'corporate'],
     createdAt: new Date(Date.now() - 240 * 60 * 60 * 1000)
-  }
 ];
 
-const mockMessages: Record<string, Message[]> = {
-  '1': [
-    {
-      id: 'm1-1',
-      content: "Hi Sarah, I've attached our latest pitch deck for your review.",
-      sender: 'user',
-      timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000),
-      channel: 'whatsapp',
-      status: 'read',
-      attachments: ['pitch-deck.pdf']
-    },
-    {
-      id: 'm1-2',
-      content: "Thanks for the pitch deck! I'll review it and get back to you by Friday.",
-      sender: 'customer',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      channel: 'whatsapp',
-      status: 'read'
-    },
-    {
-      id: 'm1-3',
-      content: "Perfect! Looking forward to your feedback. Let me know if you need any clarification.",
-      sender: 'user',
-      timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000),
-      channel: 'whatsapp',
-      status: 'delivered'
-    }
-  ]
-};
-
+// Mock data removed - using real API data
+const mockMessages: Record<string, Message[]> = {};
 const channelIcons = {
   whatsapp: MessageCircle,
   sms: Phone,

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, CheckCircle, Phone, Mail, Globe, Star } from 'lucide-react';
+import { MapPin, CheckCircle, Phone, Mail, Globe, Star, Plus, Tag } from 'lucide-react';
 
 // Declare Leaflet types
 declare const L: any;
@@ -9,9 +9,46 @@ declare const L: any;
 export function SuppliersModule() {
   const [supplierCountryFilter, setSupplierCountryFilter] = useState('');
   const [showSupplierModal, setShowSupplierModal] = useState(false);
+  const [showAddSupplierModal, setShowAddSupplierModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCategoriesModal, setShowCategoriesModal] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const supplierMapRef = useRef<HTMLDivElement>(null);
+  const supplierMapInstanceRef = useRef<any>(null);
+
+  const [supplierForm, setSupplierForm] = useState({
+    name: '',
+    category: '',
+    location: '',
+    country: '',
+    priceRange: '',
+    bulkDiscount: '',
+    minOrder: '',
+    leadTime: '',
+    returnPolicy: '',
+    warranty: '',
+    established: '',
+    employees: '',
+    tags: '',
+    specialties: '',
+    languages: '',
+    certifications: '',
+    paymentMethods: '',
+    deliveryAreas: '',
+    contact: {
+      phone: '',
+      email: '',
+      website: '',
+      address: ''
+    },
+    coordinates: {
+      lat: '',
+      lng: ''
+    },
+    customerReviews: []
+  });
 
   const countries = [
     'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Australia', 'Austria',
@@ -74,12 +111,109 @@ export function SuppliersModule() {
     };
   }, [showSupplierModal, selectedSupplier]);
 
+  // Initialize supplier map when add supplier modal opens
+  useEffect(() => {
+    if (showAddSupplierModal && supplierMapRef.current && !supplierMapInstanceRef.current) {
+      const map = L.map(supplierMapRef.current).setView([-6.7789, 39.2567], 10); // Default to Dar es Salaam
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Add click event to map
+      map.on('click', (e: any) => {
+        const { lat, lng } = e.latlng;
+        setSupplierForm(prev => ({ 
+          ...prev, 
+          coordinates: { lat: lat.toString(), lng: lng.toString() } 
+        }));
+
+        // Remove existing marker if any
+        map.eachLayer((layer: any) => {
+          if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+          }
+        });
+
+        // Add new marker
+        L.marker([lat, lng]).addTo(map);
+      });
+
+      supplierMapInstanceRef.current = map;
+    }
+
+    return () => {
+      if (supplierMapInstanceRef.current) {
+        supplierMapInstanceRef.current.off();
+        supplierMapInstanceRef.current.remove();
+        supplierMapInstanceRef.current = null;
+      }
+    };
+  }, [showAddSupplierModal]);
+
   return (
     <div style={{ padding: '24px', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
-      
+      {/* Add Supplier Button */}
+      <div style={{ marginBottom: '24px', marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+        <button
+          onClick={() => setShowCategoriesModal(true)}
+          style={{
+            backgroundColor: 'transparent',
+            color: 'var(--mc-sidebar-bg-hover)',
+            border: '1px solid var(--mc-sidebar-bg-hover)',
+            borderRadius: '20px',
+            padding: '12px 20px',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+            e.currentTarget.style.color = 'white';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = 'var(--mc-sidebar-bg-hover)';
+          }}
+        >
+          <Tag size={16} />
+          Categories
+        </button>
+        
+        <button
+          onClick={() => setShowAddSupplierModal(true)}
+          style={{
+            backgroundColor: 'var(--mc-sidebar-bg-hover)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '20px',
+            padding: '12px 20px',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'background-color 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+          }}
+        >
+          <Plus size={16} />
+          Add Supplier
+        </button>
+      </div>
 
       {/* Search Bar and Filters */}
-      <div style={{ marginBottom: '16px', marginTop: '48px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '16px' }}>
+      <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '16px' }}>
         <div style={{ position: 'relative', flex: '0 0 auto' }}>
           <input
             type="text"
@@ -96,8 +230,8 @@ export function SuppliersModule() {
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
             }}
             onFocus={(e) => {
-              e.target.style.borderColor = 'var(--mc-sidebar-bg)';
-              e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+              e.target.style.borderColor = 'var(--mc-sidebar-bg-hover)';
+              e.target.style.boxShadow = '0 0 0 3px rgba(51, 65, 85, 0.1)';
             }}
             onBlur={(e) => {
               e.target.style.borderColor = '#e5e7eb';
@@ -134,8 +268,8 @@ export function SuppliersModule() {
             cursor: 'pointer'
           }}
           onFocus={(e) => {
-            e.target.style.borderColor = 'var(--mc-sidebar-bg)';
-            e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+            e.target.style.borderColor = '#C50F11';
+            e.target.style.boxShadow = '0 0 0 3px rgba(197, 15, 17, 0.1)';
           }}
           onBlur={(e) => {
             e.target.style.borderColor = '#e5e7eb';
@@ -761,6 +895,602 @@ export function SuppliersModule() {
           </div>
         </div>
       )}
+
+      {/* Add Supplier Modal */}
+      {showAddSupplierModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            width: 'min(800px, 90vw)',
+            maxHeight: '90vh',
+            borderRadius: '20px',
+            padding: '24px',
+            overflowY: 'auto',
+            position: 'relative'
+          }}>
+            {/* Close Button */}
+            <button
+              onClick={() => setShowAddSupplierModal(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                padding: '8px',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                borderRadius: '20px',
+                color: '#6b7280'
+              }}
+            >
+              ✕
+            </button>
+
+            {/* Header */}
+            <div style={{ marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
+                Add New Supplier
+              </h2>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: '8px 0 0 0' }}>
+                Enter comprehensive supplier information for better management.
+              </p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              setIsSubmitting(true);
+              try {
+                // Process form data
+                const processedData = {
+                  ...supplierForm,
+                  tags: supplierForm.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+                  specialties: supplierForm.specialties.split(',').map(spec => spec.trim()).filter(spec => spec),
+                  languages: supplierForm.languages.split(',').map(lang => lang.trim()).filter(lang => lang),
+                  certifications: supplierForm.certifications.split(',').map(cert => cert.trim()).filter(cert => cert),
+                  paymentMethods: supplierForm.paymentMethods.split(',').map(method => method.trim()).filter(method => method),
+                  deliveryAreas: supplierForm.deliveryAreas.split(',').map(area => area.trim()).filter(area => area),
+                  coordinates: {
+                    lat: parseFloat(supplierForm.coordinates.lat) || 0,
+                    lng: parseFloat(supplierForm.coordinates.lng) || 0
+                  }
+                };
+
+                console.log('Supplier data:', processedData);
+                alert('Supplier added successfully! (Backend integration pending)');
+                
+                // Reset form
+                setSupplierForm({
+                  name: '',
+                  category: '',
+                  location: '',
+                  country: '',
+                  priceRange: '',
+                  bulkDiscount: '',
+                  minOrder: '',
+                  leadTime: '',
+                  returnPolicy: '',
+                  warranty: '',
+                  established: '',
+                  employees: '',
+                  tags: '',
+                  specialties: '',
+                  languages: '',
+                  certifications: '',
+                  paymentMethods: '',
+                  deliveryAreas: '',
+                  contact: {
+                    phone: '',
+                    email: '',
+                    website: '',
+                    address: ''
+                  },
+                  coordinates: {
+                    lat: '',
+                    lng: ''
+                  },
+                  customerReviews: []
+                });
+                setShowAddSupplierModal(false);
+              } catch (error) {
+                console.error('Error adding supplier:', error);
+                alert('Error adding supplier: ' + (error as Error).message);
+              } finally {
+                setIsSubmitting(false);
+              }
+            }}>
+              {/* Basic Information */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>
+                  Basic Information
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Company Name *</label>
+                    <input
+                      type="text"
+                      value={supplierForm.name}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, name: e.target.value }))}
+                      required
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Category *</label>
+                    <select
+                      value={supplierForm.category}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, category: e.target.value }))}
+                      required
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    >
+                      <option value="">Select Category</option>
+                      <option value="Electronics">Electronics</option>
+                      <option value="Furniture">Furniture</option>
+                      <option value="Office Supplies">Office Supplies</option>
+                      <option value="Textiles">Textiles</option>
+                      <option value="Food & Beverage">Food & Beverage</option>
+                      <option value="Automotive">Automotive</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Location *</label>
+                    <input
+                      type="text"
+                      value={supplierForm.location}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, location: e.target.value }))}
+                      required
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Country *</label>
+                    <select
+                      value={supplierForm.country}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, country: e.target.value }))}
+                      required
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    >
+                      <option value="">Select Country</option>
+                      {countries.map((country) => (
+                        <option key={country} value={country}>{country}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>
+                  Contact Information
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Phone *</label>
+                    <input
+                      type="tel"
+                      value={supplierForm.contact.phone}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, contact: { ...prev.contact, phone: e.target.value } }))}
+                      required
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Email *</label>
+                    <input
+                      type="email"
+                      value={supplierForm.contact.email}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, contact: { ...prev.contact, email: e.target.value } }))}
+                      required
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Website</label>
+                    <input
+                      type="url"
+                      value={supplierForm.contact.website}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, contact: { ...prev.contact, website: e.target.value } }))}
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Address *</label>
+                    <input
+                      type="text"
+                      value={supplierForm.contact.address}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, contact: { ...prev.contact, address: e.target.value } }))}
+                      required
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Pricing & Business Details */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>
+                  Pricing & Business Details
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Price Range *</label>
+                    <input
+                      type="text"
+                      value={supplierForm.priceRange}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, priceRange: e.target.value }))}
+                      placeholder="e.g., TZS 45,000 - 120,000"
+                      required
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Bulk Discount</label>
+                    <input
+                      type="text"
+                      value={supplierForm.bulkDiscount}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, bulkDiscount: e.target.value }))}
+                      placeholder="e.g., 10% off 100+ units"
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Minimum Order *</label>
+                    <input
+                      type="text"
+                      value={supplierForm.minOrder}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, minOrder: e.target.value }))}
+                      placeholder="e.g., 50 units"
+                      required
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Lead Time *</label>
+                    <input
+                      type="text"
+                      value={supplierForm.leadTime}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, leadTime: e.target.value }))}
+                      placeholder="e.g., 7 days"
+                      required
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+
+              {/* Products & Services */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>
+                  Products & Services
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Product Tags (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={supplierForm.tags}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, tags: e.target.value }))}
+                      placeholder="e.g., Laptops, Phones, Tablets, Accessories"
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Specialties (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={supplierForm.specialties}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, specialties: e.target.value }))}
+                      placeholder="e.g., Custom Electronics, Bulk Orders, Technical Support"
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Payment Methods (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={supplierForm.paymentMethods}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, paymentMethods: e.target.value }))}
+                      placeholder="e.g., Bank Transfer, Mobile Money, Credit Card"
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Delivery Areas (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={supplierForm.deliveryAreas}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, deliveryAreas: e.target.value }))}
+                      placeholder="e.g., Dar es Salaam, Arusha, Mwanza, Dodoma"
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Location Map */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>
+                  Location (Optional)
+                </h3>
+                <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>
+                  Click on the map to set the supplier's location
+                </p>
+                <div style={{ height: '300px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #d1d5db', position: 'relative' }}>
+                  <div 
+                    ref={supplierMapRef}
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                  {!supplierForm.coordinates.lat && !supplierForm.coordinates.lng && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      padding: '16px',
+                      borderRadius: '8px',
+                      textAlign: 'center',
+                      fontSize: '14px',
+                      color: '#6b7280',
+                      border: '1px solid #e5e7eb'
+                    }}>
+                      Click on the map to set location
+                    </div>
+                  )}
+                </div>
+                {(supplierForm.coordinates.lat || supplierForm.coordinates.lng) && (
+                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280' }}>
+                    Selected: {supplierForm.coordinates.lat}, {supplierForm.coordinates.lng}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddSupplierModal(false)}
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: '#6b7280',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '12px',
+                    padding: '12px 24px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  style={{
+                    backgroundColor: isSubmitting ? '#9ca3af' : 'var(--mc-sidebar-bg-hover)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '12px 24px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isSubmitting ? 'Adding...' : 'Add Supplier'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Categories Modal */}
+      {showCategoriesModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            width: 'min(600px, 90vw)',
+            maxHeight: '80vh',
+            borderRadius: '20px',
+            padding: '24px',
+            overflowY: 'auto',
+            position: 'relative'
+          }}>
+            {/* Close Button */}
+            <button
+              onClick={() => setShowCategoriesModal(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                padding: '8px',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                borderRadius: '20px',
+                color: '#6b7280'
+              }}
+            >
+              ✕
+            </button>
+
+            {/* Header */}
+            <div style={{ marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
+                Supplier Categories
+              </h2>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: '8px 0 0 0' }}>
+                Manage supplier categories for better organization.
+              </p>
+            </div>
+
+            {/* Add New Category */}
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>
+                Add New Category
+              </h3>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <input
+                  type="text"
+                  placeholder="Enter category name..."
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'var(--mc-sidebar-bg-hover)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(51, 65, 85, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#d1d5db';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+                <button
+                  style={{
+                    backgroundColor: 'var(--mc-sidebar-bg-hover)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '12px 20px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+                  }}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
+            {/* Categories List */}
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {['Electronics', 'Furniture', 'Office Supplies', 'Textiles', 'Food & Beverage', 'Automotive', 'Construction', 'Other'].map((category, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      backgroundColor: '#f9fafb',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '12px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f3f4f6';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f9fafb';
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Tag size={16} color="#6b7280" />
+                      <span style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>
+                        {category}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        style={{
+                          backgroundColor: 'transparent',
+                          color: '#ef4444',
+                          border: '1px solid #ef4444',
+                          borderRadius: '8px',
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#ef4444';
+                          e.currentTarget.style.color = 'white';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.color = '#ef4444';
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowCategoriesModal(false)}
+                style={{
+                  backgroundColor: 'transparent',
+                  color: '#6b7280',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '12px',
+                  padding: '12px 24px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f9fafb';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

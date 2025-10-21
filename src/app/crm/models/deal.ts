@@ -1,3 +1,5 @@
+import { getApiUrl } from '../../../config/api';
+
 export interface Deal {
   id: string;
   productName: string;
@@ -21,84 +23,22 @@ export interface DealCreateData {
   orderDate: Date;
   quantity: number;
   unitPrice: number;
+  contactId?: string;
 }
 
 export interface DealUpdateData extends Partial<DealCreateData> {
   id: string;
 }
 
-// Mock data that matches the structure exactly
-export const mockDeals: Deal[] = [
-  {
-    id: '1',
-    productName: 'Dell Latitude 5520 Laptop',
-    productCategory: 'Electronics',
-    buyerName: 'Sarah Johnson',
-    address: 'San Francisco, CA',
-    email: 'sarah.johnson@techcorp.com',
-    phone: '+1 (555) 123-4567',
-    orderDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-    quantity: 25,
-    unitPrice: 1200
-  },
-  {
-    id: '2',
-    productName: 'Office Furniture Set',
-    productCategory: 'Furniture',
-    buyerName: 'Michael Chen',
-    address: 'Austin, TX',
-    email: 'm.chen@startupxyz.com',
-    phone: '+1 (555) 987-6543',
-    orderDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    quantity: 15,
-    unitPrice: 800
-  },
-  {
-    id: '3',
-    productName: 'Medical Equipment Package',
-    productCategory: 'Healthcare',
-    buyerName: 'Dr. Emily Rodriguez',
-    address: 'Boston, MA',
-    email: 'emily.r@healthplus.com',
-    phone: '+1 (555) 456-7890',
-    orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    quantity: 8,
-    unitPrice: 2500
-  },
-  {
-    id: '4',
-    productName: 'Financial Software License',
-    productCategory: 'Software',
-    buyerName: 'James Wilson',
-    address: 'New York, NY',
-    email: 'j.wilson@financegroup.com',
-    phone: '+1 (555) 321-0987',
-    orderDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    quantity: 1,
-    unitPrice: 50000
-  },
-  {
-    id: '5',
-    productName: 'Retail POS System',
-    productCategory: 'Electronics',
-    buyerName: 'Lisa Thompson',
-    address: 'Chicago, IL',
-    email: 'lisa.t@retailco.com',
-    phone: '+1 (555) 654-3210',
-    orderDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-    quantity: 3,
-    unitPrice: 1500
-  }
-];
+// Mock data removed - using real API data
 
 // Database service functions (now using real API calls)
 export class DealService {
-  private static baseUrl = 'http://localhost:5000/api/v1';
 
   // Fetch all deals from database
   static async fetchDeals(): Promise<Deal[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/deals`);
+      const response = await fetch(getApiUrl('CRM.DEALS'));
       if (!response.ok) throw new Error('Failed to fetch deals');
       
       const deals = await response.json();
@@ -106,14 +46,14 @@ export class DealService {
     } catch (error) {
       console.error('Error fetching deals:', error);
       // Fallback to mock data if API fails
-      return mockDeals;
+      return [];
     }
   }
 
   // Fetch deals by contact ID
   static async fetchDealsByContact(contactId: string): Promise<Deal[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/deals?contact_id=${contactId}`);
+      const response = await fetch(`${getApiUrl('CRM.DEALS')}?contact_id=${contactId}`);
       if (!response.ok) throw new Error('Failed to fetch deals by contact');
       
       const deals = await response.json();
@@ -128,7 +68,7 @@ export class DealService {
   // Create new deal
   static async createDeal(data: DealCreateData): Promise<Deal> {
     try {
-      const response = await fetch(`${this.baseUrl}/deals`, {
+      const response = await fetch(getApiUrl('CRM.DEALS'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -142,7 +82,10 @@ export class DealService {
           phone: data.phone,
           order_date: data.orderDate.toISOString(),
           quantity: data.quantity,
-          unit_price: data.unitPrice
+          unit_price: data.unitPrice,
+          status: 'pending',
+          contact_id: data.contactId || null,
+          creator_id: 1 // Default creator ID
         }),
       });
       
@@ -164,7 +107,7 @@ export class DealService {
   // Update existing deal
   static async updateDeal(data: DealUpdateData): Promise<Deal> {
     try {
-      const response = await fetch(`${this.baseUrl}/deals/${data.id}`, {
+      const response = await fetch(`${getApiUrl('CRM.DEALS')}/${data.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -199,7 +142,7 @@ export class DealService {
   // Delete deal
   static async deleteDeal(id: string): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/deals/${id}`, {
+      const response = await fetch(`${getApiUrl('CRM.DEALS')}/${id}`, {
         method: 'DELETE',
       });
       
