@@ -1,27 +1,24 @@
 #!/bin/bash
 
-# Aris Portal Backend Startup Script
+echo "🚀 Starting ArisPortal Backend..."
 
-echo "Starting Aris Portal Backend..."
+# Change to backend directory
+cd backend
 
 # Check if virtual environment exists
-if [ ! -d "invoice_env" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv invoice_env
+if [ ! -d "venv" ]; then
+    echo "📦 Creating virtual environment..."
+    python3 -m venv venv
 fi
 
 # Activate virtual environment
-echo "Activating virtual environment..."
-source invoice_env/bin/activate
+echo "🔧 Activating virtual environment..."
+source venv/bin/activate
 
 # Install dependencies
-echo "Installing dependencies..."
-pip install -r requirements.txt
+echo "📥 Installing dependencies..."
+pip install -r requirements_fastapi.txt
 
-# Initialize database
-echo "Initializing database..."
-python init_db.py
-
-# Start Flask application
-echo "Starting Flask application..."
-python app.py
+# Start FastAPI server from the backend directory
+echo "🌟 Starting FastAPI server on port 4001..."
+uvicorn main:app --host 0.0.0.0 --port 4001 --reload
