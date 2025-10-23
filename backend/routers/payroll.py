@@ -405,13 +405,17 @@ async def create_department(department_data: dict, db: Session = Depends(get_db)
     # Handle branch name to branch_id conversion
     branch_id = None
     if 'branch' in department_data:
-        # Find branch by name
-        branch = db.query(Branch).filter(Branch.name == department_data['branch']).first()
+        # Find branch by name (case insensitive and trim whitespace)
+        branch_name = department_data['branch'].strip()
+        branch = db.query(Branch).filter(Branch.name.ilike(f"%{branch_name}%")).first()
         if branch:
             branch_id = branch.id
+            print(f"Found branch '{branch.name}' with ID {branch_id}")
         else:
-            # If branch not found, create a new one or use first available
-            branch_id = 1  # Default to first branch
+            # If branch not found, use first available branch
+            first_branch = db.query(Branch).first()
+            branch_id = first_branch.id if first_branch else 1
+            print(f"Branch '{branch_name}' not found, using branch ID {branch_id}")
     
     # Filter out fields that don't exist in the Department model
     valid_fields = {
@@ -508,13 +512,17 @@ async def create_role(role_data: dict, db: Session = Depends(get_db)):
     # Handle department name to department_id conversion
     department_id = None
     if 'department' in role_data:
-        # Find department by name
-        department = db.query(Department).filter(Department.name == role_data['department']).first()
+        # Find department by name (case insensitive and trim whitespace)
+        department_name = role_data['department'].strip()
+        department = db.query(Department).filter(Department.name.ilike(f"%{department_name}%")).first()
         if department:
             department_id = department.id
+            print(f"Found department '{department.name}' with ID {department_id}")
         else:
-            # If department not found, use first available
-            department_id = 1  # Default to first department
+            # If department not found, use first available department
+            first_department = db.query(Department).first()
+            department_id = first_department.id if first_department else 1
+            print(f"Department '{department_name}' not found, using department ID {department_id}")
     
     # Filter out fields that don't exist in the Role model
     valid_fields = {
@@ -794,6 +802,40 @@ async def create_staff(staff_data: dict, db: Session = Depends(get_db)):
     if 'employment_type' in staff_data and staff_data['employment_type'] in employment_type_mapping:
         staff_data['employment_type'] = employment_type_mapping[staff_data['employment_type']]
     
+    # Handle branch, department, and role name to ID conversion
+    if 'branch' in staff_data and staff_data['branch']:
+        branch_name = staff_data['branch'].strip()
+        branch = db.query(Branch).filter(Branch.name.ilike(f"%{branch_name}%")).first()
+        if branch:
+            staff_data['branch_id'] = branch.id
+            print(f"Found branch '{branch.name}' with ID {branch.id}")
+        else:
+            first_branch = db.query(Branch).first()
+            staff_data['branch_id'] = first_branch.id if first_branch else 1
+            print(f"Branch '{branch_name}' not found, using branch ID {staff_data['branch_id']}")
+    
+    if 'department' in staff_data and staff_data['department']:
+        department_name = staff_data['department'].strip()
+        department = db.query(Department).filter(Department.name.ilike(f"%{department_name}%")).first()
+        if department:
+            staff_data['department_id'] = department.id
+            print(f"Found department '{department.name}' with ID {department.id}")
+        else:
+            first_department = db.query(Department).first()
+            staff_data['department_id'] = first_department.id if first_department else 1
+            print(f"Department '{department_name}' not found, using department ID {staff_data['department_id']}")
+    
+    if 'position' in staff_data and staff_data['position']:
+        role_name = staff_data['position'].strip()
+        role = db.query(Role).filter(Role.name.ilike(f"%{role_name}%")).first()
+        if role:
+            staff_data['role_id'] = role.id
+            print(f"Found role '{role.name}' with ID {role.id}")
+        else:
+            first_role = db.query(Role).first()
+            staff_data['role_id'] = first_role.id if first_role else 1
+            print(f"Role '{role_name}' not found, using role ID {staff_data['role_id']}")
+    
     # Convert IDs from strings to integers
     id_fields = ['branch_id', 'department_id', 'role_id']
     for field in id_fields:
@@ -844,11 +886,11 @@ async def create_staff(staff_data: dict, db: Session = Depends(get_db)):
     print(f"Creating staff with valid fields: {valid_fields}")
     
     try:
-    db_staff = Staff(**valid_fields)
-    db.add(db_staff)
-    db.commit()
-    db.refresh(db_staff)
-    return db_staff
+        db_staff = Staff(**valid_fields)
+        db.add(db_staff)
+        db.commit()
+        db.refresh(db_staff)
+        return db_staff
     except Exception as e:
         db.rollback()
         print(f"Error creating staff: {str(e)}")
