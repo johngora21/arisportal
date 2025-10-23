@@ -12,9 +12,6 @@ interface AddStaffFormProps {
 }
 
 const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches, departments, roles, isEditing = false, initialData }) => {
-  // Debug logging
-  console.log('AddStaffForm props:', { branches, departments, roles, isEditing, initialData });
-  
   // Convert backend data (snake_case) to frontend format (camelCase)
   const convertBackendToFrontend = (backendData: any) => {
     if (!backendData) return {};

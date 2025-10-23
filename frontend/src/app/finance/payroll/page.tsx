@@ -52,13 +52,6 @@ export default function PayrollPage() {
         setBranches(branchesData.map(b => ({ id: b.id.toString(), name: b.name })));
         setDepartments(departmentsData.map(d => ({ id: d.id.toString(), name: d.name })));
         setRoles(rolesData.map(r => ({ id: r.id.toString(), name: r.name })));
-        
-        console.log('Fetched data:', { branchesData, departmentsData, rolesData });
-        console.log('Mapped data:', { 
-          branches: branchesData.map(b => ({ id: b.id.toString(), name: b.name })), 
-          departments: departmentsData.map(d => ({ id: d.id.toString(), name: d.name })), 
-          roles: rolesData.map(r => ({ id: r.id.toString(), name: r.name })) 
-        });
       } catch (error) {
         console.error('Error fetching payroll data:', error);
         // Fallback to empty arrays
@@ -72,13 +65,6 @@ export default function PayrollPage() {
 
     fetchData();
   }, []);
-
-  // Debug when modal opens
-  React.useEffect(() => {
-    if (showAddModal) {
-      console.log('Modal opened with data:', { branches, departments, roles, loading });
-    }
-  }, [showAddModal, branches, departments, roles, loading]);
 
   // Refresh function for child components
   const refreshData = async () => {
