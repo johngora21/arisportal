@@ -28,6 +28,7 @@ export default function PayrollPage() {
   const [branchFilter, setBranchFilter] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [addModalType, setAddModalType] = useState<'branch' | 'department' | 'role' | 'staff'>('branch');
+  const [editingStaff, setEditingStaff] = useState<any>(null);
   const [showProcessPayrollModal, setShowProcessPayrollModal] = useState(false);
 
   // State for real data
@@ -35,6 +36,7 @@ export default function PayrollPage() {
   const [departments, setDepartments] = useState<Array<{ id: string; name: string }>>([]);
   const [roles, setRoles] = useState<Array<{ id: string; name: string }>>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Fetch data from API
   React.useEffect(() => {
@@ -50,6 +52,13 @@ export default function PayrollPage() {
         setBranches(branchesData.map(b => ({ id: b.id.toString(), name: b.name })));
         setDepartments(departmentsData.map(d => ({ id: d.id.toString(), name: d.name })));
         setRoles(rolesData.map(r => ({ id: r.id.toString(), name: r.name })));
+        
+        console.log('Fetched data:', { branchesData, departmentsData, rolesData });
+        console.log('Mapped data:', { 
+          branches: branchesData.map(b => ({ id: b.id.toString(), name: b.name })), 
+          departments: departmentsData.map(d => ({ id: d.id.toString(), name: d.name })), 
+          roles: rolesData.map(r => ({ id: r.id.toString(), name: r.name })) 
+        });
       } catch (error) {
         console.error('Error fetching payroll data:', error);
         // Fallback to empty arrays
@@ -64,6 +73,36 @@ export default function PayrollPage() {
     fetchData();
   }, []);
 
+  // Debug when modal opens
+  React.useEffect(() => {
+    if (showAddModal) {
+      console.log('Modal opened with data:', { branches, departments, roles, loading });
+    }
+  }, [showAddModal, branches, departments, roles, loading]);
+
+  // Refresh function for child components
+  const refreshData = async () => {
+    try {
+      setLoading(true);
+      const [branchesData, departmentsData, rolesData] = await Promise.all([
+        BranchService.fetchBranches(),
+        DepartmentService.fetchDepartments(),
+        RoleService.fetchRoles()
+      ]);
+      
+      setBranches(branchesData.map(b => ({ id: b.id.toString(), name: b.name })));
+      setDepartments(departmentsData.map(d => ({ id: d.id.toString(), name: d.name })));
+      setRoles(rolesData.map(r => ({ id: r.id.toString(), name: r.name })));
+      
+      // Trigger refresh for child components
+      setRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error('Error refreshing payroll data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'branches':
@@ -72,6 +111,8 @@ export default function PayrollPage() {
             searchQuery={searchQuery} 
             setSearchQuery={setSearchQuery}
             onAddNew={() => { setShowAddModal(true); setAddModalType('branch'); }}
+            onRefresh={refreshData}
+            refreshTrigger={refreshTrigger}
           />
         );
 
@@ -84,6 +125,8 @@ export default function PayrollPage() {
             setBranchFilter={setBranchFilter}
             branches={branches}
             onAddNew={() => { setShowAddModal(true); setAddModalType('department'); }}
+            onRefresh={refreshData}
+            refreshTrigger={refreshTrigger}
           />
         );
 
@@ -95,7 +138,10 @@ export default function PayrollPage() {
             branchFilter={branchFilter}
             setBranchFilter={setBranchFilter}
             branches={branches}
+            departments={departments}
             onAddNew={() => { setShowAddModal(true); setAddModalType('role'); }}
+            onRefresh={refreshData}
+            refreshTrigger={refreshTrigger}
           />
         );
 
@@ -108,6 +154,11 @@ export default function PayrollPage() {
             setBranchFilter={setBranchFilter}
             branches={branches}
             onAddNew={() => { setShowAddModal(true); setAddModalType('staff'); }}
+            onEditStaff={(staff) => { 
+              setEditingStaff(staff);
+              setShowAddModal(true); 
+              setAddModalType('staff'); 
+            }}
           />
         );
 
@@ -245,30 +296,75 @@ export default function PayrollPage() {
       {/* Add New Modal */}
       <AddNewModal
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => {
+          setShowAddModal(false);
+          setEditingStaff(null);
+        }}
         modalType={addModalType}
         branches={branches}
         departments={departments}
         roles={roles}
-        onAddBranch={(branchData) => {
-          console.log('New branch:', branchData);
-          // Here you would typically add the branch to your state or API
-          setShowAddModal(false);
+        editingStaff={editingStaff}
+        loading={loading}
+        onAddBranch={async (branchData) => {
+          console.log('AddNewModal branches prop:', branches);
+          console.log('AddNewModal departments prop:', departments);
+          console.log('AddNewModal roles prop:', roles);
+          try {
+            console.log('Creating new branch:', branchData);
+            const result = await BranchService.createBranch(branchData);
+            console.log('Branch created successfully:', result);
+            setShowAddModal(false);
+            // Refresh the data to show the new branch
+            refreshData();
+          } catch (error) {
+            console.error('Error creating branch:', error);
+            alert('Failed to create branch: ' + error.message);
+            // Keep modal open on error
+          }
         }}
-        onAddDepartment={(departmentData) => {
-          console.log('New department:', departmentData);
-          // Here you would typically add the department to your state or API
-          setShowAddModal(false);
+        onAddDepartment={async (departmentData) => {
+          try {
+            console.log('Creating new department:', departmentData);
+            const result = await DepartmentService.createDepartment(departmentData);
+            console.log('Department created successfully:', result);
+            setShowAddModal(false);
+            // Refresh the data to show the new department
+            refreshData();
+          } catch (error: any) {
+            console.error('Error creating department:', error);
+            alert('Failed to create department: ' + error.message);
+            // Keep modal open on error
+          }
         }}
-        onAddRole={(roleData) => {
-          console.log('New role:', roleData);
-          // Here you would typically add the role to your state or API
-          setShowAddModal(false);
+        onAddRole={async (roleData) => {
+          try {
+            console.log('Creating new role:', roleData);
+            const result = await RoleService.createRole(roleData);
+            console.log('Role created successfully:', result);
+            setShowAddModal(false);
+            // Refresh the data to show the new role
+            refreshData();
+          } catch (error: any) {
+            console.error('Error creating role:', error);
+            alert('Failed to create role: ' + error.message);
+            // Keep modal open on error
+          }
         }}
-        onAddStaff={(staffData) => {
-          console.log('New staff:', staffData);
-          // Here you would typically add the staff to your state or API
-          setShowAddModal(false);
+        onAddStaff={async (staffData) => {
+          try {
+            console.log('Creating new staff:', staffData);
+            const result = await StaffService.createStaff(staffData);
+            console.log('Staff created successfully:', result);
+            setShowAddModal(false);
+            setEditingStaff(null);
+            // Refresh the data to show the new staff
+            refreshData();
+          } catch (error: any) {
+            console.error('Error creating staff:', error);
+            // Re-throw the error so the form can display it
+            throw error;
+          }
         }}
       />
 

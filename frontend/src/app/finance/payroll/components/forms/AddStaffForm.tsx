@@ -7,10 +7,77 @@ interface AddStaffFormProps {
   branches: Array<{ id: string; name: string }>;
   departments: Array<{ id: string; name: string }>;
   roles: Array<{ id: string; name: string }>;
+  isEditing?: boolean;
+  initialData?: any;
 }
 
-const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches, departments, roles }) => {
-  const [formData, setFormData] = useState<any>({
+const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches, departments, roles, isEditing = false, initialData }) => {
+  // Debug logging
+  console.log('AddStaffForm props:', { branches, departments, roles, isEditing, initialData });
+  
+  // Convert backend data (snake_case) to frontend format (camelCase)
+  const convertBackendToFrontend = (backendData: any) => {
+    if (!backendData) return {};
+    
+    // Helper function to find name by ID
+    const findNameById = (id: any, options: Array<{ id: string; name: string }>) => {
+      return options.find(option => option.id === id?.toString())?.name || '';
+    };
+    
+    return {
+      // Personal
+      firstName: backendData.first_name || '',
+      middleName: backendData.middle_name || '',
+      lastName: backendData.last_name || '',
+      dateOfBirth: backendData.date_of_birth || '',
+      gender: backendData.gender || '',
+      nationalId: backendData.national_id || '',
+      maritalStatus: backendData.marital_status || '',
+      // Contact
+      email: backendData.email || '',
+      phone: backendData.phone || '',
+      alternativePhone: backendData.alternative_phone || '',
+      linkedin: backendData.linkedin_url || '',
+      twitter: backendData.twitter_url || '',
+      instagram: backendData.instagram_url || '',
+      // Emergency Contact 1
+      emergencyContactName1: backendData.emergency_contact_name || '',
+      emergencyContactRelationship1: backendData.emergency_contact_relationship || '',
+      emergencyContactPhone1: backendData.emergency_contact_phone || '',
+      // Emergency Contact 2
+      emergencyContactName2: backendData.emergency_contact2_name || '',
+      emergencyContactRelationship2: backendData.emergency_contact2_relationship || '',
+      emergencyContactPhone2: backendData.emergency_contact2_phone || '',
+      // Address
+      addressCity: backendData.address_city || '',
+      addressState: backendData.address_state || '',
+      addressCountry: backendData.address_country || '',
+      addressPostalCode: backendData.address_postal_code || '',
+      // Employment - use IDs for form values
+      department: backendData.department_id?.toString() || '',
+      position: backendData.role_id?.toString() || '',
+      employmentType: backendData.employment_type || '',
+      hireDate: backendData.hire_date || '',
+      probationEndDate: backendData.probation_end_date || '',
+      contractEndDate: backendData.contract_end_date || '',
+      reportingManager: backendData.reporting_manager_id || '',
+      branch: backendData.branch_id?.toString() || '',
+      // Salary
+      basicSalary: backendData.basic_salary || '',
+      allowances: [],
+      bankName: backendData.bank_name || '',
+      bankAccount: backendData.bank_account || '',
+      taxId: backendData.tax_id || '',
+      payeEligible: false,
+      sdlEligible: false
+    };
+  };
+
+  const [formData, setFormData] = useState<any>(() => {
+    if (isEditing && initialData) {
+      return convertBackendToFrontend(initialData);
+    }
+    return {
     // Personal
     firstName: '',
     middleName: '',
@@ -19,7 +86,6 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
     gender: '',
     nationalId: '',
     maritalStatus: '',
-    bloodGroup: '',
     // Contact
     email: '',
     phone: '',
@@ -36,18 +102,14 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
     emergencyContactRelationship2: '',
     emergencyContactPhone2: '',
     // Address
-    addressFull: '',
     addressCity: '',
     addressState: '',
     addressCountry: '',
     addressPostalCode: '',
     // Employment
-    employeeId: '',
-    employeeNumber: '',
     department: '',
     position: '',
     employmentType: '',
-    employmentStatus: 'active',
     hireDate: '',
     probationEndDate: '',
     contractEndDate: '',
@@ -61,9 +123,11 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
     taxId: '',
     payeEligible: false,
     sdlEligible: false
+    };
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [apiError, setApiError] = useState<string>('');
   const [activeTab, setActiveTab] = useState('personal');
 
   const inputStyle = (hasError: boolean) => ({
@@ -113,29 +177,44 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
-    if (!formData.employeeId.trim()) newErrors.employeeId = 'Employee ID is required';
+    if (!formData.firstName?.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
+    if (!formData.email?.trim()) newErrors.email = 'Email is required';
+    if (!formData.phone?.trim()) newErrors.phone = 'Phone is required';
     if (!formData.department) newErrors.department = 'Department is required';
-    if (!formData.position.trim()) newErrors.position = 'Position is required';
+    if (!formData.position) newErrors.position = 'Position is required';
+    if (!formData.branch) newErrors.branch = 'Branch is required';
     if (!formData.basicSalary) newErrors.basicSalary = 'Basic salary is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted, validating...');
+    
     if (validateForm()) {
-      onSave({
+      console.log('Validation passed, sending data:', formData);
+      const staffData = {
         ...formData,
-        id: Date.now().toString(),
         basicSalary: parseFloat(formData.basicSalary),
-        fullName: `${formData.firstName} ${formData.lastName}`,
-        status: formData.employmentStatus
-      });
+        fullName: `${formData.firstName} ${formData.lastName}`
+      };
+      
+      // Remove id field to avoid database errors
+      delete staffData.id;
+      
+      console.log('Sending staff data:', staffData);
+      setApiError(''); // Clear any previous API errors
+      try {
+        await onSave(staffData);
+      } catch (error: any) {
+        console.error('API Error:', error);
+        setApiError(error.message || 'Failed to create staff member');
+      }
+    } else {
+      console.log('Validation failed, errors:', errors);
     }
   };
 
@@ -255,27 +334,6 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
         </select>
       </div>
 
-      <div>
-        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-          Blood Group
-        </label>
-        <select
-          name="bloodGroup"
-          value={formData.bloodGroup}
-          onChange={handleInputChange}
-          style={selectStyle(false)}
-        >
-          <option value="">Select blood group</option>
-          <option value="A+">A+</option>
-          <option value="A-">A-</option>
-          <option value="B+">B+</option>
-          <option value="B-">B-</option>
-          <option value="AB+">AB+</option>
-          <option value="AB-">AB-</option>
-          <option value="O+">O+</option>
-          <option value="O-">O-</option>
-        </select>
-      </div>
     </div>
   );
 
@@ -481,19 +539,6 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
           Current Address
         </h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-              Full Address
-            </label>
-            <input
-              type="text"
-              name="addressFull"
-              value={formData.addressFull}
-              onChange={handleInputChange}
-              style={inputStyle(false)}
-              placeholder="Enter full address"
-            />
-          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
@@ -542,34 +587,6 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
 
   const renderEmploymentTab = () => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-      <div>
-        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-          Employee ID *
-        </label>
-        <input
-          type="text"
-          name="employeeId"
-          value={formData.employeeId}
-          onChange={handleInputChange}
-          style={inputStyle(!!errors.employeeId)}
-          placeholder="Enter employee ID"
-        />
-        {errors.employeeId && <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', display: 'block' }}>{errors.employeeId}</span>}
-      </div>
-
-      <div>
-        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-          Employee Number
-        </label>
-        <input
-          type="text"
-          name="employeeNumber"
-          value={formData.employeeNumber}
-          onChange={handleInputChange}
-          style={inputStyle(false)}
-          placeholder="Enter employee number"
-        />
-      </div>
 
       <div>
         <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
@@ -583,7 +600,7 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
         >
           <option value="">Select branch</option>
           {branches.map(branch => (
-            <option key={branch.id} value={branch.name}>{branch.name}</option>
+            <option key={branch.id} value={branch.id}>{branch.name}</option>
           ))}
         </select>
       </div>
@@ -600,7 +617,7 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
         >
           <option value="">Select department</option>
           {departments.map(dept => (
-            <option key={dept.id} value={dept.name}>{dept.name}</option>
+            <option key={dept.id} value={dept.id}>{dept.name}</option>
           ))}
         </select>
         {errors.department && <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', display: 'block' }}>{errors.department}</span>}
@@ -618,7 +635,7 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
         >
           <option value="">Select position</option>
           {roles.map(role => (
-            <option key={role.id} value={role.name}>{role.name}</option>
+            <option key={role.id} value={role.id}>{role.name}</option>
           ))}
         </select>
         {errors.position && <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', display: 'block' }}>{errors.position}</span>}
@@ -642,22 +659,6 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
         </select>
       </div>
 
-      <div>
-        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-          Employment Status
-        </label>
-        <select
-          name="employmentStatus"
-          value={formData.employmentStatus}
-          onChange={handleInputChange}
-          style={selectStyle(false)}
-        >
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="on-leave">On Leave</option>
-          <option value="terminated">Terminated</option>
-        </select>
-      </div>
 
       <div>
         <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
@@ -1416,7 +1417,7 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <User size={20} color="var(--mc-sidebar-bg)" />
           <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-            Add New Staff Member
+            {isEditing ? 'Edit Staff Member' : 'Add New Staff Member'}
           </h2>
         </div>
         <button
@@ -1473,6 +1474,21 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
 
       {/* Form Content */}
       <form onSubmit={handleSubmit} style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* API Error Display */}
+        {apiError && (
+          <div style={{
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '16px',
+            color: '#dc2626',
+            fontSize: '14px'
+          }}>
+            {apiError}
+          </div>
+        )}
+        
         {activeTab === 'personal' && renderPersonalTab()}
         {activeTab === 'contact' && renderContactTab()}
         {activeTab === 'employment' && renderEmploymentTab()}
@@ -1499,7 +1515,7 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
             }}
           >
             <Save size={16} />
-            Save Staff Member
+            {isEditing ? 'Update Staff Member' : 'Save Staff Member'}
           </button>
         </div>
       </form>

@@ -22,6 +22,8 @@ interface AddNewModalProps {
   branches: Array<{ id: string; name: string }>;
   departments: Array<{ id: string; name: string }>;
   roles: Array<{ id: string; name: string }>;
+  editingStaff?: any;
+  loading?: boolean;
   onAddBranch?: (branchData: any) => void;
   onAddDepartment?: (departmentData: any) => void;
   onAddRole?: (roleData: any) => void;
@@ -35,6 +37,8 @@ const AddNewModal: React.FC<AddNewModalProps> = ({
   branches,
   departments,
   roles,
+  editingStaff,
+  loading = false,
   onAddBranch,
   onAddDepartment,
   onAddRole,
@@ -68,22 +72,28 @@ const AddNewModal: React.FC<AddNewModalProps> = ({
     }
   ];
 
-  const handleFormSave = (data: any) => {
-    switch (modalType) {
-      case 'branch':
-        onAddBranch?.(data);
-        break;
-      case 'department':
-        onAddDepartment?.(data);
-        break;
-      case 'role':
-        onAddRole?.(data);
-        break;
-      case 'staff':
-        onAddStaff?.(data);
-        break;
+  const handleFormSave = async (data: any) => {
+    try {
+      switch (modalType) {
+        case 'branch':
+          await onAddBranch?.(data);
+          break;
+        case 'department':
+          await onAddDepartment?.(data);
+          break;
+        case 'role':
+          await onAddRole?.(data);
+          break;
+        case 'staff':
+          await onAddStaff?.(data);
+          break;
+      }
+      handleClose();
+    } catch (error: any) {
+      // Error will be handled by the form component
+      console.error('Form save error:', error);
+      throw error; // Re-throw so the form can catch it
     }
-    handleClose();
   };
 
   const handleFormCancel = () => {
@@ -95,6 +105,14 @@ const AddNewModal: React.FC<AddNewModalProps> = ({
   };
 
   const renderForm = () => {
+    if (loading) {
+      return (
+        <div style={{ padding: '40px', textAlign: 'center' }}>
+          <div>Loading...</div>
+        </div>
+      );
+    }
+
     const commonProps = {
       onSave: handleFormSave,
       onCancel: handleFormCancel
@@ -108,7 +126,14 @@ const AddNewModal: React.FC<AddNewModalProps> = ({
       case 'role':
         return <AddRoleForm {...commonProps} branches={branches} departments={departments} />;
       case 'staff':
-        return <AddStaffForm {...commonProps} branches={branches} departments={departments} roles={roles} />;
+        return <AddStaffForm 
+          {...commonProps} 
+          branches={branches} 
+          departments={departments} 
+          roles={roles}
+          isEditing={!!editingStaff}
+          initialData={editingStaff}
+        />;
       default:
         return null;
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   Edit,
@@ -23,6 +23,7 @@ import {
   MessageCircle,
   Plus
 } from 'lucide-react';
+import { DepartmentService } from '../services/payrollService';
 
 interface Department {
   id: string;
@@ -72,6 +73,8 @@ interface DepartmentsTabProps {
   setBranchFilter: (filter: string) => void;
   branches: Array<{ id: string; name: string }>;
   onAddNew: () => void;
+  onRefresh?: () => void;
+  refreshTrigger?: number;
 }
 
 const mockDepartments: Department[] = [
@@ -274,13 +277,54 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({
   branchFilter, 
   setBranchFilter, 
   branches,
-  onAddNew
+  onAddNew,
+  onRefresh,
+  refreshTrigger
 }) => {
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showDepartmentModal, setShowDepartmentModal] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
   const [departmentModalTab, setDepartmentModalTab] = useState('overview');
 
-  const filteredDepartments = mockDepartments.filter(dept => {
+  // Fetch departments from API
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setLoading(true);
+        const data = await DepartmentService.fetchDepartments();
+        setDepartments(data);
+      } catch (err) {
+        setError('Failed to fetch departments');
+        console.error('Error fetching departments:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDepartments();
+  }, [refreshTrigger]); // Use refreshTrigger as dependency
+
+  // Refresh departments data
+  const refreshDepartments = async () => {
+    try {
+      setLoading(true);
+      const data = await DepartmentService.fetchDepartments();
+      setDepartments(data);
+      // Also refresh parent data
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (err) {
+      setError('Failed to fetch departments');
+      console.error('Error fetching departments:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredDepartments = departments.filter(dept => {
     const matchesSearch = dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          dept.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          dept.manager.toLowerCase().includes(searchQuery.toLowerCase());
@@ -328,6 +372,41 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({
           Add New Department
         </button>
       </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <div>Loading departments...</div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px', 
+          color: '#ef4444',
+          backgroundColor: '#fef2f2',
+          borderRadius: '8px',
+          marginBottom: '16px'
+        }}>
+          {error}
+          <button 
+            onClick={refreshDepartments}
+            style={{
+              marginLeft: '16px',
+              padding: '8px 16px',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Search Bar and Branch Filter */}
       <div style={{

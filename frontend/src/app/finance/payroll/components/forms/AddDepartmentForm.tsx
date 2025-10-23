@@ -16,8 +16,6 @@ const AddDepartmentForm: React.FC<AddDepartmentFormProps> = ({ onSave, onCancel,
     phone: '',
     email: '',
     establishedDate: '',
-    monthlyBudget: '',
-    annualBudget: '',
     status: 'active',
     objectives: ''
   });
@@ -78,8 +76,6 @@ const AddDepartmentForm: React.FC<AddDepartmentFormProps> = ({ onSave, onCancel,
     if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     if (!formData.establishedDate) newErrors.establishedDate = 'Established date is required';
-    if (!formData.monthlyBudget) newErrors.monthlyBudget = 'Monthly budget is required';
-    if (!formData.annualBudget) newErrors.annualBudget = 'Annual budget is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -91,8 +87,6 @@ const AddDepartmentForm: React.FC<AddDepartmentFormProps> = ({ onSave, onCancel,
       onSave({
         ...formData,
         id: Date.now().toString(),
-        monthlyBudget: parseFloat(formData.monthlyBudget),
-        annualBudget: parseFloat(formData.annualBudget),
         objectives: formData.objectives.split('\n').filter(obj => obj.trim()),
         expenses: []
       });
@@ -241,35 +235,6 @@ const AddDepartmentForm: React.FC<AddDepartmentFormProps> = ({ onSave, onCancel,
             {errors.establishedDate && <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', display: 'block' }}>{errors.establishedDate}</span>}
           </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-              Monthly Budget *
-            </label>
-            <input
-              type="number"
-              name="monthlyBudget"
-              value={formData.monthlyBudget}
-              onChange={handleInputChange}
-              style={inputStyle(!!errors.monthlyBudget)}
-              placeholder="Enter monthly budget"
-            />
-            {errors.monthlyBudget && <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', display: 'block' }}>{errors.monthlyBudget}</span>}
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-              Annual Budget *
-            </label>
-            <input
-              type="number"
-              name="annualBudget"
-              value={formData.annualBudget}
-              onChange={handleInputChange}
-              style={inputStyle(!!errors.annualBudget)}
-              placeholder="Enter annual budget"
-            />
-            {errors.annualBudget && <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', display: 'block' }}>{errors.annualBudget}</span>}
-          </div>
         </div>
 
         <div style={{ marginBottom: '20px' }}>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   Edit,
@@ -22,34 +22,27 @@ import {
   UserCheck,
   Plus
 } from 'lucide-react';
+import { RoleService } from '../services/payrollService';
+import AddRoleForm from './forms/AddRoleForm';
 
 interface Role {
   id: string;
-  title: string;
+  name: string;  // Changed from title to name
   department: string;
   branch: string;
   level: string;
   employees: number;
   description: string;
   status: string;
-  // Extended details for modal
-  salaryRange: {
-    min: number;
-    max: number;
-  };
+  reports_to: string;
+  experience_required: string;
+  education_required: string;
+  key_skills: string[];
+  minSalary: number;
+  maxSalary: number;
   requirements: string[];
   responsibilities: string[];
-  skills: string[];
-  experience: string;
-  education: string;
   createdDate: string;
-  reportsTo: string;
-  directReports: number;
-  departmentInfo: {
-    phone: string;
-    email: string;
-    manager: string;
-  };
 }
 
 interface RolesTabProps {
@@ -58,7 +51,10 @@ interface RolesTabProps {
   branchFilter: string;
   setBranchFilter: (filter: string) => void;
   branches: Array<{ id: string; name: string }>;
+  departments: Array<{ id: string; name: string }>;
   onAddNew: () => void;
+  onRefresh?: () => void;
+  refreshTrigger?: number;
 }
 
 const mockRoles: Role[] = [
@@ -209,15 +205,42 @@ const RolesTab: React.FC<RolesTabProps> = ({
   branchFilter, 
   setBranchFilter, 
   branches,
-  onAddNew
+  departments,
+  onAddNew,
+  onRefresh,
+  refreshTrigger
 }) => {
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredRoles = mockRoles.filter(role => {
-    const matchesSearch = role.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  // Fetch roles from API
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const rolesData = await RoleService.fetchRoles();
+        setRoles(rolesData);
+      } catch (err) {
+        console.error('Error fetching roles:', err);
+        setError('Failed to load roles');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRoles();
+  }, [refreshTrigger]);
+
+  const filteredRoles = roles.filter(role => {
+    const matchesSearch = role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          role.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         role.description.toLowerCase().includes(searchQuery.toLowerCase());
+                         (role.description && role.description.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesBranch = branchFilter === 'all' || role.branch === branchFilter;
     
@@ -229,9 +252,81 @@ const RolesTab: React.FC<RolesTabProps> = ({
     setShowRoleModal(true);
   };
 
+  const handleEditRole = (role: Role) => {
+    setEditingRole(role);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteRole = async (role: Role) => {
+    if (window.confirm(`Are you sure you want to delete the role "${role.name}"?`)) {
+      try {
+        await RoleService.deleteRole(role.id);
+        // Refresh the roles list
+        if (onRefresh) {
+          onRefresh();
+        }
+        // Also refresh local state
+        const updatedRoles = roles.filter(r => r.id !== role.id);
+        setRoles(updatedRoles);
+      } catch (error) {
+        console.error('Error deleting role:', error);
+        alert('Failed to delete role. Please try again.');
+      }
+    }
+  };
+
+  const handleUpdateRole = async (updatedRoleData: Partial<Role>) => {
+    if (!editingRole) return;
+    
+    try {
+      await RoleService.updateRole(editingRole.id, updatedRoleData);
+      setShowEditModal(false);
+      setEditingRole(null);
+      
+      // Refresh the roles list
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (error) {
+      console.error('Error updating role:', error);
+      alert('Failed to update role. Please try again.');
+    }
+  };
+
   return (
     <div>
-      {/* Add New Button */}
+      {/* Loading State */}
+      {loading && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          padding: '40px',
+          fontSize: '16px',
+          color: '#6b7280'
+        }}>
+          Loading roles...
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          padding: '40px',
+          fontSize: '16px',
+          color: '#ef4444'
+        }}>
+          {error}
+        </div>
+      )}
+
+      {/* Content */}
+      {!loading && !error && (
+        <>
+          {/* Add New Button */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
         <button
           onClick={onAddNew}
@@ -375,7 +470,7 @@ const RolesTab: React.FC<RolesTabProps> = ({
                     </div>
                     <div>
                       <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>
-                        {role.title}
+                        {role.name}
                       </div>
                       <div style={{ fontSize: '14px', color: '#6b7280' }}>
                         {role.description}
@@ -428,23 +523,28 @@ const RolesTab: React.FC<RolesTabProps> = ({
                 </td>
                 <td style={{ padding: '16px', textAlign: 'center' }}>
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                    <button style={{
-                      padding: '6px',
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      borderRadius: '20px',
-                      color: '#6b7280',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.backgroundColor = '#f3f4f6';
-                      e.currentTarget.style.color = 'var(--mc-sidebar-bg)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = '#6b7280';
-                    }}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditRole(role);
+                      }}
+                      style={{
+                        padding: '6px',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        borderRadius: '20px',
+                        color: '#6b7280',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f3f4f6';
+                        e.currentTarget.style.color = 'var(--mc-sidebar-bg)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = '#6b7280';
+                      }}
                     >
                       <Edit size={16} />
                     </button>
@@ -470,23 +570,28 @@ const RolesTab: React.FC<RolesTabProps> = ({
                     >
                       <Eye size={16} />
                     </button>
-                    <button style={{
-                      padding: '6px',
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      borderRadius: '20px',
-                      color: '#6b7280',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.backgroundColor = '#fef2f2';
-                      e.currentTarget.style.color = '#dc2626';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = '#6b7280';
-                    }}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteRole(role);
+                      }}
+                      style={{
+                        padding: '6px',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        borderRadius: '20px',
+                        color: '#6b7280',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = '#fef2f2';
+                        e.currentTarget.style.color = '#dc2626';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = '#6b7280';
+                      }}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -545,7 +650,7 @@ const RolesTab: React.FC<RolesTabProps> = ({
                 </div>
                 <div>
                   <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937', margin: '0 0 4px 0' }}>
-                    {selectedRole.title}
+                    {selectedRole.name}
                   </h2>
                   <p style={{ fontSize: '16px', color: '#6b7280', margin: 0 }}>
                     {selectedRole.department} • {selectedRole.branch}
@@ -608,7 +713,7 @@ const RolesTab: React.FC<RolesTabProps> = ({
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <UserCheck size={16} color="#6b7280" />
-                        <span style={{ fontSize: '14px', color: '#374151' }}>Reports To: {selectedRole.reportsTo}</span>
+                        <span style={{ fontSize: '14px', color: '#374151' }}>Reports To: {selectedRole.reports_to}</span>
                       </div>
                     </div>
                   </div>
@@ -621,20 +726,20 @@ const RolesTab: React.FC<RolesTabProps> = ({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <DollarSign size={16} color="#10b981" />
                         <span style={{ fontSize: '14px', color: '#374151' }}>
-                          Salary Range: ${selectedRole.salaryRange.min.toLocaleString()} - ${selectedRole.salaryRange.max.toLocaleString()}
+                          Salary Range: ${selectedRole.minSalary.toLocaleString()} - ${selectedRole.maxSalary.toLocaleString()}
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Users size={16} color="#6b7280" />
-                        <span style={{ fontSize: '14px', color: '#374151' }}>Direct Reports: {selectedRole.directReports}</span>
+                        <span style={{ fontSize: '14px', color: '#374151' }}>Employees: {selectedRole.employees}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Clock size={16} color="#6b7280" />
-                        <span style={{ fontSize: '14px', color: '#374151' }}>Experience Required: {selectedRole.experience}</span>
+                        <span style={{ fontSize: '14px', color: '#374151' }}>Experience Required: {selectedRole.experience_required}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <FileText size={16} color="#6b7280" />
-                        <span style={{ fontSize: '14px', color: '#374151' }}>Education: {selectedRole.education}</span>
+                        <span style={{ fontSize: '14px', color: '#374151' }}>Education: {selectedRole.education_required}</span>
                       </div>
                     </div>
                   </div>
@@ -670,7 +775,7 @@ const RolesTab: React.FC<RolesTabProps> = ({
                     Key Skills
                   </h4>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {selectedRole.skills.map((skill, index) => (
+                    {selectedRole.key_skills.map((skill, index) => (
                       <span key={index} style={{
                         padding: '4px 12px',
                         backgroundColor: '#f3f4f6',
@@ -699,28 +804,47 @@ const RolesTab: React.FC<RolesTabProps> = ({
                   ))}
                 </ul>
               </div>
-
-              {/* Department Contact */}
-              <div style={{ border: '1px solid #e5e7eb', padding: '20px', borderRadius: '20px' }}>
-                <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
-                  Department Contact Information
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Building size={16} color="#6b7280" />
-                    <span style={{ fontSize: '14px', color: '#374151' }}>Department Manager: {selectedRole.departmentInfo.manager}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Phone size={16} color="#6b7280" />
-                    <span style={{ fontSize: '14px', color: '#374151' }}>{selectedRole.departmentInfo.phone}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Mail size={16} color="#6b7280" />
-                    <span style={{ fontSize: '14px', color: '#374151' }}>{selectedRole.departmentInfo.email}</span>
-                  </div>
-                </div>
-              </div>
             </div>
+          </div>
+        </div>
+      )}
+        </>
+      )}
+
+      {/* Edit Role Modal */}
+      {showEditModal && editingRole && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            width: '90%',
+            maxWidth: '800px',
+            height: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            <AddRoleForm
+              onSave={handleUpdateRole}
+              onCancel={() => {
+                setShowEditModal(false);
+                setEditingRole(null);
+              }}
+              branches={branches}
+              departments={departments}
+              initialData={editingRole}
+            />
           </div>
         </div>
       )}

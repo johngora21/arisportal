@@ -262,6 +262,7 @@ const mockConversations: Conversation[] = [
     status: 'active',
     tags: ['partnership', 'corporate'],
     createdAt: new Date(Date.now() - 240 * 60 * 60 * 1000)
+  }
 ];
 
 // Mock data removed - using real API data

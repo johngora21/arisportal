@@ -1,10 +1,8 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, ForeignKey, Enum, Date, JSON
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 import enum
-
-Base = declarative_base()
+from database import Base
 
 class EmploymentStatus(enum.Enum):
     ACTIVE = "active"
@@ -41,13 +39,14 @@ class Branch(Base):
     postal_code = Column(String(20))
     phone = Column(String(20))
     email = Column(String(100))
+    manager = Column(String(100))  # Manager name
     manager_id = Column(Integer, ForeignKey("staff.id"))
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    staff = relationship("Staff", back_populates="branch")
+    staff = relationship("Staff", back_populates="branch", foreign_keys="Staff.branch_id")
     departments = relationship("Department", back_populates="branch")
 
 class Department(Base):
@@ -57,7 +56,11 @@ class Department(Base):
     name = Column(String(100), nullable=False)
     description = Column(Text)
     branch_id = Column(Integer, ForeignKey("branches.id"), nullable=False)
+    manager = Column(String(100))  # Manager name
     manager_id = Column(Integer, ForeignKey("staff.id"))
+    phone = Column(String(20))  # Department phone
+    email = Column(String(100))  # Department email
+    objectives = Column(Text)  # Department objectives (JSON string)
     budget = Column(Float, default=0)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -65,7 +68,7 @@ class Department(Base):
     
     # Relationships
     branch = relationship("Branch", back_populates="departments")
-    staff = relationship("Staff", back_populates="department")
+    staff = relationship("Staff", back_populates="department", foreign_keys="Staff.department_id")
     roles = relationship("Role", back_populates="department")
 
 class Role(Base):
@@ -75,6 +78,12 @@ class Role(Base):
     name = Column(String(100), nullable=False)
     description = Column(Text)
     department_id = Column(Integer, ForeignKey("departments.id"), nullable=False)
+    level = Column(String(50))  # Senior, Junior, Manager
+    reports_to = Column(String(100))  # Reports To
+    status = Column(String(20), default='active')  # Active/Inactive
+    experience_required = Column(String(100))  # Experience Required
+    education_required = Column(String(100))  # Education Required
+    key_skills = Column(Text)  # Key Skills (JSON string)
     min_salary = Column(Float, default=0)
     max_salary = Column(Float, default=0)
     responsibilities = Column(Text)
@@ -85,15 +94,15 @@ class Role(Base):
     
     # Relationships
     department = relationship("Department", back_populates="roles")
-    staff = relationship("Staff", back_populates="role")
+    staff = relationship("Staff", back_populates="role", foreign_keys="Staff.role_id")
 
 class Staff(Base):
     __tablename__ = "staff"
     
     # Basic Information
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(String(20), unique=True, nullable=False, index=True)
-    employee_number = Column(String(20), unique=True, nullable=False)
+    employee_id = Column(String(20), unique=True, nullable=True, index=True)
+    employee_number = Column(String(20), unique=True, nullable=True)
     
     # Personal Information
     first_name = Column(String(50), nullable=False)
@@ -177,10 +186,10 @@ class Staff(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    branch = relationship("Branch", back_populates="staff")
-    department = relationship("Department", back_populates="staff")
-    role = relationship("Role", back_populates="staff")
-    reporting_manager = relationship("Staff", remote_side=[id])
+    branch = relationship("Branch", back_populates="staff", foreign_keys=[branch_id])
+    department = relationship("Department", back_populates="staff", foreign_keys=[department_id])
+    role = relationship("Role", back_populates="staff", foreign_keys=[role_id])
+    reporting_manager = relationship("Staff", remote_side=[id], foreign_keys=[reporting_manager_id])
     payroll_records = relationship("PayrollRecord", back_populates="staff")
 
 class PayrollRecord(Base):

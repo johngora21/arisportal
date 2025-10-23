@@ -6,25 +6,26 @@ interface AddRoleFormProps {
   onCancel: () => void;
   branches: Array<{ id: string; name: string }>;
   departments: Array<{ id: string; name: string }>;
+  initialData?: any; // For editing existing roles
 }
 
-const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, departments }) => {
+const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, departments, initialData }) => {
   const [formData, setFormData] = useState({
-    title: '',
-    department: '',
-    branch: '',
-    level: '',
-    description: '',
-    salaryMin: '',
-    salaryMax: '',
-    requirements: '',
-    responsibilities: '',
-    skills: '',
-    experience: '',
-    education: '',
-    createdDate: '',
-    reportsTo: '',
-    status: 'active'
+    title: initialData?.name || '',
+    department: initialData?.department || '',
+    branch: initialData?.branch || '',
+    level: initialData?.level || '',
+    description: initialData?.description || '',
+    salaryMin: initialData?.minSalary?.toString() || '',
+    salaryMax: initialData?.maxSalary?.toString() || '',
+    requirements: initialData?.requirements?.join('\n') || '',
+    responsibilities: initialData?.responsibilities?.join('\n') || '',
+    skills: initialData?.key_skills?.join('\n') || '',
+    experience: initialData?.experience_required || '',
+    education: initialData?.education_required || '',
+    createdDate: initialData?.createdDate || '',
+    reportsTo: initialData?.reports_to || '',
+    status: initialData?.status || 'active'
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -97,20 +98,26 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      onSave({
+      const roleData = {
         ...formData,
-        id: Date.now().toString(),
         salaryMin: parseFloat(formData.salaryMin),
         salaryMax: parseFloat(formData.salaryMax),
         requirements: formData.requirements.split('\n').filter(req => req.trim()),
         responsibilities: formData.responsibilities.split('\n').filter(resp => resp.trim()),
         skills: formData.skills.split('\n').filter(skill => skill.trim())
-      });
+      };
+      
+      // Only add id for new roles, not when editing
+      if (!initialData) {
+        roleData.id = Date.now().toString();
+      }
+      
+      onSave(roleData);
     }
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%' }}>
       {/* Header with close button */}
       <div style={{
         padding: '20px 24px',
@@ -122,7 +129,7 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Shield size={20} color="var(--mc-sidebar-bg)" />
           <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-            Add New Role
+            {initialData ? 'Edit Role' : 'Add New Role'}
           </h2>
         </div>
         <button
@@ -142,7 +149,8 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+        <div style={{ padding: '24px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '20px' }}>
           <div>
             <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
@@ -375,9 +383,34 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
           ></textarea>
           {errors.skills && <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', display: 'block' }}>{errors.skills}</span>}
         </div>
+        </div>
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: 'auto' }}>
+        <div style={{ 
+          padding: '24px', 
+          borderTop: '1px solid #e5e7eb', 
+          display: 'flex', 
+          gap: '12px', 
+          justifyContent: 'flex-end',
+          flexShrink: 0,
+          backgroundColor: 'white'
+        }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{
+              padding: '12px 24px',
+              borderRadius: '20px',
+              border: '1px solid #d1d5db',
+              backgroundColor: 'white',
+              color: '#374151',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer'
+            }}
+          >
+            Cancel
+          </button>
           <button
             type="submit"
             style={{
@@ -395,7 +428,7 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
             }}
           >
             <Save size={16} />
-            Save Role
+            {initialData ? 'Update Role' : 'Save Role'}
           </button>
         </div>
       </form>

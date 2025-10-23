@@ -33,6 +33,7 @@ interface StaffTabProps {
   setBranchFilter: (filter: string) => void;
   branches: Array<{ id: string; name: string }>;
   onAddNew: () => void;
+  onEditStaff?: (staff: Staff) => void;
 }
 
 const formatCurrency = (amount: number) => {
@@ -56,7 +57,8 @@ const StaffTab: React.FC<StaffTabProps> = ({
   branchFilter, 
   setBranchFilter, 
   branches,
-  onAddNew
+  onAddNew,
+  onEditStaff
 }) => {
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
@@ -97,6 +99,13 @@ const StaffTab: React.FC<StaffTabProps> = ({
     setShowStaffModal(true);
     setStaffModalTab('personal');
   };
+
+  const handleEditStaff = (staff: Staff) => {
+    if (onEditStaff) {
+      onEditStaff(staff);
+    }
+  };
+
 
   const staffModalTabs = [
     { id: "personal", label: "Personal", icon: <User size={16} /> },
@@ -360,7 +369,12 @@ const StaffTab: React.FC<StaffTabProps> = ({
               </div>
               
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button style={{
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditStaff(staff);
+                  }}
+                  style={{
                   padding: '6px',
                   backgroundColor: 'transparent',
                   border: 'none',
@@ -547,25 +561,25 @@ const StaffTab: React.FC<StaffTabProps> = ({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>First Name</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.firstName || '-'}
+                        {selectedStaff.first_name || '-'}
                       </p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Last Name</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.lastName || '-'}
+                        {selectedStaff.last_name || '-'}
                       </p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Middle Name</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.middleName || '-'}
+                        {selectedStaff.middle_name || '-'}
                       </p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Date of Birth</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.dateOfBirth || '-'}
+                        {selectedStaff.date_of_birth || '-'}
                       </p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -577,19 +591,13 @@ const StaffTab: React.FC<StaffTabProps> = ({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>National ID</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.nationalId || '-'}
+                        {selectedStaff.national_id || '-'}
                       </p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Marital Status</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.maritalStatus || '-'}
-                      </p>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Blood Group</label>
-                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.bloodGroup || '-'}
+                        {selectedStaff.marital_status || '-'}
                       </p>
                     </div>
                   </div>
@@ -618,7 +626,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Alternative Phone</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.alternativePhone || '+255 22 999 8888'}
+                        {selectedStaff.alternative_phone || '+255 22 999 8888'}
                       </p>
                     </div>
                   </div>
@@ -635,19 +643,19 @@ const StaffTab: React.FC<StaffTabProps> = ({
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>LinkedIn</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.socialMedia?.linkedin || 'linkedin.com/in/' + selectedStaff.name.toLowerCase().replace(' ', '-')}
+                          {selectedStaff.socialMedia?.linkedin || 'linkedin.com/in/' + (selectedStaff.first_name + '-' + selectedStaff.last_name).toLowerCase().replace(/\s/g, '-')}
                         </p>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Twitter/X</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.socialMedia?.twitter || '@' + selectedStaff.name.toLowerCase().replace(' ', '')}
+                          {selectedStaff.socialMedia?.twitter || '@' + (selectedStaff.first_name + selectedStaff.last_name).toLowerCase().replace(/\s/g, '')}
                         </p>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Instagram</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.socialMedia?.instagram || '@' + selectedStaff.name.toLowerCase().replace(' ', '_')}
+                          {selectedStaff.socialMedia?.instagram || '@' + (selectedStaff.first_name + '_' + selectedStaff.last_name).toLowerCase().replace(/\s/g, '_')}
                         </p>
                       </div>
                     </div>
@@ -668,19 +676,19 @@ const StaffTab: React.FC<StaffTabProps> = ({
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Contact Name (Primary)</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.emergencyContact?.name || '-'}
+                          {selectedStaff.emergency_contact_name || '-'}
                         </p>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Relationship</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.emergencyContact?.relationship || '-'}
+                          {selectedStaff.emergency_contact_relationship || '-'}
                         </p>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Phone</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.emergencyContact?.phone || '-'}
+                          {selectedStaff.emergency_contact_phone || '-'}
                         </p>
                       </div>
                     </div>
@@ -694,19 +702,19 @@ const StaffTab: React.FC<StaffTabProps> = ({
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Contact Name (Secondary)</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.emergencyContact2?.name || '-'}
+                          {selectedStaff.emergency_contact2_name || '-'}
                         </p>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Relationship</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.emergencyContact2?.relationship || '-'}
+                          {selectedStaff.emergency_contact2_relationship || '-'}
                         </p>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Phone</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.emergencyContact2?.phone || '-'}
+                          {selectedStaff.emergency_contact2_phone || '-'}
                         </p>
                       </div>
                     </div>
@@ -719,7 +727,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Full Address</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.address?.full || 'Not provided'}
+                        {selectedStaff.address_full || 'Not provided'}
                       </p>
                     </div>
                     <div style={{ 
@@ -730,19 +738,19 @@ const StaffTab: React.FC<StaffTabProps> = ({
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>City</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.address?.city || '-'}
+                          {selectedStaff.address_city || '-'}
                         </p>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>State/Region</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.address?.state || '-'}
+                          {selectedStaff.address_state || '-'}
                         </p>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Country</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.address?.country || '-'}
+                          {selectedStaff.address_country || '-'}
                         </p>
                       </div>
                     </div>
@@ -752,7 +760,113 @@ const StaffTab: React.FC<StaffTabProps> = ({
 
 
               {/* Placeholder for other tabs */}
-              {['employment', 'salary', 'performance', 'attendance'].includes(staffModalTab) && (
+              {staffModalTab === 'employment' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(2, 1fr)', 
+                    gap: '24px' 
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Department</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.department_name || '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Position/Role</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.role_name || '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Branch</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.branch_name || '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Employment Type</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.employment_type || '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Hire Date</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.hire_date || '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Employment Status</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.employment_status || '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Probation End Date</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.probation_end_date || '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Contract End Date</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.contract_end_date || '-'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {staffModalTab === 'salary' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(2, 1fr)', 
+                    gap: '24px' 
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Basic Salary</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.basic_salary ? `$${selectedStaff.basic_salary.toLocaleString()}` : '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Total Package</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.total_package ? `$${selectedStaff.total_package.toLocaleString()}` : '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Allowances</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.allowances || '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Bank Name</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.bank_name || '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Bank Account</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.bank_account || '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Tax ID</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.tax_id || '-'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {['performance', 'attendance'].includes(staffModalTab) && (
                 <div style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
@@ -796,7 +910,14 @@ const StaffTab: React.FC<StaffTabProps> = ({
               >
                 Close
               </button>
-              <button style={{
+              <button 
+                onClick={() => {
+                  setShowStaffModal(false);
+                  if (onEditStaff && selectedStaff) {
+                    onEditStaff(selectedStaff);
+                  }
+                }}
+                style={{
                 padding: '12px 24px',
                 backgroundColor: 'var(--mc-sidebar-bg)',
                 color: 'white',
@@ -819,6 +940,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
           </div>
         </div>
       )}
+
     </div>
   );
 };

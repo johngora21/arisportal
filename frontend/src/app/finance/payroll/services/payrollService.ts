@@ -1,4 +1,4 @@
-import { getApiUrl } from '../../../config/api';
+import { getApiUrl } from '../../../../config/api';
 
 export interface Branch {
   id: number;
@@ -252,6 +252,35 @@ export class RoleService {
       throw error;
     }
   }
+
+  static async updateRole(roleId: string, roleData: Partial<Role>): Promise<Role> {
+    try {
+      const response = await fetch(`${getApiUrl('PAYROLL.ROLES')}/${roleId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(roleData)
+      });
+      
+      if (!response.ok) throw new Error('Failed to update role');
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating role:', error);
+      throw error;
+    }
+  }
+
+  static async deleteRole(roleId: string): Promise<void> {
+    try {
+      const response = await fetch(`${getApiUrl('PAYROLL.ROLES')}/${roleId}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete role');
+    } catch (error) {
+      console.error('Error deleting role:', error);
+      throw error;
+    }
+  }
 }
 
 export class StaffService {
@@ -286,7 +315,10 @@ export class StaffService {
         body: JSON.stringify(staffData)
       });
       
-      if (!response.ok) throw new Error('Failed to create staff');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to create staff');
+      }
       return await response.json();
     } catch (error) {
       console.error('Error creating staff:', error);
@@ -302,6 +334,35 @@ export class StaffService {
       return await response.json();
     } catch (error) {
       console.error('Error fetching staff member:', error);
+      throw error;
+    }
+  }
+
+  static async updateStaff(staffId: string, staffData: Partial<Staff>): Promise<Staff> {
+    try {
+      const response = await fetch(`${getApiUrl('PAYROLL.STAFF')}/${staffId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(staffData)
+      });
+      
+      if (!response.ok) throw new Error('Failed to update staff');
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating staff:', error);
+      throw error;
+    }
+  }
+
+  static async deleteStaff(staffId: string): Promise<void> {
+    try {
+      const response = await fetch(`${getApiUrl('PAYROLL.STAFF')}/${staffId}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete staff');
+    } catch (error) {
+      console.error('Error deleting staff:', error);
       throw error;
     }
   }

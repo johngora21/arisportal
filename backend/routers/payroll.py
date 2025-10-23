@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, date
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +83,8 @@ class RoleResponse(BaseModel):
         from_attributes = True
 
 class StaffCreate(BaseModel):
-    employee_id: str
-    employee_number: str
+    employee_id: Optional[str] = None
+    employee_number: Optional[str] = None
     first_name: str
     last_name: str
     middle_name: Optional[str] = None
@@ -237,7 +238,7 @@ class PayrollRecordResponse(BaseModel):
         from_attributes = True
 
 # Branch endpoints
-@router.get("/branches", response_model=List[BranchResponse])
+@router.get("/branches")
 async def get_branches(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -257,16 +258,82 @@ async def get_branches(
         )
     
     branches = query.offset(skip).limit(limit).all()
-    return branches
+    
+    # Transform to match frontend expectations
+    result = []
+    for branch in branches:
+        # Count employees in this branch
+        employee_count = db.query(Staff).filter(Staff.branch_id == branch.id).count()
+        
+        result.append({
+            "id": str(branch.id),
+            "name": branch.name,
+            "address": branch.address or "",
+            "phone": branch.phone or "",
+            "email": branch.email or "",
+            "manager": branch.manager or "No Manager",
+            "employees": employee_count,
+            "status": "active" if branch.is_active else "inactive",
+            "establishedDate": branch.created_at.strftime("%Y-%m-%d") if branch.created_at else "",
+            "monthlyBudget": 0,  # TODO: Calculate from departments
+            "annualBudget": 0,  # TODO: Calculate from departments
+            "departments": [],  # TODO: Get actual departments
+            "staff": [],  # TODO: Get actual staff
+            "attendance": {
+                "available": employee_count,
+                "onLeave": 0,
+                "absent": 0
+            }
+        })
+    
+    return result
 
-@router.post("/branches", response_model=BranchResponse)
-async def create_branch(branch: BranchCreate, db: Session = Depends(get_db)):
+@router.post("/branches")
+async def create_branch(branch_data: dict, db: Session = Depends(get_db)):
     """Create a new branch"""
-    db_branch = Branch(**branch.dict())
+    print(f"Received branch data: {branch_data}")
+    # Filter out fields that don't exist in the Branch model
+    valid_fields = {
+        'name': branch_data.get('name'),
+        'address': branch_data.get('address'),
+        'city': branch_data.get('city'),
+        'state': branch_data.get('state'),
+        'country': branch_data.get('country'),
+        'postal_code': branch_data.get('postal_code'),
+        'phone': branch_data.get('phone'),
+        'email': branch_data.get('email'),
+        'manager': branch_data.get('manager')
+    }
+    
+    # Remove None values
+    valid_fields = {k: v for k, v in valid_fields.items() if v is not None}
+    
+    db_branch = Branch(**valid_fields)
     db.add(db_branch)
     db.commit()
     db.refresh(db_branch)
-    return db_branch
+    
+    # Return in the format the frontend expects
+    return {
+        "id": str(db_branch.id),
+        "name": db_branch.name,
+        "address": db_branch.address or "",
+        "phone": db_branch.phone or "",
+        "email": db_branch.email or "",
+        "manager": db_branch.manager or "No Manager",
+        "employees": 0,
+        "status": "active" if db_branch.is_active else "inactive",
+        "establishedDate": db_branch.created_at.strftime("%Y-%m-%d") if db_branch.created_at else "",
+        "monthlyBudget": 0,
+        "annualBudget": 0,
+        "departments": [],
+        "staff": [],
+        "attendance": {
+            "available": 0,
+            "onLeave": 0,
+            "absent": 0
+        }
+    }
 
 @router.get("/branches/{branch_id}", response_model=BranchResponse)
 async def get_branch(branch_id: int, db: Session = Depends(get_db)):
@@ -277,7 +344,7 @@ async def get_branch(branch_id: int, db: Session = Depends(get_db)):
     return branch
 
 # Department endpoints
-@router.get("/departments", response_model=List[DepartmentResponse])
+@router.get("/departments")
 async def get_departments(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -286,6 +353,8 @@ async def get_departments(
     db: Session = Depends(get_db)
 ):
     """Get all departments with optional filtering"""
+    from sqlalchemy.orm import joinedload
+    
     query = db.query(Department).filter(Department.is_active == True)
     
     if branch_id:
@@ -295,19 +364,90 @@ async def get_departments(
         query = query.filter(Department.name.ilike(f"%{search}%"))
     
     departments = query.offset(skip).limit(limit).all()
-    return departments
+    
+    # Transform to match frontend expectations
+    result = []
+    for dept in departments:
+        # Get branch name
+        branch = db.query(Branch).filter(Branch.id == dept.branch_id).first()
+        branch_name = branch.name if branch else f"Branch {dept.branch_id}"
+        
+        # Get manager name
+        manager_name = dept.manager or "No Manager"
+        
+        result.append({
+            "id": str(dept.id),
+            "name": dept.name,
+            "description": dept.description or "",
+            "manager": manager_name,
+            "employees": 0,  # TODO: Count actual employees
+            "branch": branch_name,
+            "status": "active" if dept.is_active else "inactive",
+            "phone": dept.phone or "",
+            "email": dept.email or "",
+            "establishedDate": dept.created_at.strftime("%Y-%m-%d") if dept.created_at else "",
+            "budget": dept.budget,
+            "objectives": json.loads(dept.objectives) if dept.objectives else [],
+            "teamMembers": []  # TODO: Get actual team members
+        })
+    
+    return result
 
-@router.post("/departments", response_model=DepartmentResponse)
-async def create_department(department: DepartmentCreate, db: Session = Depends(get_db)):
+@router.post("/departments")
+async def create_department(department_data: dict, db: Session = Depends(get_db)):
     """Create a new department"""
-    db_department = Department(**department.dict())
+    print(f"Received department data: {department_data}")
+    
+    # Handle branch name to branch_id conversion
+    branch_id = None
+    if 'branch' in department_data:
+        # Find branch by name
+        branch = db.query(Branch).filter(Branch.name == department_data['branch']).first()
+        if branch:
+            branch_id = branch.id
+        else:
+            # If branch not found, create a new one or use first available
+            branch_id = 1  # Default to first branch
+    
+    # Filter out fields that don't exist in the Department model
+    valid_fields = {
+        'name': department_data.get('name'),
+        'description': department_data.get('description'),
+        'branch_id': branch_id or department_data.get('branch_id'),
+        'manager': department_data.get('manager'),
+        'phone': department_data.get('phone'),
+        'email': department_data.get('email'),
+        'objectives': json.dumps(department_data.get('objectives', [])) if department_data.get('objectives') else None,
+        'budget': department_data.get('budget', 0)
+    }
+    
+    # Remove None values
+    valid_fields = {k: v for k, v in valid_fields.items() if v is not None}
+    
+    db_department = Department(**valid_fields)
     db.add(db_department)
     db.commit()
     db.refresh(db_department)
-    return db_department
+    
+    # Return in the format the frontend expects
+    return {
+        "id": str(db_department.id),
+        "name": db_department.name,
+        "description": db_department.description or "",
+        "manager": db_department.manager or "No Manager",
+        "employees": 0,
+        "branch": department_data.get('branch') or "Unknown Branch",
+        "status": "active" if db_department.is_active else "inactive",
+        "phone": db_department.phone or "",
+        "email": db_department.email or "",
+        "establishedDate": db_department.created_at.strftime("%Y-%m-%d") if db_department.created_at else "",
+        "budget": db_department.budget or 0,
+        "objectives": json.loads(db_department.objectives) if db_department.objectives else [],
+        "teamMembers": []
+    }
 
 # Role endpoints
-@router.get("/roles", response_model=List[RoleResponse])
+@router.get("/roles")
 async def get_roles(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -325,16 +465,188 @@ async def get_roles(
         query = query.filter(Role.name.ilike(f"%{search}%"))
     
     roles = query.offset(skip).limit(limit).all()
-    return roles
+    
+    # Transform to match frontend expectations
+    result = []
+    for role in roles:
+        # Get department name
+        department = db.query(Department).filter(Department.id == role.department_id).first()
+        department_name = department.name if department else f"Department {role.department_id}"
+        
+        result.append({
+            "id": str(role.id),
+            "name": role.name,
+            "description": role.description or "",
+            "department": department_name,
+            "level": role.level or "Mid",
+            "branch": "Unknown Branch",  # TODO: Add branch to role model
+            "reports_to": role.reports_to or "",
+            "status": role.status or "active",
+            "experience_required": role.experience_required or "",
+            "education_required": role.education_required or "",
+            "key_skills": json.loads(role.key_skills) if role.key_skills else [],
+            "minSalary": role.min_salary or 0,
+            "maxSalary": role.max_salary or 0,
+            "responsibilities": json.loads(role.responsibilities) if role.responsibilities else [],
+            "requirements": json.loads(role.requirements) if role.requirements else [],
+            "createdDate": role.created_at.strftime("%Y-%m-%d") if role.created_at else "",
+            "employees": 0  # TODO: Count actual employees
+        })
+    
+    return result
 
-@router.post("/roles", response_model=RoleResponse)
-async def create_role(role: RoleCreate, db: Session = Depends(get_db)):
+@router.post("/roles")
+async def create_role(role_data: dict, db: Session = Depends(get_db)):
     """Create a new role"""
-    db_role = Role(**role.dict())
+    print(f"Received role data: {role_data}")
+    
+    # Handle department name to department_id conversion
+    department_id = None
+    if 'department' in role_data:
+        # Find department by name
+        department = db.query(Department).filter(Department.name == role_data['department']).first()
+        if department:
+            department_id = department.id
+        else:
+            # If department not found, use first available
+            department_id = 1  # Default to first department
+    
+    # Filter out fields that don't exist in the Role model
+    valid_fields = {
+        'name': role_data.get('title') or role_data.get('name'),  # Frontend sends 'title'
+        'description': role_data.get('description'),
+        'department_id': department_id or role_data.get('department_id'),
+        'level': role_data.get('level'),
+        'reports_to': role_data.get('reports_to'),
+        'status': role_data.get('status', 'active'),
+        'experience_required': role_data.get('experience_required'),
+        'education_required': role_data.get('education_required'),
+        'key_skills': json.dumps(role_data.get('key_skills', [])) if role_data.get('key_skills') else None,
+        'min_salary': role_data.get('min_salary', 0),
+        'max_salary': role_data.get('max_salary', 0),
+        'responsibilities': json.dumps(role_data.get('responsibilities', [])) if role_data.get('responsibilities') else None,
+        'requirements': json.dumps(role_data.get('requirements', [])) if role_data.get('requirements') else None
+    }
+    
+    # Remove None values
+    valid_fields = {k: v for k, v in valid_fields.items() if v is not None}
+    
+    db_role = Role(**valid_fields)
     db.add(db_role)
     db.commit()
     db.refresh(db_role)
-    return db_role
+    
+    # Return in the format the frontend expects
+    return {
+        "id": str(db_role.id),
+        "name": db_role.name,
+        "description": db_role.description or "",
+        "department": role_data.get('department') or "Unknown Department",
+        "level": db_role.level or role_data.get('level') or "Mid",
+        "branch": role_data.get('branch') or "Unknown Branch",
+        "reports_to": db_role.reports_to or "",
+        "status": db_role.status or "active",
+        "experience_required": db_role.experience_required or "",
+        "education_required": db_role.education_required or "",
+        "key_skills": json.loads(db_role.key_skills) if db_role.key_skills else [],
+        "minSalary": db_role.min_salary or 0,
+        "maxSalary": db_role.max_salary or 0,
+        "responsibilities": json.loads(db_role.responsibilities) if db_role.responsibilities else [],
+        "requirements": json.loads(db_role.requirements) if db_role.requirements else [],
+        "createdDate": role_data.get('created_date') or (db_role.created_at.strftime("%Y-%m-%d") if db_role.created_at else ""),
+        "employees": 0  # TODO: Count actual employees
+    }
+
+@router.put("/roles/{role_id}")
+async def update_role(role_id: int, role_data: dict, db: Session = Depends(get_db)):
+    """Update an existing role"""
+    print(f"Updating role {role_id} with data: {role_data}")
+    
+    # Find the role
+    role = db.query(Role).filter(Role.id == role_id).first()
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    
+    # Handle department name to department_id conversion if provided
+    if 'department' in role_data:
+        department = db.query(Department).filter(Department.name == role_data['department']).first()
+        if department:
+            role_data['department_id'] = department.id
+        del role_data['department']  # Remove the department name from update data
+    
+    # Map frontend field names to backend field names
+    field_mapping = {
+        'title': 'name',
+        'experience': 'experience_required',
+        'education': 'education_required',
+        'skills': 'key_skills',
+        'reportsTo': 'reports_to',
+        'salaryMin': 'min_salary',
+        'salaryMax': 'max_salary'
+    }
+    
+    # Apply field mapping
+    for frontend_field, backend_field in field_mapping.items():
+        if frontend_field in role_data:
+            role_data[backend_field] = role_data[frontend_field]
+            del role_data[frontend_field]
+    
+    # Update fields (exclude id and other non-updatable fields)
+    excluded_fields = ['id', 'created_at', 'updated_at']
+    for field, value in role_data.items():
+        if hasattr(role, field) and value is not None and field not in excluded_fields:
+            if field in ['key_skills', 'responsibilities', 'requirements'] and isinstance(value, list):
+                setattr(role, field, json.dumps(value))
+            else:
+                setattr(role, field, value)
+    
+    db.commit()
+    db.refresh(role)
+    
+    # Return in the format the frontend expects
+    return {
+        "id": str(role.id),
+        "name": role.name,
+        "description": role.description or "",
+        "department": role_data.get('department') or "Unknown Department",
+        "level": role.level or "Mid",
+        "branch": role_data.get('branch') or "Unknown Branch",
+        "reports_to": role.reports_to or "",
+        "status": role.status or "active",
+        "experience_required": role.experience_required or "",
+        "education_required": role.education_required or "",
+        "key_skills": json.loads(role.key_skills) if role.key_skills else [],
+        "minSalary": role.min_salary or 0,
+        "maxSalary": role.max_salary or 0,
+        "responsibilities": json.loads(role.responsibilities) if role.responsibilities else [],
+        "requirements": json.loads(role.requirements) if role.requirements else [],
+        "createdDate": role.created_at.strftime("%Y-%m-%d") if role.created_at else "",
+        "employees": 0
+    }
+
+@router.delete("/roles/{role_id}")
+async def delete_role(role_id: int, db: Session = Depends(get_db)):
+    """Delete a role (soft delete)"""
+    print(f"Deleting role {role_id}")
+    
+    # Find the role
+    role = db.query(Role).filter(Role.id == role_id).first()
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    
+    # Check if role has any staff assigned
+    staff_count = db.query(Staff).filter(Staff.role_id == role_id).count()
+    if staff_count > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot delete role. {staff_count} staff members are assigned to this role."
+        )
+    
+    # Soft delete by setting is_active to False
+    role.is_active = False
+    db.commit()
+    
+    return {"message": "Role deleted successfully"}
 
 # Staff endpoints
 @router.get("/staff", response_model=List[StaffResponse])
@@ -370,16 +682,180 @@ async def get_staff(
         )
     
     staff = query.offset(skip).limit(limit).all()
+    
+    # Add names to each staff member
+    for member in staff:
+        # Get department name
+        if member.department_id:
+            dept = db.query(Department).filter(Department.id == member.department_id).first()
+            member.department_name = dept.name if dept else None
+        
+        # Get role name
+        if member.role_id:
+            role = db.query(Role).filter(Role.id == member.role_id).first()
+            member.role_name = role.name if role else None
+        
+        # Get branch name
+        if member.branch_id:
+            branch = db.query(Branch).filter(Branch.id == member.branch_id).first()
+            member.branch_name = branch.name if branch else None
+    
     return staff
 
 @router.post("/staff", response_model=StaffResponse)
-async def create_staff(staff: StaffCreate, db: Session = Depends(get_db)):
+async def create_staff(staff_data: dict, db: Session = Depends(get_db)):
     """Create a new staff member"""
-    db_staff = Staff(**staff.dict())
+    print(f"Received staff data: {staff_data}")
+    
+    # Map frontend field names to backend field names
+    field_mapping = {
+        'firstName': 'first_name',
+        'lastName': 'last_name',
+        'middleName': 'middle_name',
+        'dateOfBirth': 'date_of_birth',
+        'phone': 'phone',
+        'alternativePhone': 'alternative_phone',
+        'emergencyContactName1': 'emergency_contact_name',
+        'emergencyContactRelationship1': 'emergency_contact_relationship',
+        'emergencyContactPhone1': 'emergency_contact_phone',
+        'emergencyContactName2': 'emergency_contact2_name',
+        'emergencyContactRelationship2': 'emergency_contact2_relationship',
+        'emergencyContactPhone2': 'emergency_contact2_phone',
+        'linkedin': 'linkedin_url',
+        'twitter': 'twitter_url',
+        'instagram': 'instagram_url',
+        'addressCity': 'address_city',
+        'addressState': 'address_state',
+        'addressCountry': 'address_country',
+        'addressPostalCode': 'address_postal_code',
+        'hireDate': 'hire_date',
+        'probationEndDate': 'probation_end_date',
+        'contractEndDate': 'contract_end_date',
+        'basicSalary': 'basic_salary',
+        'employmentType': 'employment_type',
+        'maritalStatus': 'marital_status',
+        'reportingManager': 'reporting_manager_id',
+        'department': 'department_id',  # Form sends department as ID
+        'branch': 'branch_id',         # Form sends branch as ID
+        'position': 'role_id',         # Form sends position as role ID
+        'bankName': 'bank_name',
+        'bankAccount': 'bank_account',
+        'taxId': 'tax_id'
+    }
+    
+    # Apply field mapping
+    mapped_data = {}
+    for frontend_field, backend_field in field_mapping.items():
+        if frontend_field in staff_data:
+            mapped_data[backend_field] = staff_data[frontend_field]
+    
+    # Add any remaining unmapped fields
+    for field, value in staff_data.items():
+        if field not in field_mapping:
+            mapped_data[field] = value
+    
+    staff_data = mapped_data
+    
+    # Auto-generate employee_id and employee_number if not provided
+    if 'employee_id' not in staff_data or not staff_data.get('employee_id'):
+        # Generate employee_id based on first name and last name initials + timestamp
+        first_name = staff_data.get('first_name', '').upper()[:2]
+        last_name = staff_data.get('last_name', '').upper()[:2]
+        timestamp = str(int(datetime.now().timestamp()))[-4:]
+        staff_data['employee_id'] = f"{first_name}{last_name}{timestamp}"
+    
+    if 'employee_number' not in staff_data or not staff_data.get('employee_number'):
+        # Generate employee_number as sequential number
+        last_staff = db.query(Staff).order_by(Staff.id.desc()).first()
+        next_number = (last_staff.id + 1) if last_staff else 1
+        staff_data['employee_number'] = f"EMP{next_number:04d}"
+    
+    # Set default employment_status if not provided
+    if 'employment_status' not in staff_data:
+        staff_data['employment_status'] = 'active'
+    
+    # Set default hire_date if not provided
+    if 'hire_date' not in staff_data or not staff_data.get('hire_date'):
+        from datetime import date
+        staff_data['hire_date'] = date.today()
+    
+    # Convert employment_type values to match enum
+    employment_type_mapping = {
+        'full-time': 'full_time',
+        'part-time': 'part_time',
+        'contract': 'contract',
+        'intern': 'intern'
+    }
+    if 'employment_type' in staff_data and staff_data['employment_type'] in employment_type_mapping:
+        staff_data['employment_type'] = employment_type_mapping[staff_data['employment_type']]
+    
+    # Convert IDs from strings to integers
+    id_fields = ['branch_id', 'department_id', 'role_id']
+    for field in id_fields:
+        if field in staff_data and staff_data[field]:
+            try:
+                staff_data[field] = int(staff_data[field])
+            except (ValueError, TypeError):
+                pass  # Keep original value if conversion fails
+    
+    # Handle reporting_manager_id separately - if it's a string (name), set to None
+    if 'reporting_manager_id' in staff_data and staff_data['reporting_manager_id']:
+        if isinstance(staff_data['reporting_manager_id'], str):
+            # If it's a string (manager name), we can't convert it to ID, so set to None
+            staff_data['reporting_manager_id'] = None
+        else:
+            try:
+                staff_data['reporting_manager_id'] = int(staff_data['reporting_manager_id'])
+            except (ValueError, TypeError):
+                staff_data['reporting_manager_id'] = None
+    
+    # Calculate allowances total and store as numeric value
+    allowances_total = 0
+    if 'allowances' in staff_data and staff_data['allowances']:
+        if isinstance(staff_data['allowances'], list):
+            for allowance in staff_data['allowances']:
+                if isinstance(allowance, dict) and 'amount' in allowance:
+                    try:
+                        allowances_total += float(allowance['amount'])
+                    except (ValueError, TypeError):
+                        pass
+        elif isinstance(staff_data['allowances'], (int, float)):
+            allowances_total = float(staff_data['allowances'])
+    
+    # Store the numeric total instead of JSON
+    staff_data['allowances'] = allowances_total
+    
+    # Calculate total_package if not provided
+    if 'total_package' not in staff_data or not staff_data.get('total_package'):
+        basic_salary = float(staff_data.get('basic_salary', 0)) if staff_data.get('basic_salary') else 0
+        staff_data['total_package'] = basic_salary + allowances_total
+    
+    # Filter out fields that don't exist in the Staff model
+    valid_fields = {}
+    for field, value in staff_data.items():
+        if hasattr(Staff, field) and value is not None and value != '':
+            valid_fields[field] = value
+    
+    print(f"Creating staff with valid fields: {valid_fields}")
+    
+    try:
+    db_staff = Staff(**valid_fields)
     db.add(db_staff)
     db.commit()
     db.refresh(db_staff)
     return db_staff
+    except Exception as e:
+        db.rollback()
+        print(f"Error creating staff: {str(e)}")
+        
+        # Handle specific database errors
+        error_message = str(e)
+        if "Duplicate entry" in error_message and "email" in error_message:
+            raise HTTPException(status_code=400, detail="Email address already exists. Please use a different email.")
+        elif "Duplicate entry" in error_message and "phone" in error_message:
+            raise HTTPException(status_code=400, detail="Phone number already exists. Please use a different phone number.")
+        else:
+            raise HTTPException(status_code=400, detail=f"Error creating staff: {str(e)}")
 
 @router.get("/staff/{staff_id}", response_model=StaffResponse)
 async def get_staff_member(staff_id: int, db: Session = Depends(get_db)):
@@ -387,7 +863,90 @@ async def get_staff_member(staff_id: int, db: Session = Depends(get_db)):
     staff = db.query(Staff).filter(Staff.id == staff_id).first()
     if not staff:
         raise HTTPException(status_code=404, detail="Staff member not found")
+    
+    # Add names to the staff member
+    if staff.department_id:
+        dept = db.query(Department).filter(Department.id == staff.department_id).first()
+        staff.department_name = dept.name if dept else None
+    
+    if staff.role_id:
+        role = db.query(Role).filter(Role.id == staff.role_id).first()
+        staff.role_name = role.name if role else None
+    
+    if staff.branch_id:
+        branch = db.query(Branch).filter(Branch.id == staff.branch_id).first()
+        staff.branch_name = branch.name if branch else None
+    
     return staff
+
+@router.put("/staff/{staff_id}", response_model=StaffResponse)
+async def update_staff(staff_id: int, staff_data: dict, db: Session = Depends(get_db)):
+    """Update an existing staff member"""
+    print(f"Updating staff {staff_id} with data: {staff_data}")
+    
+    # Find the staff member
+    staff = db.query(Staff).filter(Staff.id == staff_id).first()
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff member not found")
+    
+    # Map frontend field names to backend field names
+    field_mapping = {
+        'firstName': 'first_name',
+        'lastName': 'last_name',
+        'employeeId': 'employee_id',
+        'phoneNumber': 'phone_number',
+        'emergencyContact': 'emergency_contact',
+        'emergencyPhone': 'emergency_phone',
+        'hireDate': 'hire_date',
+        'basicSalary': 'basic_salary',
+        'employmentStatus': 'employment_status',
+        'employmentType': 'employment_type',
+        'maritalStatus': 'marital_status',
+        'reportingManager': 'reporting_manager_id',
+        'branchId': 'branch_id',
+        'departmentId': 'department_id',
+        'roleId': 'role_id'
+    }
+    
+    # Apply field mapping
+    for frontend_field, backend_field in field_mapping.items():
+        if frontend_field in staff_data:
+            staff_data[backend_field] = staff_data[frontend_field]
+            del staff_data[frontend_field]
+    
+    # Update fields (exclude id and other non-updatable fields)
+    excluded_fields = ['id', 'created_at', 'updated_at']
+    for field, value in staff_data.items():
+        if hasattr(staff, field) and value is not None and field not in excluded_fields:
+            setattr(staff, field, value)
+    
+    db.commit()
+    db.refresh(staff)
+    return staff
+
+@router.delete("/staff/{staff_id}")
+async def delete_staff(staff_id: int, db: Session = Depends(get_db)):
+    """Delete a staff member (soft delete)"""
+    print(f"Deleting staff {staff_id}")
+    
+    # Find the staff member
+    staff = db.query(Staff).filter(Staff.id == staff_id).first()
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff member not found")
+    
+    # Check if staff has any payroll records
+    payroll_count = db.query(PayrollRecord).filter(PayrollRecord.staff_id == staff_id).count()
+    if payroll_count > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot delete staff member. {payroll_count} payroll records exist for this staff member."
+        )
+    
+    # Soft delete by setting is_active to False
+    staff.is_active = False
+    db.commit()
+    
+    return {"message": "Staff member deleted successfully"}
 
 # Payroll calculation function
 def calculate_payroll(basic_salary: float, allowances: float = 0, overtime_pay: float = 0, bonus: float = 0):

@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { BarChart3, TrendingUp } from 'lucide-react';
 
-export function ReportsModule() {
+function ReportsModule() {
   const products = useMemo(() => ([
     { id: 'p1', name: 'Office Chair', category: 'Furniture', unitPrice: 150 },
     { id: 'p2', name: 'Laptop 15"', category: 'Electronics', unitPrice: 800 },

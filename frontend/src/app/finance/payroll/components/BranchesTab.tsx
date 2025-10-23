@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   Plus, 
@@ -22,6 +22,7 @@ import {
   TrendingUp,
   MessageCircle
 } from 'lucide-react';
+import { BranchService } from '../services/payrollService';
 
 interface Branch {
   id: string;
@@ -34,8 +35,6 @@ interface Branch {
   status: string;
   // Extended details for modal
   establishedDate: string;
-  monthlyBudget: number;
-  annualBudget: number;
   departments: Array<{
     id: string;
     name: string;
@@ -62,7 +61,10 @@ interface BranchesTabProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onAddNew: () => void;
+  onRefresh?: () => void;
+  refreshTrigger?: number; // Add refresh trigger
 }
+
 
 const mockBranches: Branch[] = [
   {
@@ -75,8 +77,6 @@ const mockBranches: Branch[] = [
     employees: 45,
     status: 'active',
     establishedDate: '2018-03-15',
-    monthlyBudget: 125000,
-    annualBudget: 1500000,
     departments: [
       { id: '1', name: 'Finance', employees: 8, manager: 'Jennifer White' },
       { id: '2', name: 'Human Resources', employees: 6, manager: 'Alice Brown' },
@@ -100,8 +100,6 @@ const mockBranches: Branch[] = [
     employees: 32,
     status: 'active',
     establishedDate: '2019-08-20',
-    monthlyBudget: 95000,
-    annualBudget: 1140000,
     departments: [
       { id: '1', name: 'Information Technology', employees: 25, manager: 'Tech Lead' },
       { id: '2', name: 'Research & Development', employees: 7, manager: 'Dr. Michael Chen' }
@@ -123,8 +121,6 @@ const mockBranches: Branch[] = [
     employees: 28,
     status: 'active',
     establishedDate: '2020-01-10',
-    monthlyBudget: 75000,
-    annualBudget: 900000,
     departments: [
       { id: '1', name: 'Sales & Marketing', employees: 18, manager: 'Sales Manager' },
       { id: '2', name: 'Business Development', employees: 10, manager: 'Business Dev Lead' }
@@ -146,8 +142,6 @@ const mockBranches: Branch[] = [
     employees: 15,
     status: 'active',
     establishedDate: '2021-06-05',
-    monthlyBudget: 45000,
-    annualBudget: 540000,
     departments: [
       { id: '1', name: 'Operations', employees: 15, manager: 'Operations Manager' }
     ],
@@ -167,21 +161,61 @@ const getStatusColor = (status: string) => {
   }
 };
 
-const BranchesTab: React.FC<BranchesTabProps> = ({ searchQuery, setSearchQuery, onAddNew }) => {
+const BranchesTab: React.FC<BranchesTabProps> = ({ searchQuery, setSearchQuery, onAddNew, onRefresh, refreshTrigger }) => {
+  const [branches, setBranches] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showBranchModal, setShowBranchModal] = useState(false);
-  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+  const [selectedBranch, setSelectedBranch] = useState<any | null>(null);
   const [branchModalTab, setBranchModalTab] = useState('overview');
 
-  const filteredBranches = mockBranches.filter(branch =>
+  // Fetch branches from API
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        setLoading(true);
+        const data = await BranchService.fetchBranches();
+        setBranches(data);
+      } catch (err) {
+        setError('Failed to fetch branches');
+        console.error('Error fetching branches:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBranches();
+  }, [refreshTrigger]); // Use refreshTrigger as dependency
+
+  // Filter branches based on search query
+  const filteredBranches = branches.filter(branch =>
     branch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    branch.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    branch.manager.toLowerCase().includes(searchQuery.toLowerCase())
+    branch.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    branch.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleViewBranch = (branch: Branch) => {
+  const handleViewBranch = (branch: any) => {
     setSelectedBranch(branch);
     setShowBranchModal(true);
     setBranchModalTab('overview');
+  };
+
+  // Refresh branches data
+  const refreshBranches = async () => {
+    try {
+      setLoading(true);
+      const data = await BranchService.fetchBranches();
+      setBranches(data);
+      // Also refresh parent data
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (err) {
+      setError('Failed to fetch branches');
+      console.error('Error fetching branches:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const branchModalTabs = [
@@ -216,6 +250,41 @@ const BranchesTab: React.FC<BranchesTabProps> = ({ searchQuery, setSearchQuery, 
           Add New Branch
         </button>
       </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <div>Loading branches...</div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px', 
+          color: '#ef4444',
+          backgroundColor: '#fef2f2',
+          borderRadius: '8px',
+          marginBottom: '16px'
+        }}>
+          {error}
+          <button 
+            onClick={refreshBranches}
+            style={{
+              marginLeft: '16px',
+              padding: '8px 16px',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Search Bar */}
       <div style={{
@@ -314,7 +383,7 @@ const BranchesTab: React.FC<BranchesTabProps> = ({ searchQuery, setSearchQuery, 
                 fontWeight: '500',
                 ...getStatusColor(branch.status)
               }}>
-                {branch.status.charAt(0).toUpperCase() + branch.status.slice(1)}
+                {(branch.status || 'active').charAt(0).toUpperCase() + (branch.status || 'active').slice(1)}
               </span>
             </div>
 
@@ -557,10 +626,6 @@ const BranchesTab: React.FC<BranchesTabProps> = ({ searchQuery, setSearchQuery, 
                           <Mail size={16} color="#6b7280" />
                           <span style={{ fontSize: '14px', color: '#374151' }}>{selectedBranch.email}</span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <DollarSign size={16} color="#6b7280" />
-                          <span style={{ fontSize: '14px', color: '#374151' }}>Annual Budget: ${selectedBranch.annualBudget.toLocaleString()}</span>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -568,26 +633,10 @@ const BranchesTab: React.FC<BranchesTabProps> = ({ searchQuery, setSearchQuery, 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
                     <div style={{ border: '1px solid #e5e7eb', padding: '20px', borderRadius: '20px' }}>
                       <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
-                        Financial Summary
-                      </h4>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <DollarSign size={16} color="#10b981" />
-                          <span style={{ fontSize: '14px', color: '#374151' }}>Annual Budget: ${selectedBranch.annualBudget.toLocaleString()}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <DollarSign size={16} color="#f59e0b" />
-                          <span style={{ fontSize: '14px', color: '#374151' }}>Payroll Total: ${selectedBranch.annualBudget.toLocaleString()}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ border: '1px solid #e5e7eb', padding: '20px', borderRadius: '20px' }}>
-                      <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
                         Departments
                       </h4>
                       <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--mc-sidebar-bg)', marginBottom: '8px' }}>
-                        {selectedBranch.departments.length}
+                        {(selectedBranch.departments || []).length}
                       </div>
                       <div style={{ fontSize: '14px', color: '#6b7280' }}>
                         Total departments in this branch
@@ -603,7 +652,7 @@ const BranchesTab: React.FC<BranchesTabProps> = ({ searchQuery, setSearchQuery, 
                     Branch Departments
                   </h3>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
-                    {selectedBranch.departments.map((dept) => (
+                    {(selectedBranch.departments || []).map((dept: any) => (
                       <div key={dept.id} style={{
                         border: '1px solid #e5e7eb',
                         borderRadius: '20px',
@@ -650,7 +699,7 @@ const BranchesTab: React.FC<BranchesTabProps> = ({ searchQuery, setSearchQuery, 
                     Branch Staff
                   </h3>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '16px' }}>
-                    {selectedBranch.staff.map((member) => (
+                    {(selectedBranch.staff || []).map((member: any) => (
                       <div key={member.id} style={{
                         border: '1px solid #e5e7eb',
                         borderRadius: '20px',
@@ -683,7 +732,7 @@ const BranchesTab: React.FC<BranchesTabProps> = ({ searchQuery, setSearchQuery, 
                             color: 'white',
                             fontWeight: '600'
                           }}>
-                            {member.name.split(' ').map(n => n[0]).join('')}
+                            {member.name.split(' ').map((n: string) => n[0]).join('')}
                           </div>
                           <div>
                             <div style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>
@@ -799,7 +848,7 @@ const BranchesTab: React.FC<BranchesTabProps> = ({ searchQuery, setSearchQuery, 
                         </h4>
                       </div>
                       <div style={{ fontSize: '32px', fontWeight: '700', color: '#10b981', marginBottom: '8px' }}>
-                        {selectedBranch.attendance.available}
+                        {(selectedBranch.attendance || {}).available || 0}
                       </div>
                       <div style={{ fontSize: '14px', color: '#6b7280' }}>
                         Staff currently available
@@ -814,7 +863,7 @@ const BranchesTab: React.FC<BranchesTabProps> = ({ searchQuery, setSearchQuery, 
                         </h4>
                       </div>
                       <div style={{ fontSize: '32px', fontWeight: '700', color: '#f59e0b', marginBottom: '8px' }}>
-                        {selectedBranch.attendance.onLeave}
+                        {(selectedBranch.attendance || {}).onLeave || 0}
                       </div>
                       <div style={{ fontSize: '14px', color: '#6b7280' }}>
                         Staff on leave today
@@ -829,7 +878,7 @@ const BranchesTab: React.FC<BranchesTabProps> = ({ searchQuery, setSearchQuery, 
                         </h4>
                       </div>
                       <div style={{ fontSize: '32px', fontWeight: '700', color: '#6b7280', marginBottom: '8px' }}>
-                        {selectedBranch.attendance.absent}
+                        {(selectedBranch.attendance || {}).absent || 0}
                       </div>
                       <div style={{ fontSize: '14px', color: '#6b7280' }}>
                         Staff absent today

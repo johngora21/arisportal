@@ -6,7 +6,7 @@ import { MapPin, CheckCircle, Phone, Mail, Globe, Star, Plus, Tag } from 'lucide
 // Declare Leaflet types
 declare const L: any;
 
-export function SuppliersModule() {
+function SuppliersModule() {
   const [supplierCountryFilter, setSupplierCountryFilter] = useState('');
   const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [showAddSupplierModal, setShowAddSupplierModal] = useState(false);

@@ -152,17 +152,17 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         ]
       },
       { id: 'crm', label: 'CRM', href: '/crm', icon: <UserCheck size={20} /> },
-      { id: 'marketing', label: 'Marketing', href: '/marketing', icon: <Megaphone size={20} /> },
-      { 
-        id: 'investments', 
-        label: 'Investments', 
-        href: '/investments', 
-        icon: <InvestmentIcon size={20} />,
-        subItems: [
-          { id: 'investments-infrastructure', label: 'Infrastructure', href: '/investments/infrastructure', icon: <Landmark size={16} /> },
-          { id: 'investments-agriculture', label: 'Agriculture', href: '/investments/agriculture', icon: <Trees size={16} /> }
-        ]
-      },
+      // { id: 'marketing', label: 'Marketing', href: '/marketing', icon: <Megaphone size={20} /> },
+      // { 
+      //   id: 'investments', 
+      //   label: 'Investments', 
+      //   href: '/investments', 
+      //   icon: <InvestmentIcon size={20} />,
+      //   subItems: [
+      //     { id: 'investments-infrastructure', label: 'Infrastructure', href: '/investments/infrastructure', icon: <Landmark size={16} /> },
+      //     { id: 'investments-agriculture', label: 'Agriculture', href: '/investments/agriculture', icon: <Trees size={16} /> }
+      //   ]
+      // },
       { id: 'real-estates', label: 'Real Estates', href: '/real-estates', icon: <Landmark size={20} /> },
       { 
         id: 'settings', 
