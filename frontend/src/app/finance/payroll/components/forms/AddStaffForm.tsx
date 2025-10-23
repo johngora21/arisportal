@@ -130,12 +130,12 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
 
   // Filter departments based on selected branch
   const filteredDepartments = departments.filter(dept => 
-    formData.branch ? dept.branch_id === formData.branch : true
+    formData.branch ? dept.branch_id === parseInt(formData.branch) : true
   );
 
   // Filter roles based on selected department
   const filteredRoles = roles.filter(role => 
-    formData.department ? role.department_id === formData.department : true
+    formData.department ? role.department_id === parseInt(formData.department) : true
   );
 
   const inputStyle = (hasError: boolean) => ({

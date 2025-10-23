@@ -32,7 +32,7 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
 
   // Filter departments based on selected branch
   const filteredDepartments = departments.filter(dept => 
-    formData.branch ? dept.branch_id === formData.branch : true
+    formData.branch ? dept.branch_id === parseInt(formData.branch) : true
   );
 
   const inputStyle = (hasError: boolean) => ({

@@ -385,6 +385,7 @@ async def get_departments(
             "manager": manager_name,
             "employees": 0,  # TODO: Count actual employees
             "branch": branch_name,
+            "branch_id": dept.branch_id,  # Add branch_id for frontend filtering
             "status": "active" if dept.is_active else "inactive",
             "phone": dept.phone or "",
             "email": dept.email or "",
@@ -481,6 +482,7 @@ async def get_roles(
             "name": role.name,
             "description": role.description or "",
             "department": department_name,
+            "department_id": role.department_id,  # Add department_id for frontend filtering
             "level": role.level or "Mid",
             "branch": "Unknown Branch",  # TODO: Add branch to role model
             "reports_to": role.reports_to or "",
@@ -842,11 +844,11 @@ async def create_staff(staff_data: dict, db: Session = Depends(get_db)):
     print(f"Creating staff with valid fields: {valid_fields}")
     
     try:
-        db_staff = Staff(**valid_fields)
-        db.add(db_staff)
-        db.commit()
-        db.refresh(db_staff)
-        return db_staff
+    db_staff = Staff(**valid_fields)
+    db.add(db_staff)
+    db.commit()
+    db.refresh(db_staff)
+    return db_staff
     except Exception as e:
         db.rollback()
         print(f"Error creating staff: {str(e)}")
