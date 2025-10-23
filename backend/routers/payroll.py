@@ -200,6 +200,9 @@ class StaffResponse(BaseModel):
     maternity_leave_balance: int
     is_active: bool
     created_at: datetime
+    department_name: Optional[str] = None
+    role_name: Optional[str] = None
+    branch_name: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -839,11 +842,11 @@ async def create_staff(staff_data: dict, db: Session = Depends(get_db)):
     print(f"Creating staff with valid fields: {valid_fields}")
     
     try:
-    db_staff = Staff(**valid_fields)
-    db.add(db_staff)
-    db.commit()
-    db.refresh(db_staff)
-    return db_staff
+        db_staff = Staff(**valid_fields)
+        db.add(db_staff)
+        db.commit()
+        db.refresh(db_staff)
+        return db_staff
     except Exception as e:
         db.rollback()
         print(f"Error creating staff: {str(e)}")
