@@ -316,7 +316,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
                 <div>
                   <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '2px' }}>Department</div>
                   <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>
-                    Department {staff.department_id}
+                    {staff.department_name || `Department ${staff.department_id}`}
                   </span>
                 </div>
               </div>
@@ -325,7 +325,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
                 <div>
                   <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '2px' }}>Role</div>
                   <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>
-                    Role {staff.role_id}
+                    {staff.role_name || `Role ${staff.role_id}`}
                   </span>
                 </div>
               </div>
@@ -364,7 +364,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <MapPin size={16} color="#6b7280" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
-                  Branch {staff.branch_id}
+                  {staff.branch_name || `Branch ${staff.branch_id}`}
                 </span>
               </div>
               

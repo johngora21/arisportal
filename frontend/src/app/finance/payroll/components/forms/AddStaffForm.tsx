@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { User, Mail, Phone, MapPin, Briefcase, DollarSign, Calendar, X, Save, FileText, Plus, Eye, Trash2, Shield, Award, GraduationCap, Clock } from 'lucide-react';
+import { StaffService } from '../../services/payrollService';
 
 interface AddStaffFormProps {
   onSave: (staffData: any) => void;
@@ -205,10 +206,16 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
       console.log('Sending staff data:', staffData);
       setApiError(''); // Clear any previous API errors
       try {
-        await onSave(staffData);
+        if (isEditing && initialData?.id) {
+          // Update existing staff member
+          await StaffService.updateStaff(initialData.id.toString(), staffData);
+        } else {
+          // Create new staff member
+          await onSave(staffData);
+        }
       } catch (error: any) {
         console.error('API Error:', error);
-        setApiError(error.message || 'Failed to create staff member');
+        setApiError(error.message || `Failed to ${isEditing ? 'update' : 'create'} staff member`);
       }
     } else {
       console.log('Validation failed, errors:', errors);

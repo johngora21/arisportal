@@ -339,15 +339,23 @@ export default function PayrollPage() {
         }}
         onAddStaff={async (staffData) => {
           try {
-            console.log('Creating new staff:', staffData);
-            const result = await StaffService.createStaff(staffData);
-            console.log('Staff created successfully:', result);
+            if (editingStaff?.id) {
+              // Update existing staff member
+              console.log('Updating staff:', staffData);
+              const result = await StaffService.updateStaff(editingStaff.id.toString(), staffData);
+              console.log('Staff updated successfully:', result);
+            } else {
+              // Create new staff member
+              console.log('Creating new staff:', staffData);
+              const result = await StaffService.createStaff(staffData);
+              console.log('Staff created successfully:', result);
+            }
             setShowAddModal(false);
             setEditingStaff(null);
-            // Refresh the data to show the new staff
+            // Refresh the data to show the updated/new staff
             refreshData();
           } catch (error: any) {
-            console.error('Error creating staff:', error);
+            console.error('Error saving staff:', error);
             // Re-throw the error so the form can display it
             throw error;
           }
