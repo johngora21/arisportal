@@ -940,35 +940,102 @@ async def update_staff(staff_id: int, staff_data: dict, db: Session = Depends(ge
     field_mapping = {
         'firstName': 'first_name',
         'lastName': 'last_name',
-        'employeeId': 'employee_id',
-        'phoneNumber': 'phone_number',
-        'emergencyContact': 'emergency_contact',
-        'emergencyPhone': 'emergency_phone',
-        'hireDate': 'hire_date',
-        'basicSalary': 'basic_salary',
-        'employmentStatus': 'employment_status',
-        'employmentType': 'employment_type',
+        'middleName': 'middle_name',
+        'dateOfBirth': 'date_of_birth',
+        'gender': 'gender',
+        'nationalId': 'national_id',
         'maritalStatus': 'marital_status',
+        'email': 'email',
+        'phone': 'phone',
+        'alternativePhone': 'alternative_phone',
+        'linkedin': 'linkedin_url',
+        'twitter': 'twitter_url',
+        'instagram': 'instagram_url',
+        'emergencyContactName1': 'emergency_contact_name',
+        'emergencyContactRelationship1': 'emergency_contact_relationship',
+        'emergencyContactPhone1': 'emergency_contact_phone',
+        'emergencyContactName2': 'emergency_contact2_name',
+        'emergencyContactRelationship2': 'emergency_contact2_relationship',
+        'emergencyContactPhone2': 'emergency_contact2_phone',
+        'addressCity': 'address_city',
+        'addressState': 'address_state',
+        'addressCountry': 'address_country',
+        'addressPostalCode': 'address_postal_code',
+        'department': 'department_id',
+        'position': 'role_id',
+        'employmentType': 'employment_type',
+        'hireDate': 'hire_date',
+        'probationEndDate': 'probation_end_date',
+        'contractEndDate': 'contract_end_date',
         'reportingManager': 'reporting_manager_id',
-        'branchId': 'branch_id',
-        'departmentId': 'department_id',
-        'roleId': 'role_id'
+        'branch': 'branch_id',
+        'basicSalary': 'basic_salary',
+        'allowances': 'allowances',
+        'bankName': 'bank_name',
+        'bankAccount': 'bank_account',
+        'taxId': 'tax_id',
+        'payeEligible': 'paye_eligible',
+        'sdlEligible': 'sdl_eligible'
     }
     
-    # Apply field mapping
+    # Apply field mapping and data conversion
+    updated_fields = {}
     for frontend_field, backend_field in field_mapping.items():
         if frontend_field in staff_data:
-            staff_data[backend_field] = staff_data[frontend_field]
-            del staff_data[frontend_field]
+            value = staff_data[frontend_field]
+            
+            # Convert data types appropriately
+            if backend_field in ['department_id', 'role_id', 'branch_id'] and value:
+                try:
+                    updated_fields[backend_field] = int(value)
+                except (ValueError, TypeError):
+                    updated_fields[backend_field] = None
+            elif backend_field == 'basic_salary' and value:
+                try:
+                    updated_fields[backend_field] = float(value)
+                except (ValueError, TypeError):
+                    updated_fields[backend_field] = 0.0
+            elif backend_field == 'allowances' and isinstance(value, list):
+                # Calculate total allowances
+                total_allowances = 0
+                for allowance in value:
+                    if isinstance(allowance, dict) and 'amount' in allowance:
+                        try:
+                            total_allowances += float(allowance['amount'])
+                        except (ValueError, TypeError):
+                            pass
+                updated_fields[backend_field] = total_allowances
+            elif backend_field in ['paye_eligible', 'sdl_eligible']:
+                updated_fields[backend_field] = bool(value)
+            elif value is not None and value != '':
+                updated_fields[backend_field] = value
     
     # Update fields (exclude id and other non-updatable fields)
-    excluded_fields = ['id', 'created_at', 'updated_at']
-    for field, value in staff_data.items():
-        if hasattr(staff, field) and value is not None and field not in excluded_fields:
+    excluded_fields = ['id', 'created_at', 'updated_at', 'employee_id', 'employee_number']
+    for field, value in updated_fields.items():
+        if hasattr(staff, field) and field not in excluded_fields:
             setattr(staff, field, value)
+    
+    # Recalculate total package
+    if 'basic_salary' in updated_fields or 'allowances' in updated_fields:
+        staff.total_package = staff.basic_salary + staff.allowances
     
     db.commit()
     db.refresh(staff)
+    
+    # Add related entity names for response
+    if staff.department_id:
+        department = db.query(Department).filter(Department.id == staff.department_id).first()
+        staff.department_name = department.name if department else None
+    
+    if staff.role_id:
+        role = db.query(Role).filter(Role.id == staff.role_id).first()
+        staff.role_name = role.name if role else None
+    
+    if staff.branch_id:
+        branch = db.query(Branch).filter(Branch.id == staff.branch_id).first()
+        staff.branch_name = branch.name if branch else None
+    
     return staff
 
 @router.delete("/staff/{staff_id}")

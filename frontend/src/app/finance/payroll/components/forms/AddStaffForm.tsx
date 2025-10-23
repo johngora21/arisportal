@@ -128,15 +128,9 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
   const [apiError, setApiError] = useState<string>('');
   const [activeTab, setActiveTab] = useState('personal');
 
-  // Filter departments based on selected branch
-  const filteredDepartments = departments.filter(dept => 
-    formData.branch ? dept.branch_id === parseInt(formData.branch) : true
-  );
-
-  // Filter roles based on selected department
-  const filteredRoles = roles.filter(role => 
-    formData.department ? role.department_id === parseInt(formData.department) : true
-  );
+  // Show all departments and roles without filtering
+  const filteredDepartments = departments;
+  const filteredRoles = roles;
 
   const inputStyle = (hasError: boolean) => ({
     width: '100%',
@@ -170,26 +164,10 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    // Clear dependent selections when parent selections change
-    if (name === 'branch') {
-      setFormData((prev: any) => ({
-        ...prev,
-        [name]: value,
-        department: '', // Clear department when branch changes
-        position: ''    // Clear position when branch changes
-      }));
-    } else if (name === 'department') {
-      setFormData((prev: any) => ({
-        ...prev,
-        [name]: value,
-        position: ''    // Clear position when department changes
-      }));
-    } else {
     setFormData((prev: any) => ({
       ...prev,
       [name]: value
     }));
-    }
     
     // Clear error when user starts typing
     if (errors[name]) {

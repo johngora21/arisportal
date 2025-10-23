@@ -10,30 +10,56 @@ interface AddRoleFormProps {
 }
 
 const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, departments, initialData }) => {
-  const [formData, setFormData] = useState({
-    title: initialData?.name || '',
-    department: initialData?.department || '',
-    branch: initialData?.branch || '',
-    level: initialData?.level || '',
-    description: initialData?.description || '',
-    salaryMin: initialData?.minSalary?.toString() || '',
-    salaryMax: initialData?.maxSalary?.toString() || '',
-    requirements: initialData?.requirements?.join('\n') || '',
-    responsibilities: initialData?.responsibilities?.join('\n') || '',
-    skills: initialData?.key_skills?.join('\n') || '',
-    experience: initialData?.experience_required || '',
-    education: initialData?.education_required || '',
-    createdDate: initialData?.createdDate || '',
-    reportsTo: initialData?.reports_to || '',
-    status: initialData?.status || 'active'
+  const [formData, setFormData] = useState(() => {
+    if (initialData) {
+      // Find the department by id from initialData
+      const dept = departments.find((d: any) => d.id === (initialData as any).department_id?.toString() || (initialData as any).department_id);
+      // Use IDs in state for selects
+      const departmentId = dept ? String(dept.id) : '';
+      const branchId = dept && (dept as any).branch_id ? String((dept as any).branch_id) : '';
+      
+      return {
+        title: (initialData as any).name || '',
+        department: departmentId, // store department id
+        branch: branchId, // store branch id
+        level: (initialData as any).level || '',
+        description: (initialData as any).description || '',
+        salaryMin: (initialData as any).minSalary?.toString() || '',
+        salaryMax: (initialData as any).maxSalary?.toString() || '',
+        requirements: (initialData as any).requirements?.join('\n') || '',
+        responsibilities: (initialData as any).responsibilities?.join('\n') || '',
+        skills: (initialData as any).key_skills?.join('\n') || '',
+        experience: (initialData as any).experience_required || '',
+        education: (initialData as any).education_required || '',
+        createdDate: (initialData as any).createdDate || '',
+        reportsTo: (initialData as any).reports_to || '',
+        status: (initialData as any).status || 'active'
+      };
+    }
+    
+    return {
+      title: '',
+      department: '',
+      branch: '',
+      level: '',
+      description: '',
+      salaryMin: '',
+      salaryMax: '',
+      requirements: '',
+      responsibilities: '',
+      skills: '',
+      experience: '',
+      education: '',
+      createdDate: '',
+      reportsTo: '',
+      status: 'active'
+    };
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Filter departments based on selected branch
-  const filteredDepartments = departments.filter(dept => 
-    formData.branch ? dept.branch_id === parseInt(formData.branch) : true
-  );
+  // Show all departments without filtering
+  const filteredDepartments = departments;
 
   const inputStyle = (hasError: boolean) => ({
     width: '100%',
@@ -67,19 +93,10 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    // If branch changes, clear department selection
-    if (name === 'branch') {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value,
-        department: '' // Clear department when branch changes
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
     
     // Clear error when user starts typing
     if (errors[name]) {
@@ -114,8 +131,14 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
+      // Convert branch and department names back to IDs for backend
+      const branchId = branches.find(b => b.name === formData.branch)?.id;
+      const departmentId = departments.find(d => d.name === formData.department)?.id;
+      
       const roleData = {
         ...formData,
+        branch: branchId, // Convert name back to ID
+        department: departmentId, // Convert name back to ID
         salaryMin: parseFloat(formData.salaryMin),
         salaryMax: parseFloat(formData.salaryMax),
         requirements: formData.requirements.split('\n').filter(req => req.trim()),
@@ -185,24 +208,6 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
 
           <div>
             <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-              Department *
-            </label>
-            <select
-              name="department"
-              value={formData.department}
-              onChange={handleInputChange}
-              style={selectStyle(!!errors.department)}
-            >
-              <option value="">Select a department</option>
-              {filteredDepartments.map(dept => (
-                <option key={dept.id} value={dept.name}>{dept.name}</option>
-              ))}
-            </select>
-            {errors.department && <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', display: 'block' }}>{errors.department}</span>}
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
               Branch *
             </label>
             <select
@@ -213,10 +218,28 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
             >
               <option value="">Select a branch</option>
               {branches.map(branch => (
-                <option key={branch.id} value={branch.name}>{branch.name}</option>
+                <option key={branch.id} value={branch.id}>{branch.name}</option>
               ))}
             </select>
             {errors.branch && <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', display: 'block' }}>{errors.branch}</span>}
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
+              Department *
+            </label>
+            <select
+              name="department"
+              value={formData.department}
+              onChange={handleInputChange}
+              style={selectStyle(!!errors.department)}
+            >
+              <option value="">Select a department</option>
+              {filteredDepartments.map((dept: any) => (
+                <option key={dept.id} value={dept.id}>{dept.name}</option>
+              ))}
+            </select>
+            {errors.department && <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', display: 'block' }}>{errors.department}</span>}
           </div>
 
           <div>

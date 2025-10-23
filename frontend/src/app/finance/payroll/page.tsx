@@ -339,23 +339,15 @@ export default function PayrollPage() {
         }}
         onAddStaff={async (staffData) => {
           try {
-            if (editingStaff?.id) {
-              // Update existing staff member
-              console.log('Updating staff:', staffData);
-              const result = await StaffService.updateStaff(editingStaff.id.toString(), staffData);
-              console.log('Staff updated successfully:', result);
-            } else {
-              // Create new staff member
-              console.log('Creating new staff:', staffData);
-              const result = await StaffService.createStaff(staffData);
-              console.log('Staff created successfully:', result);
-            }
+            // The form now handles both create and update internally
+            // This callback is just for closing the modal and refreshing data
+            console.log('Staff operation completed, closing modal');
             setShowAddModal(false);
             setEditingStaff(null);
             // Refresh the data to show the updated/new staff
             refreshData();
           } catch (error: any) {
-            console.error('Error saving staff:', error);
+            console.error('Error in staff operation:', error);
             // Re-throw the error so the form can display it
             throw error;
           }
