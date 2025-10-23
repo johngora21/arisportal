@@ -128,6 +128,16 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
   const [apiError, setApiError] = useState<string>('');
   const [activeTab, setActiveTab] = useState('personal');
 
+  // Filter departments based on selected branch
+  const filteredDepartments = departments.filter(dept => 
+    formData.branch ? dept.branch_id === formData.branch : true
+  );
+
+  // Filter roles based on selected department
+  const filteredRoles = roles.filter(role => 
+    formData.department ? role.department_id === formData.department : true
+  );
+
   const inputStyle = (hasError: boolean) => ({
     width: '100%',
     maxWidth: '100%',
@@ -159,10 +169,28 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    
+    // Clear dependent selections when parent selections change
+    if (name === 'branch') {
+      setFormData((prev: any) => ({
+        ...prev,
+        [name]: value,
+        department: '', // Clear department when branch changes
+        position: ''    // Clear position when branch changes
+      }));
+    } else if (name === 'department') {
+      setFormData((prev: any) => ({
+        ...prev,
+        [name]: value,
+        position: ''    // Clear position when department changes
+      }));
+    } else {
     setFormData((prev: any) => ({
       ...prev,
       [name]: value
     }));
+    }
+    
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -208,11 +236,17 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
       try {
         if (isEditing && initialData?.id) {
           // Update existing staff member
+          console.log('Updating staff member:', initialData.id);
           await StaffService.updateStaff(initialData.id.toString(), staffData);
+          console.log('Staff updated successfully');
         } else {
           // Create new staff member
-          await onSave(staffData);
+          console.log('Creating new staff member');
+          await StaffService.createStaff(staffData);
+          console.log('Staff created successfully');
         }
+        // Call onSave to close modal and refresh data
+      onSave(staffData);
       } catch (error: any) {
         console.error('API Error:', error);
         setApiError(error.message || `Failed to ${isEditing ? 'update' : 'create'} staff member`);
@@ -620,7 +654,7 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
           style={selectStyle(!!errors.department)}
         >
           <option value="">Select department</option>
-          {departments.map(dept => (
+          {filteredDepartments.map(dept => (
             <option key={dept.id} value={dept.id}>{dept.name}</option>
           ))}
         </select>
@@ -638,7 +672,7 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
           style={selectStyle(!!errors.position)}
         >
           <option value="">Select position</option>
-          {roles.map(role => (
+          {filteredRoles.map(role => (
             <option key={role.id} value={role.id}>{role.name}</option>
           ))}
         </select>

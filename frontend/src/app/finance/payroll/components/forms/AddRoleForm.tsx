@@ -30,6 +30,11 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Filter departments based on selected branch
+  const filteredDepartments = departments.filter(dept => 
+    formData.branch ? dept.branch_id === formData.branch : true
+  );
+
   const inputStyle = (hasError: boolean) => ({
     width: '100%',
     maxWidth: '100%',
@@ -61,10 +66,21 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // If branch changes, clear department selection
+    if (name === 'branch') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        department: '' // Clear department when branch changes
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+    
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -178,7 +194,7 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
               style={selectStyle(!!errors.department)}
             >
               <option value="">Select a department</option>
-              {departments.map(dept => (
+              {filteredDepartments.map(dept => (
                 <option key={dept.id} value={dept.name}>{dept.name}</option>
               ))}
             </select>
