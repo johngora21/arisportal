@@ -45,7 +45,7 @@ type BulkOrderPool = {
   deadline: string;
   organizer: string;
   description?: string;
-  participants: BulkOrderParticipant[];
+  participants?: BulkOrderParticipant[];
   status: 'active' | 'closed' | 'ready';
   currentQuantity?: number;
 };
@@ -56,6 +56,17 @@ export default function BulkOrdersPage() {
   const [activePool, setActivePool] = useState<string | null>(null);
   const [showPoolModal, setShowPoolModal] = useState(false);
   const [selectedPool, setSelectedPool] = useState<BulkOrderPool | null>(null);
+  
+  // Utility function to ensure we're using URLs, not base64
+  const getValidImageUrl = (url: string): string => {
+    if (!url) return '';
+    // If it's base64 data, return empty string (we don't want base64)
+    if (url.startsWith('data:')) return '';
+    // If it's a relative URL, make it absolute
+    if (url.startsWith('/')) return `http://localhost:8000${url}`;
+    // If it's already a full URL, return as is
+    return url;
+  };
   const [mediaIndex, setMediaIndex] = useState<number>(0);
   const [joinError, setJoinError] = useState<string>('');
   const [joinSuccess, setJoinSuccess] = useState<string>('');
@@ -118,6 +129,8 @@ export default function BulkOrdersPage() {
   });
   const [createImages, setCreateImages] = useState<string[]>([]);
   const [createVideos, setCreateVideos] = useState<string[]>([]);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [selectedVideos, setSelectedVideos] = useState<File[]>([]);
   const [createTags, setCreateTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState<string>('');
   const [createSpecs, setCreateSpecs] = useState<string[]>([]);
@@ -137,12 +150,35 @@ export default function BulkOrdersPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCountry, setSelectedCountry] = useState<string>('');
 
+  // Handle image selection
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setSelectedImages(prev => [...prev, ...files]);
+  };
+
+  // Handle video selection
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setSelectedVideos(prev => [...prev, ...files]);
+  };
+
+  // Remove image
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Remove video
+  const removeVideo = (index: number) => {
+    setSelectedVideos(prev => prev.filter((_, i) => i !== index));
+  };
+
   // Load pools from backend
   useEffect(() => {
     const loadPools = async () => {
       try {
         setLoading(true);
         const poolsData = await BulkOrdersService.fetchPools(searchQuery, selectedCountry);
+        console.log('Fetched pools data:', poolsData);
         setPools(poolsData);
       } catch (error) {
         console.error('Error loading pools:', error);
@@ -202,13 +238,51 @@ export default function BulkOrdersPage() {
 
   const handleCreatePool = async () => {
     try {
+      // Upload selected images
+      const uploadedImages: string[] = [];
+      for (const file of selectedImages) {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          const response = await fetch('http://localhost:8000/api/v1/upload-image', {
+            method: 'POST',
+            body: formData
+          });
+          const result = await response.json();
+          if (result.url) {
+            uploadedImages.push(result.url);
+          }
+        } catch (error) {
+          console.error('Error uploading image:', error);
+        }
+      }
+
+      // Upload selected videos
+      const uploadedVideos: string[] = [];
+      for (const file of selectedVideos) {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          const response = await fetch('http://localhost:8000/api/v1/upload-video', {
+            method: 'POST',
+            body: formData
+          });
+          const result = await response.json();
+          if (result.url) {
+            uploadedVideos.push(result.url);
+          }
+        } catch (error) {
+          console.error('Error uploading video:', error);
+        }
+      }
+
       const poolData: CreatePoolData = {
         title: createForm.product,
         category: createForm.category,
         description: createForm.description,
         image: createForm.image,
-        images: createImages,
-        videos: createVideos,
+        images: uploadedImages,
+        videos: uploadedVideos,
         tags: createTags,
         manufacturer: createForm.manufacturer,
         supplierContactName: createForm.supplierContactName,
@@ -286,6 +360,8 @@ export default function BulkOrdersPage() {
       });
       setCreateImages([]);
       setCreateVideos([]);
+      setSelectedImages([]);
+      setSelectedVideos([]);
       setCreateTags([]);
       setCreateSpecs([]);
       setCreateIncluded([]);
@@ -436,7 +512,7 @@ export default function BulkOrdersPage() {
         <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
           Active Bulk Orders {filteredPools.length !== pools.length && `(${filteredPools.length} of ${pools.length})`}
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, 400px)', gap: '20px', justifyContent: 'center' }}>
           {loading ? (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#6b7280' }}>
               Loading pools...
@@ -498,7 +574,7 @@ export default function BulkOrdersPage() {
                   }}>
                     {isClosed ? 'Closed' : 'Active'}
                   </div>
-                  <img src={order.image} alt={order.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <img src={getValidImageUrl(order.image)} alt={order.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
               )}
 
@@ -599,7 +675,7 @@ export default function BulkOrdersPage() {
               }}>
                 <div style={{ fontSize: '12px', color: '#6b7280', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <Users size={14} />
-                  <span><span style={{ fontWeight: 600, color: '#1f2937' }}>{order.participants.length}</span>&nbsp;people</span>
+                  <span><span style={{ fontWeight: 600, color: '#1f2937' }}>{order.participants?.length || 0}</span>&nbsp;people</span>
                 </div>
                 <button style={{
                   backgroundColor: 'var(--mc-sidebar-bg-hover)',
@@ -683,9 +759,9 @@ export default function BulkOrdersPage() {
               return (
                 <div style={{ position: 'relative', width: '100%', height: '380px', overflow: 'hidden', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', backgroundColor: '#000' }}>
                   {current.type === 'image' ? (
-                    <img src={current.src} alt={selectedPool.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    <img src={getValidImageUrl(current.src)} alt={selectedPool.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   ) : (
-                    <video src={current.src} controls style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    <video src={getValidImageUrl(current.src)} controls style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   )}
                   {/* Close button on media */}
                 <button
@@ -1173,78 +1249,172 @@ export default function BulkOrdersPage() {
                   <input 
                     type="file" 
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                          setCreateForm(f => ({ ...f, image: event.target?.result as string }));
-                        };
-                        reader.readAsDataURL(file);
+                        try {
+                          console.log('Uploading main image:', file.name);
+                          const formData = new FormData();
+                          formData.append('file', file);
+                          const response = await fetch('http://localhost:8000/api/v1/upload-image', {
+                            method: 'POST',
+                            body: formData
+                          });
+                          const result = await response.json();
+                          console.log('Main image upload result:', result);
+                          if (result.url) {
+                            setCreateForm(f => ({ ...f, image: result.url }));
+                          }
+                        } catch (error) {
+                          console.error('Error uploading image:', error);
+                        }
                       }
+                      // Clear the input
+                      e.target.value = '';
                     }}
                     style={{ width: 300, height: 34, border: '1px solid #e5e7eb', borderRadius: 8, padding: '0 10px', fontSize: 13 }} 
                   />
+                  {createForm.image && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: 9999, fontSize: 12, color: '#374151', backgroundColor: '#f9fafb' }}>
+                      <img src={getValidImageUrl(createForm.image)} alt="Main image" style={{ width: 20, height: 20, objectFit: 'cover', borderRadius: 4 }} />
+                      Main Image
+                      <button type="button" onClick={() => setCreateForm(f => ({ ...f, image: '' }))} style={{ border: 'none', background: 'transparent', color: '#dc2626', cursor: 'pointer' }}>✕</button>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Additional Images</div>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <input 
                       type="file" 
-                      accept="image/*"
                       multiple
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files || []);
-                        files.forEach(file => {
-                          const reader = new FileReader();
-                          reader.onload = (event) => {
-                            setCreateImages(arr => [...arr, event.target?.result as string]);
-                          };
-                          reader.readAsDataURL(file);
-                        });
-                      }}
-                      style={{ width: 300, height: 34, border: '1px solid #e5e7eb', borderRadius: 8, padding: '0 10px', fontSize: 13 }} 
-                    />
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                  />
+                  <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
+                    Select multiple images (JPG, PNG, max 10MB each)
+                  </p>
+                  
+                  {/* Show selected images */}
+                  {selectedImages.length > 0 && (
+                    <div style={{ marginTop: '8px' }}>
+                      <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>
+                        Selected Images ({selectedImages.length}):
                   </div>
-                  {createImages.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                      {createImages.map((url, idx) => (
-                        <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: 9999, fontSize: 12, color: '#374151' }}>
-                          Image {idx + 1}
-                          <button type="button" onClick={() => setCreateImages(arr => arr.filter((_, i) => i !== idx))} style={{ border: 'none', background: 'transparent', color: '#dc2626', cursor: 'pointer' }}>✕</button>
-                        </span>
-                      ))}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {selectedImages.map((file, index) => (
+                          <div key={index} style={{ 
+                            position: 'relative', 
+                            width: '80px', 
+                            height: '80px', 
+                            borderRadius: '8px', 
+                            overflow: 'hidden',
+                            border: '1px solid #e5e7eb'
+                          }}>
+                            <img 
+                              src={URL.createObjectURL(file)} 
+                              alt={`Preview ${index + 1}`}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              style={{
+                                position: 'absolute',
+                                top: '4px',
+                                right: '4px',
+                                width: '20px',
+                                height: '20px',
+                                borderRadius: '50%',
+                                backgroundColor: '#dc2626',
+                                color: 'white',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
                 <div>
                   <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Videos</div>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <input 
                       type="file" 
-                      accept="video/*"
                       multiple
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files || []);
-                        files.forEach(file => {
-                          const reader = new FileReader();
-                          reader.onload = (event) => {
-                            setCreateVideos(arr => [...arr, event.target?.result as string]);
-                          };
-                          reader.readAsDataURL(file);
-                        });
-                      }}
-                      style={{ width: 300, height: 34, border: '1px solid #e5e7eb', borderRadius: 8, padding: '0 10px', fontSize: 13 }} 
-                    />
+                    accept="video/*"
+                    onChange={handleVideoChange}
+                    style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                  />
+                  <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
+                    Select multiple videos (MP4, MOV, max 50MB each)
+                  </p>
+                  
+                  {/* Show selected videos */}
+                  {selectedVideos.length > 0 && (
+                    <div style={{ marginTop: '8px' }}>
+                      <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>
+                        Selected Videos ({selectedVideos.length}):
                   </div>
-                  {createVideos.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                      {createVideos.map((url, idx) => (
-                        <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: 9999, fontSize: 12, color: '#374151' }}>
-                          Video {idx + 1}
-                          <button type="button" onClick={() => setCreateVideos(arr => arr.filter((_, i) => i !== idx))} style={{ border: 'none', background: 'transparent', color: '#dc2626', cursor: 'pointer' }}>✕</button>
-                        </span>
-                      ))}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {selectedVideos.map((file, index) => (
+                          <div key={index} style={{ 
+                            position: 'relative', 
+                            width: '80px', 
+                            height: '80px', 
+                            borderRadius: '8px', 
+                            overflow: 'hidden',
+                            border: '1px solid #e5e7eb',
+                            backgroundColor: '#f3f4f6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <div style={{ 
+                              width: '30px', 
+                              height: '30px', 
+                              backgroundColor: '#dc2626', 
+                              borderRadius: '50%', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontSize: '12px'
+                            }}>
+                              ▶
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeVideo(index)}
+                              style={{
+                                position: 'absolute',
+                                top: '4px',
+                                right: '4px',
+                                width: '20px',
+                                height: '20px',
+                                borderRadius: '50%',
+                                backgroundColor: '#dc2626',
+                                color: 'white',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

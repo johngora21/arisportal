@@ -2,7 +2,7 @@
 export const API_CONFIG = {
   BASE_URL: process.env.NODE_ENV === 'production' 
     ? 'https://your-production-api.com/api/v1'
-    : 'http://localhost:4001/api/v1',
+    : 'http://localhost:8000/api/v1',
   VERSION: '1.0.0', // Cache busting
   
   ENDPOINTS: {
@@ -64,6 +64,9 @@ export const API_CONFIG = {
       LIST: '/suppliers',
       CREATE: '/suppliers',
       UPDATE: '/suppliers',
+      CATEGORIES: '/suppliers/meta/categories',
+      CREATE_CATEGORY: '/suppliers/meta/categories/create',
+      DELETE_CATEGORY: '/suppliers/meta/categories',
     },
   }
 };
@@ -75,6 +78,10 @@ export const buildApiUrl = (endpoint: string): string => {
 
 // Helper function to get endpoint by path
 export const getEndpoint = (path: string): string => {
+  if (!path || typeof path !== 'string') {
+    throw new Error(`Invalid endpoint path: ${path}`);
+  }
+  
   const keys = path.split('.');
   let endpoint = API_CONFIG.ENDPOINTS as any;
   
@@ -90,6 +97,10 @@ export const getEndpoint = (path: string): string => {
 
 // Helper function to build full URL from endpoint path
 export const getApiUrl = (endpointPath: string): string => {
+  if (!endpointPath || typeof endpointPath !== 'string') {
+    throw new Error(`Invalid endpointPath: ${endpointPath}`);
+  }
+  
   const endpoint = getEndpoint(endpointPath);
   return buildApiUrl(endpoint);
 };

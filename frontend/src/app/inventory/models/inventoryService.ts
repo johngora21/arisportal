@@ -4,10 +4,11 @@ import { getApiUrl } from '../../../config/api';
 export interface InventoryItem {
   id: number;
   name: string;
-  sku: string;
   category: string;
   description: string;
   supplier: string | null;
+  supplierContact: string | null;
+  supplierSocial: string | null;
   unit: string;
   quantity: number;
   minQuantity: number;
@@ -39,7 +40,6 @@ export interface InventoryStats {
 
 export interface NewInventoryForm {
   name: string;
-  sku: string;
   category: string;
   description: string;
   supplier: string;
@@ -54,13 +54,6 @@ export interface NewInventoryForm {
 }
 
 class InventoryService {
-  // Test method to verify API config
-  static testApiConfig() {
-    console.log('API Config Test:');
-    console.log('INVENTORY.CATEGORIES URL:', getApiUrl('INVENTORY.CATEGORIES'));
-    console.log('INVENTORY.ITEMS URL:', getApiUrl('INVENTORY.ITEMS'));
-    console.log('INVENTORY.ANALYTICS URL:', getApiUrl('INVENTORY.ANALYTICS'));
-  }
 
   // Categories
   static async fetchCategories(): Promise<InventoryCategory[]> {
@@ -121,6 +114,12 @@ class InventoryService {
   }
 
   static async createItem(itemData: NewInventoryForm): Promise<InventoryItem> {
+    console.log('Sending item data:', itemData);
+    console.log('Supplier fields:', {
+      supplier: itemData.supplier,
+      supplierContact: itemData.supplierContact,
+      supplierSocial: itemData.supplierSocial
+    });
     const response = await fetch(getApiUrl('INVENTORY.ITEMS'), {
       method: 'POST',
       headers: {
@@ -130,6 +129,7 @@ class InventoryService {
     });
     if (!response.ok) {
       const error = await response.json();
+      console.log('Backend error:', error);
       throw new Error(error.detail || error.error || 'Failed to create item');
     }
     return response.json();

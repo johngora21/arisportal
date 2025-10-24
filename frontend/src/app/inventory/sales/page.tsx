@@ -37,8 +37,7 @@ export default function SalesPage() {
     if (!q) return inventoryItems;
     return inventoryItems.filter(p => 
       p.name.toLowerCase().includes(q) || 
-      p.category.toLowerCase().includes(q) ||
-      p.sku.toLowerCase().includes(q)
+      p.category.toLowerCase().includes(q)
     );
   }, [inventoryItems, productQuery]);
 

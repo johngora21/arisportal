@@ -38,7 +38,7 @@ export interface BulkOrderPool {
   pricePerUnit: number;
   deadline: string;
   status: 'active' | 'closed' | 'ready';
-  participants: BulkOrderParticipant[];
+  participants?: BulkOrderParticipant[];
   currentQuantity: number;
   createdAt?: string;
   updatedAt?: string;
@@ -144,7 +144,7 @@ export interface AnalyticsData {
 }
 
 class BulkOrdersService {
-  private static baseUrl = 'http://localhost:5000/api/v1';
+  private static baseUrl = 'http://localhost:8000/api/v1';
 
   // Get all pools with optional filtering
   static async fetchPools(search?: string, country?: string, status?: string): Promise<BulkOrderPool[]> {
@@ -156,12 +156,14 @@ class BulkOrdersService {
 
       const response = await fetch(`${this.baseUrl}/pools?${params.toString()}`);
       const data = await response.json();
+      
+      console.log('Pools API response:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch pools');
       }
 
-      return data.data || [];
+      return data || [];
     } catch (error) {
       console.error('Error fetching pools:', error);
       throw error;
@@ -178,7 +180,7 @@ class BulkOrdersService {
         throw new Error(data.error || 'Failed to fetch pool');
       }
 
-      return data.data;
+      return data;
     } catch (error) {
       console.error('Error fetching pool:', error);
       throw error;
@@ -199,7 +201,8 @@ class BulkOrdersService {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create pool');
+        const errorMessage = data.detail || data.error || 'Failed to create pool';
+        throw new Error(errorMessage);
       }
 
       return data.data;
