@@ -217,6 +217,8 @@ const RolesTab: React.FC<RolesTabProps> = ({
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Fetch roles from API
   useEffect(() => {
@@ -260,6 +262,7 @@ const RolesTab: React.FC<RolesTabProps> = ({
   const handleDeleteRole = async (role: Role) => {
     if (window.confirm(`Are you sure you want to delete the role "${role.name}"?`)) {
       try {
+        setDeleteError(null); // Clear any previous errors
         await RoleService.deleteRole(role.id);
         // Refresh the roles list
         if (onRefresh) {
@@ -270,7 +273,7 @@ const RolesTab: React.FC<RolesTabProps> = ({
         setRoles(updatedRoles);
       } catch (error) {
         console.error('Error deleting role:', error);
-        alert('Failed to delete role. Please try again.');
+        setDeleteError('Failed to delete role. Please try again.');
       }
     }
   };
@@ -278,18 +281,26 @@ const RolesTab: React.FC<RolesTabProps> = ({
   const handleUpdateRole = async (updatedRoleData: Partial<Role>) => {
     if (!editingRole) return;
     
+    console.log('handleUpdateRole called with:', updatedRoleData);
+    console.log('Editing role ID:', editingRole.id);
+    
     try {
+      setUpdateError(null); // Clear any previous errors
+      console.log('Calling RoleService.updateRole...');
       await RoleService.updateRole(editingRole.id, updatedRoleData);
+      console.log('Role updated successfully');
+      
       setShowEditModal(false);
       setEditingRole(null);
       
       // Refresh the roles list
       if (onRefresh) {
+        console.log('Calling onRefresh...');
         onRefresh();
       }
     } catch (error) {
       console.error('Error updating role:', error);
-      alert('Failed to update role. Please try again.');
+      setUpdateError('Failed to update role. Please try again.');
     }
   };
 
@@ -320,6 +331,36 @@ const RolesTab: React.FC<RolesTabProps> = ({
           color: '#ef4444'
         }}>
           {error}
+        </div>
+      )}
+
+      {/* Update Error State */}
+      {updateError && (
+        <div style={{ 
+          backgroundColor: '#fef2f2',
+          border: '1px solid #fecaca',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          marginBottom: '16px',
+          fontSize: '14px',
+          color: '#dc2626'
+        }}>
+          {updateError}
+        </div>
+      )}
+
+      {/* Delete Error State */}
+      {deleteError && (
+        <div style={{ 
+          backgroundColor: '#fef2f2',
+          border: '1px solid #fecaca',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          marginBottom: '16px',
+          fontSize: '14px',
+          color: '#dc2626'
+        }}>
+          {deleteError}
         </div>
       )}
 
@@ -471,9 +512,6 @@ const RolesTab: React.FC<RolesTabProps> = ({
                     <div>
                       <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>
                         {role.name}
-                      </div>
-                      <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                        {role.description}
                       </div>
                     </div>
                   </div>
@@ -840,6 +878,7 @@ const RolesTab: React.FC<RolesTabProps> = ({
               onCancel={() => {
                 setShowEditModal(false);
                 setEditingRole(null);
+                setUpdateError(null); // Clear any update errors
               }}
               branches={branches}
               departments={departments}

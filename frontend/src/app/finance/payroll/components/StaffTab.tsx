@@ -34,6 +34,8 @@ interface StaffTabProps {
   branches: Array<{ id: string; name: string }>;
   onAddNew: () => void;
   onEditStaff?: (staff: Staff) => void;
+  onRefresh?: () => void;
+  refreshTrigger?: number;
 }
 
 const formatCurrency = (amount: number) => {
@@ -58,7 +60,9 @@ const StaffTab: React.FC<StaffTabProps> = ({
   setBranchFilter, 
   branches,
   onAddNew,
-  onEditStaff
+  onEditStaff,
+  onRefresh,
+  refreshTrigger
 }) => {
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
@@ -90,7 +94,17 @@ const StaffTab: React.FC<StaffTabProps> = ({
     };
 
     fetchStaff();
-  }, [searchQuery, branchFilter, branches]);
+  }, [searchQuery, branchFilter, branches, refreshTrigger]);
+
+  // Update selectedStaff when staff data changes (for modal refresh)
+  React.useEffect(() => {
+    if (selectedStaff && showStaffModal && staff.length > 0) {
+      const updatedStaff = staff.find(s => s.id === selectedStaff.id);
+      if (updatedStaff) {
+        setSelectedStaff(updatedStaff);
+      }
+    }
+  }, [staff, refreshTrigger]);
 
   const filteredStaff = staff;
 
@@ -112,8 +126,8 @@ const StaffTab: React.FC<StaffTabProps> = ({
     { id: "contact", label: "Contact", icon: <Mail size={16} /> },
     { id: "employment", label: "Employment", icon: <Briefcase size={16} /> },
     { id: "salary", label: "Salary", icon: <DollarSign size={16} /> },
-    { id: "performance", label: "Performance", icon: <Award size={16} /> },
-    { id: "attendance", label: "Attendance", icon: <Clock size={16} /> }
+    { id: "attendance", label: "Attendance", icon: <Clock size={16} /> },
+    { id: "documents", label: "Documents", icon: <FileText size={16} /> }
   ];
 
   return (
@@ -295,7 +309,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
                 borderRadius: '20px',
                 fontSize: '12px',
                 fontWeight: '500',
-                ...getStatusColor(staff.status)
+                ...getStatusColor(staff.employment_status)
               }}>
                 {staff.employment_status.charAt(0).toUpperCase() + staff.employment_status.slice(1)}
               </span>
@@ -316,7 +330,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
                 <div>
                   <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '2px' }}>Department</div>
                   <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>
-                    {staff.department_name || `Department ${staff.department_id}`}
+                    {`Department ${staff.department_id}`}
                   </span>
                 </div>
               </div>
@@ -325,7 +339,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
                 <div>
                   <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '2px' }}>Role</div>
                   <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>
-                    {staff.role_name || `Role ${staff.role_id}`}
+                    {`Role ${staff.role_id}`}
                   </span>
                 </div>
               </div>
@@ -364,7 +378,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <MapPin size={16} color="#6b7280" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
-                  {staff.branch_name || `Branch ${staff.branch_id}`}
+                  {`Branch ${staff.branch_id}`}
                 </span>
               </div>
               
@@ -546,7 +560,9 @@ const StaffTab: React.FC<StaffTabProps> = ({
             </div>
 
             {/* Tab Content */}
-            <div style={{
+            <div 
+              key={`${selectedStaff.id}-${refreshTrigger}`}
+              style={{
               padding: '24px',
               overflowY: 'auto',
               flex: 1
@@ -643,19 +659,19 @@ const StaffTab: React.FC<StaffTabProps> = ({
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>LinkedIn</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.socialMedia?.linkedin || 'linkedin.com/in/' + (selectedStaff.first_name + '-' + selectedStaff.last_name).toLowerCase().replace(/\s/g, '-')}
+                          {selectedStaff.linkedin_url || 'linkedin.com/in/' + (selectedStaff.first_name + '-' + selectedStaff.last_name).toLowerCase().replace(/\s/g, '-')}
                         </p>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Twitter/X</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.socialMedia?.twitter || '@' + (selectedStaff.first_name + selectedStaff.last_name).toLowerCase().replace(/\s/g, '')}
+                          {selectedStaff.twitter_url || '@' + (selectedStaff.first_name + selectedStaff.last_name).toLowerCase().replace(/\s/g, '')}
                         </p>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Instagram</label>
                         <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                          {selectedStaff.socialMedia?.instagram || '@' + (selectedStaff.first_name + '_' + selectedStaff.last_name).toLowerCase().replace(/\s/g, '_')}
+                          {selectedStaff.instagram_url || '@' + (selectedStaff.first_name + '_' + selectedStaff.last_name).toLowerCase().replace(/\s/g, '_')}
                         </p>
                       </div>
                     </div>
@@ -770,19 +786,19 @@ const StaffTab: React.FC<StaffTabProps> = ({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Department</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.department_name || '-'}
+                        {selectedStaff.department_id || '-'}
                       </p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Position/Role</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.role_name || '-'}
+                        {selectedStaff.role_id || '-'}
                       </p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Branch</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.branch_name || '-'}
+                        {selectedStaff.branch_id || '-'}
                       </p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -821,29 +837,12 @@ const StaffTab: React.FC<StaffTabProps> = ({
 
               {staffModalTab === 'salary' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  {/* Banking & Tax Information */}
                   <div style={{ 
                     display: 'grid', 
                     gridTemplateColumns: 'repeat(2, 1fr)', 
                     gap: '24px' 
                   }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Basic Salary</label>
-                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.basic_salary ? `$${selectedStaff.basic_salary.toLocaleString()}` : '-'}
-                      </p>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Total Package</label>
-                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.total_package ? `$${selectedStaff.total_package.toLocaleString()}` : '-'}
-                      </p>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Allowances</label>
-                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.allowances || '-'}
-                      </p>
-                    </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Bank Name</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
@@ -857,25 +856,570 @@ const StaffTab: React.FC<StaffTabProps> = ({
                       </p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Account Name</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.account_name || '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Tax ID</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
                         {selectedStaff.tax_id || '-'}
                       </p>
                     </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>PAYE Tax Eligible</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.paye_eligible ? 'Yes' : 'No'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Salary Information */}
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(2, 1fr)', 
+                    gap: '24px' 
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Total Package</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.total_package ? `$${selectedStaff.total_package.toLocaleString()}` : '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Total Deductions</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#C50F11', margin: 0 }}>
+                        {(() => {
+                          let totalDeductions = 0;
+                          
+                          // Helper function to safely parse JSON
+                          const safeJsonParse = (jsonString: string, defaultValue: any = []) => {
+                            try {
+                              return jsonString ? JSON.parse(jsonString) : defaultValue;
+                            } catch (error) {
+                              console.warn('Failed to parse JSON:', jsonString, error);
+                              return defaultValue;
+                            }
+                          };
+                          
+                          // Social Security deductions (percentage-based)
+                          const socialSecurity = safeJsonParse(selectedStaff.social_security);
+                          if (Array.isArray(socialSecurity)) {
+                            socialSecurity.forEach((item: any) => {
+                              if (item.percentage && selectedStaff.basic_salary) {
+                                // Calculate percentage of basic salary
+                                totalDeductions += (selectedStaff.basic_salary * parseFloat(item.percentage)) / 100;
+                              } else if (item.amount) {
+                                totalDeductions += parseFloat(item.amount);
+                              }
+                            });
+                          }
+                          
+                          // Insurance deductions (annual amounts converted to monthly)
+                          const insurance = safeJsonParse(selectedStaff.insurance);
+                          if (Array.isArray(insurance)) {
+                            insurance.forEach((item: any) => {
+                              if (item.annualAmount) {
+                                totalDeductions += parseFloat(item.annualAmount) / 12;
+                              } else if (item.amount) {
+                                totalDeductions += parseFloat(item.amount);
+                              }
+                            });
+                          }
+                          
+                          // Loan deductions (monthly amounts)
+                          const loans = safeJsonParse(selectedStaff.loans);
+                          if (Array.isArray(loans)) {
+                            loans.forEach((item: any) => {
+                              if (item.amount) {
+                                totalDeductions += parseFloat(item.amount);
+                              }
+                            });
+                          }
+                          
+                          // PAYE Tax calculation (if eligible)
+                          if (selectedStaff.paye_eligible && selectedStaff.basic_salary) {
+                            const basicSalary = selectedStaff.basic_salary;
+                            let payeTax = 0;
+                            
+                            // Tanzania monthly tax brackets - using basic_salary only
+                            if (basicSalary <= 270000) {
+                              payeTax = 0;
+                            } else if (basicSalary <= 520000) {
+                              payeTax = (basicSalary - 270000) * 0.08;
+                            } else if (basicSalary <= 760000) {
+                              payeTax = 20000 + (basicSalary - 520000) * 0.20;
+                            } else if (basicSalary <= 1000000) {
+                              payeTax = 68000 + (basicSalary - 760000) * 0.25;
+                            } else {
+                              payeTax = 128000 + (basicSalary - 1000000) * 0.30;
+                            }
+                            
+                            totalDeductions += payeTax;
+                          }
+                          
+                          return totalDeductions > 0 ? `$${Math.round(totalDeductions).toLocaleString()}` : '-';
+                        })()}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Basic Salary</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.basic_salary ? `$${selectedStaff.basic_salary.toLocaleString()}` : '-'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Allowances</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {(() => {
+                          let totalAllowances = 0;
+                          
+                          // Helper function to safely parse JSON
+                          const safeJsonParse = (jsonString: string, defaultValue: any = []) => {
+                            try {
+                              return jsonString ? JSON.parse(jsonString) : defaultValue;
+                            } catch (error) {
+                              console.warn('Failed to parse JSON:', jsonString, error);
+                              return defaultValue;
+                            }
+                          };
+                          
+                          const allowancesDetail = safeJsonParse(selectedStaff.allowances_detail);
+                          if (Array.isArray(allowancesDetail)) {
+                            allowancesDetail.forEach((item: any) => {
+                              if (item.amount) totalAllowances += parseFloat(item.amount);
+                            });
+                          }
+                          
+                          return totalAllowances > 0 ? `$${totalAllowances.toLocaleString()}` : '-';
+                        })()}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Net Salary</label>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#0066CC', margin: 0 }}>
+                        {(() => {
+                          let netSalary = 0;
+                          
+                          // Helper function to safely parse JSON
+                          const safeJsonParse = (jsonString: string, defaultValue: any = []) => {
+                            try {
+                              return jsonString ? JSON.parse(jsonString) : defaultValue;
+                            } catch (error) {
+                              console.warn('Failed to parse JSON:', jsonString, error);
+                              return defaultValue;
+                            }
+                          };
+                          
+                          // Start with basic salary
+                          if (selectedStaff.basic_salary) {
+                            netSalary = selectedStaff.basic_salary;
+                          }
+                          
+                          // Calculate ALL deductions from basic salary only
+                          let totalDeductions = 0;
+                          
+                          // Social Security deductions (percentage-based on basic salary)
+                          const socialSecurity = safeJsonParse(selectedStaff.social_security);
+                          if (Array.isArray(socialSecurity)) {
+                            socialSecurity.forEach((item: any) => {
+                              if (item.percentage && selectedStaff.basic_salary) {
+                                totalDeductions += (selectedStaff.basic_salary * parseFloat(item.percentage)) / 100;
+                              } else if (item.amount) {
+                                totalDeductions += parseFloat(item.amount);
+                              }
+                            });
+                          }
+                          
+                          // Insurance deductions (annual amounts converted to monthly)
+                          const insurance = safeJsonParse(selectedStaff.insurance);
+                          if (Array.isArray(insurance)) {
+                            insurance.forEach((item: any) => {
+                              if (item.annualAmount) {
+                                totalDeductions += parseFloat(item.annualAmount) / 12;
+                              } else if (item.amount) {
+                                totalDeductions += parseFloat(item.amount);
+                              }
+                            });
+                          }
+                          
+                          // Loan deductions (monthly amounts)
+                          const loans = safeJsonParse(selectedStaff.loans);
+                          if (Array.isArray(loans)) {
+                            loans.forEach((item: any) => {
+                              if (item.amount) {
+                                totalDeductions += parseFloat(item.amount);
+                              }
+                            });
+                          }
+                          
+                          // PAYE Tax calculation (if eligible) - calculated on basic salary only
+                          if (selectedStaff.paye_eligible && selectedStaff.basic_salary) {
+                            const basicSalary = selectedStaff.basic_salary;
+                            let payeTax = 0;
+                            
+                            // Tanzania monthly tax brackets - using basic_salary only
+                            if (basicSalary <= 270000) {
+                              payeTax = 0;
+                            } else if (basicSalary <= 520000) {
+                              payeTax = (basicSalary - 270000) * 0.08;
+                            } else if (basicSalary <= 760000) {
+                              payeTax = 20000 + (basicSalary - 520000) * 0.20;
+                            } else if (basicSalary <= 1000000) {
+                              payeTax = 68000 + (basicSalary - 760000) * 0.25;
+                            } else {
+                              payeTax = 128000 + (basicSalary - 1000000) * 0.30;
+                            }
+                            
+                            totalDeductions += payeTax;
+                          }
+                          
+                          // Net Salary = (Basic Salary - All Deductions) + Allowances
+                          netSalary = netSalary - totalDeductions;
+                          
+                          // Add allowances (allowances are NEVER deducted)
+                          const allowancesDetail = safeJsonParse(selectedStaff.allowances_detail);
+                          if (Array.isArray(allowancesDetail)) {
+                            allowancesDetail.forEach((item: any) => {
+                              if (item.amount) netSalary += parseFloat(item.amount);
+                            });
+                          }
+                          
+                          return netSalary > 0 ? `$${Math.round(netSalary).toLocaleString()}` : '-';
+                        })()}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Detailed Breakdown */}
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(2, 1fr)', 
+                    gap: '24px' 
+                  }}>
+                    {/* Allowances Breakdown */}
+                    {(() => {
+                      const safeJsonParse = (jsonString: string, defaultValue: any = []) => {
+                        try {
+                          return jsonString ? JSON.parse(jsonString) : defaultValue;
+                        } catch (error) {
+                          console.warn('Failed to parse JSON:', jsonString, error);
+                          return defaultValue;
+                        }
+                      };
+                      
+                      const allowancesDetail = safeJsonParse(selectedStaff.allowances_detail);
+                      return allowancesDetail && Array.isArray(allowancesDetail) && allowancesDetail.length > 0 && (
+                        <>
+                          {allowancesDetail.map((item: any, index: number) => (
+                          <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>{item.name}</label>
+                            <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                              ${item.amount ? parseFloat(item.amount).toLocaleString() : '0'}
+                            </p>
+                          </div>
+                        ))}
+                      </>
+                      );
+                    })()}
+
+                    {/* Social Security */}
+                    {(() => {
+                      const safeJsonParse = (jsonString: string, defaultValue: any = []) => {
+                        try {
+                          return jsonString ? JSON.parse(jsonString) : defaultValue;
+                        } catch (error) {
+                          console.warn('Failed to parse JSON:', jsonString, error);
+                          return defaultValue;
+                        }
+                      };
+                      
+                      const socialSecurity = safeJsonParse(selectedStaff.social_security);
+                      return socialSecurity && Array.isArray(socialSecurity) && socialSecurity.length > 0 && (
+                        <>
+                          {socialSecurity.map((item: any, index: number) => (
+                          <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>{item.name}</label>
+                            <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                              {item.percentage ? `${item.percentage}%` : item.amount ? `$${item.amount}` : '-'}
+                            </p>
+                          </div>
+                        ))}
+                      </>
+                      );
+                    })()}
+
+                    {/* Insurance */}
+                    {(() => {
+                      const safeJsonParse = (jsonString: string, defaultValue: any = []) => {
+                        try {
+                          return jsonString ? JSON.parse(jsonString) : defaultValue;
+                        } catch (error) {
+                          console.warn('Failed to parse JSON:', jsonString, error);
+                          return defaultValue;
+                        }
+                      };
+                      
+                      const insurance = safeJsonParse(selectedStaff.insurance);
+                      return insurance && Array.isArray(insurance) && insurance.length > 0 && (
+                        <>
+                          {insurance.map((item: any, index: number) => (
+                          <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>{item.name}</label>
+                            <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                              {item.annualAmount ? `$${parseFloat(item.annualAmount).toLocaleString()}` : item.amount ? `$${item.amount}` : '-'}
+                            </p>
+                          </div>
+                        ))}
+                      </>
+                      );
+                    })()}
+
+                    {/* Loans & Deductions */}
+                    {(() => {
+                      const safeJsonParse = (jsonString: string, defaultValue: any = []) => {
+                        try {
+                          return jsonString ? JSON.parse(jsonString) : defaultValue;
+                        } catch (error) {
+                          console.warn('Failed to parse JSON:', jsonString, error);
+                          return defaultValue;
+                        }
+                      };
+                      
+                      const loans = safeJsonParse(selectedStaff.loans);
+                      return loans && Array.isArray(loans) && loans.length > 0 && (
+                        <>
+                          {loans.map((item: any, index: number) => (
+                          <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>
+                              {item.name}{item.type ? ` (${item.type})` : ''}
+                            </label>
+                            <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                              {item.amount ? `$${parseFloat(item.amount).toLocaleString()}` : '-'}
+                            </p>
+                          </div>
+                        ))}
+                      </>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
 
-              {['performance', 'attendance'].includes(staffModalTab) && (
+              {staffModalTab === 'documents' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
+                      Documents
+                    </h3>
+                    <span style={{ 
+                      fontSize: '12px', 
+                      color: '#6b7280',
+                      backgroundColor: '#f3f4f6',
+                      padding: '4px 8px',
+                      borderRadius: '12px'
+                    }}>
+                      Read-only view
+                    </span>
+                  </div>
+
+                  {/* Documents List */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {(() => {
+                      const safeJsonParse = (jsonString: string, defaultValue: any = []) => {
+                        try {
+                          return jsonString ? JSON.parse(jsonString) : defaultValue;
+                        } catch (error) {
+                          console.warn('Failed to parse JSON:', jsonString, error);
+                          return defaultValue;
+                        }
+                      };
+                      
+                      const documents = safeJsonParse(selectedStaff.documents);
+                      
+                      if (!documents || !Array.isArray(documents) || documents.length === 0) {
+                        return (
                 <div style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center', 
-                  height: '200px',
+                            height: '120px',
                   color: '#6b7280',
-                  fontSize: '16px'
-                }}>
-                  {staffModalTab.charAt(0).toUpperCase() + staffModalTab.slice(1)} information will be displayed here
+                            fontSize: '14px',
+                            backgroundColor: '#f9fafb',
+                            borderRadius: '8px',
+                            border: '1px dashed #d1d5db'
+                          }}>
+                            No documents added yet. Use "Edit Profile" to manage documents.
+                          </div>
+                        );
+                      }
+                      
+                      return documents.map((doc: any, index: number) => (
+                        <div key={index} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '16px',
+                          backgroundColor: '#f9fafb',
+                          borderRadius: '8px',
+                          border: '1px solid #e5e7eb'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <FileText size={20} color="#6b7280" />
+                            <div>
+                              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>
+                                {doc.name || `Document ${index + 1}`}
+                              </div>
+                              <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                                {doc.file && doc.file.name ? doc.file.name : 'No file uploaded'}
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button 
+                              title="Download document"
+                              onClick={() => {
+                                if (doc.file && doc.file.data) {
+                                  // Convert base64 to blob and download
+                                  const byteCharacters = atob(doc.file.data.split(',')[1]);
+                                  const byteNumbers = new Array(byteCharacters.length);
+                                  for (let i = 0; i < byteCharacters.length; i++) {
+                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                  }
+                                  const byteArray = new Uint8Array(byteNumbers);
+                                  const blob = new Blob([byteArray], { type: doc.file.type });
+                                  
+                                  const link = document.createElement('a');
+                                  link.href = URL.createObjectURL(blob);
+                                  link.download = doc.file.name;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                  URL.revokeObjectURL(link.href);
+                                } else {
+                                  alert('No file available for download');
+                                }
+                              }}
+                              style={{
+                                padding: '8px',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                color: '#6b7280',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                                e.currentTarget.style.color = '#3b82f6';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                                e.currentTarget.style.color = '#6b7280';
+                              }}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7,10 12,15 17,10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                              </svg>
+                            </button>
+                            <button 
+                              title="Delete document"
+                              onClick={async () => {
+                                if (confirm(`Are you sure you want to delete "${doc.name}"?`)) {
+                                  // Remove document from the list
+                                  const updatedDocuments = documents.filter((_, docIndex) => docIndex !== index);
+                                  
+                                  // Update the staff member's documents
+                                  const updatedStaff = {
+                                    ...selectedStaff,
+                                    documents: JSON.stringify(updatedDocuments)
+                                  };
+                                  
+                                  // Update the staff in the list
+                                  const updatedStaffList = staff.map(s => 
+                                    s.id === selectedStaff.id ? updatedStaff : s
+                                  );
+                                  setStaff(updatedStaffList);
+                                  
+                                  // Update selectedStaff
+                                  setSelectedStaff(updatedStaff);
+                                  
+                                  // Update the backend
+                                  try {
+                                    await StaffService.updateStaff(selectedStaff.id.toString(), {
+                                      documents: updatedDocuments
+                                    });
+                                    console.log('Document deleted successfully');
+                                  } catch (error) {
+                                    console.error('Error deleting document:', error);
+                                    alert('Failed to delete document. Please try again.');
+                                  }
+                                }
+                              }}
+                              style={{
+                                padding: '8px',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                color: '#6b7280',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = '#fef2f2';
+                                e.currentTarget.style.color = '#dc2626';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                                e.currentTarget.style.color = '#6b7280';
+                              }}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {staffModalTab === 'attendance' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(2, 1fr)', 
+                    gap: '24px' 
+                  }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Work Schedule</label>
+                    <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                      {selectedStaff.work_schedule || 'Not specified'}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Holiday Entitlement</label>
+                    <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                      {selectedStaff.holiday_entitlement || 0} days per year
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Current Status</label>
+                    <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                        {selectedStaff.leave_status || 'Available'}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Leave End Date</label>
+                    <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
+                      {selectedStaff.leave_end_date ? new Date(selectedStaff.leave_end_date).toLocaleDateString() : 'Not specified'}
+                    </p>
+                  </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -946,3 +1490,4 @@ const StaffTab: React.FC<StaffTabProps> = ({
 };
 
 export default StaffTab;
+

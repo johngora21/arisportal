@@ -145,6 +145,8 @@ export default function PayrollPage() {
               setShowAddModal(true); 
               setAddModalType('staff'); 
             }}
+            onRefresh={refreshData}
+            refreshTrigger={refreshTrigger}
           />
         );
 
@@ -303,7 +305,7 @@ export default function PayrollPage() {
             setShowAddModal(false);
             // Refresh the data to show the new branch
             refreshData();
-          } catch (error) {
+          } catch (error: any) {
             console.error('Error creating branch:', error);
             alert('Failed to create branch: ' + error.message);
             // Keep modal open on error
@@ -346,6 +348,8 @@ export default function PayrollPage() {
             setEditingStaff(null);
             // Refresh the data to show the updated/new staff
             refreshData();
+            // Trigger refresh for all tabs
+            setRefreshTrigger(prev => prev + 1);
           } catch (error: any) {
             console.error('Error in staff operation:', error);
             // Re-throw the error so the form can display it

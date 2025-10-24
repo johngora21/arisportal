@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Briefcase, DollarSign, Calendar, X, Save, FileText, Plus, Eye, Trash2, Shield, Award, GraduationCap, Clock } from 'lucide-react';
 import { StaffService } from '../../services/payrollService';
 
@@ -20,6 +20,16 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
     // Helper function to find name by ID
     const findNameById = (id: any, options: Array<{ id: string; name: string }>) => {
       return options.find(option => option.id === id?.toString())?.name || '';
+    };
+    
+    // Helper function to safely parse JSON
+    const safeJsonParse = (jsonString: string, defaultValue: any = []) => {
+      try {
+        return jsonString ? JSON.parse(jsonString) : defaultValue;
+      } catch (error) {
+        console.warn('Failed to parse JSON:', jsonString, error);
+        return defaultValue;
+      }
     };
     
     return {
@@ -62,15 +72,22 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
       branch: backendData.branch_id?.toString() || '',
       // Salary
       basicSalary: backendData.basic_salary || '',
-      allowances: [],
+      allowances: safeJsonParse(backendData.allowances_detail),
       bankName: backendData.bank_name || '',
       bankAccount: backendData.bank_account || '',
+      accountName: backendData.account_name || '',
       taxId: backendData.tax_id || '',
-      payeEligible: false,
-      sdlEligible: false
+      payeEligible: backendData.paye_eligible || false,
+      // Additional fields
+      socialSecurity: safeJsonParse(backendData.social_security),
+      insurance: safeJsonParse(backendData.insurance),
+      loans: safeJsonParse(backendData.loans),
+      documents: safeJsonParse(backendData.documents)
     };
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [formData, setFormData] = useState<any>(() => {
     if (isEditing && initialData) {
       return convertBackendToFrontend(initialData);
@@ -118,15 +135,27 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
     allowances: [],
     bankName: '',
     bankAccount: '',
+    accountName: '',
     taxId: '',
     payeEligible: false,
-    sdlEligible: false
+    // Additional fields
+    socialSecurity: [],
+    insurance: [],
+    loans: []
     };
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState<string>('');
   const [activeTab, setActiveTab] = useState('personal');
+
+  // Update form data when initialData changes (for editing mode)
+  useEffect(() => {
+    if (isEditing && initialData) {
+      const convertedData = convertBackendToFrontend(initialData);
+      setFormData(convertedData);
+    }
+  }, [isEditing, initialData]);
 
   // Show all departments and roles without filtering
   const filteredDepartments = departments;
@@ -196,9 +225,17 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (isSubmitting) {
+      console.log('Form already submitting, ignoring duplicate submission');
+      return;
+    }
+    
     console.log('Form submitted, validating...');
     
     if (validateForm()) {
+      setIsSubmitting(true);
       console.log('Validation passed, sending data:', formData);
       const staffData = {
         ...formData,
@@ -224,10 +261,12 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
           console.log('Staff created successfully');
         }
         // Call onSave to close modal and refresh data
-      onSave(staffData);
+        onSave(staffData);
       } catch (error: any) {
         console.error('API Error:', error);
         setApiError(error.message || `Failed to ${isEditing ? 'update' : 'create'} staff member`);
+      } finally {
+        setIsSubmitting(false);
       }
     } else {
       console.log('Validation failed, errors:', errors);
@@ -792,6 +831,20 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
           placeholder="Enter bank account number"
         />
       </div>
+
+      <div>
+        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
+          Account Name
+        </label>
+        <input
+          type="text"
+          name="accountName"
+          value={formData.accountName}
+          onChange={handleInputChange}
+          style={inputStyle(false)}
+          placeholder="Enter account holder name"
+        />
+      </div>
     </div>
 
       {/* Tax Eligibility */}
@@ -809,16 +862,6 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
               style={{ width: '16px', height: '16px' }}
             />
             <label style={{ fontSize: '14px', color: '#374151' }}>PAYE Tax Eligible</label>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <input
-              type="checkbox"
-              name="sdlEligible"
-              checked={formData.sdlEligible || false}
-              onChange={(e) => setFormData({...formData, sdlEligible: e.target.checked})}
-              style={{ width: '16px', height: '16px' }}
-            />
-            <label style={{ fontSize: '14px', color: '#374151' }}>SDL Tax Eligible</label>
           </div>
         </div>
       </div>
@@ -1310,6 +1353,7 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
           Documents
         </h3>
         <button 
+          type="button"
           onClick={() => {
             setFormData({
               ...formData,
@@ -1368,12 +1412,22 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
               <input
                 type="file"
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    const newDocuments = [...(formData.documents || [])];
-                    newDocuments[index].file = file;
-                    setFormData({ ...formData, documents: newDocuments });
+                    // Convert file to base64 string
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      const newDocuments = [...(formData.documents || [])];
+                      newDocuments[index].file = {
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        data: reader.result // base64 string
+                      };
+                      setFormData({ ...formData, documents: newDocuments });
+                    };
+                    reader.readAsDataURL(file);
                   }
                 }}
                 style={{
@@ -1383,6 +1437,7 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
               />
               </div>
             <button
+              type="button"
               onClick={() => {
                 const newDocuments = [...(formData.documents || [])];
                 newDocuments.splice(index, 1);
@@ -1516,22 +1571,27 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: 'auto', paddingTop: '40px' }}>
           <button
             type="submit"
+            disabled={isSubmitting}
             style={{
               padding: '12px 24px',
               borderRadius: '20px',
               border: 'none',
-              backgroundColor: 'var(--mc-sidebar-bg)',
+              backgroundColor: isSubmitting ? '#9ca3af' : 'var(--mc-sidebar-bg)',
               color: 'white',
               fontSize: '14px',
               fontWeight: '500',
-              cursor: 'pointer',
+              cursor: isSubmitting ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px'
+              gap: '8px',
+              opacity: isSubmitting ? 0.7 : 1
             }}
           >
             <Save size={16} />
-            {isEditing ? 'Update Staff Member' : 'Save Staff Member'}
+            {isSubmitting 
+              ? (isEditing ? 'Updating...' : 'Saving...') 
+              : (isEditing ? 'Update Staff Member' : 'Save Staff Member')
+            }
           </button>
         </div>
       </form>

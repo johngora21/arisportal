@@ -81,7 +81,13 @@ export interface Staff {
   total_package: number;
   bank_name?: string;
   bank_account?: string;
+  account_name?: string;
   tax_id?: string;
+  paye_eligible?: boolean;
+  allowances_detail?: any;
+  social_security?: any;
+  insurance?: any;
+  loans?: any;
   last_review_date?: string;
   next_review_date?: string;
   benefits?: any;
@@ -89,8 +95,11 @@ export interface Staff {
   technical_skills?: string;
   languages?: string;
   certifications?: any;
+  documents?: any;
   work_schedule?: string;
   holiday_entitlement: number;
+  leave_status?: string;
+  leave_end_date?: string;
   annual_leave_balance: number;
   sick_leave_balance: number;
   personal_leave_balance: number;
@@ -255,16 +264,39 @@ export class RoleService {
 
   static async updateRole(roleId: string, roleData: Partial<Role>): Promise<Role> {
     try {
+      console.log(`Updating role ${roleId} with data:`, roleData);
+      console.log(`API URL: ${getApiUrl('PAYROLL.ROLES')}/${roleId}`);
+      
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await fetch(`${getApiUrl('PAYROLL.ROLES')}/${roleId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(roleData)
+        body: JSON.stringify(roleData),
+        signal: controller.signal
       });
       
-      if (!response.ok) throw new Error('Failed to update role');
-      return await response.json();
+      clearTimeout(timeoutId);
+      
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Response error:', errorText);
+        throw new Error(`Failed to update role: ${response.status} ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('Update result:', result);
+      return result;
     } catch (error) {
       console.error('Error updating role:', error);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - please try again');
+      }
       throw error;
     }
   }

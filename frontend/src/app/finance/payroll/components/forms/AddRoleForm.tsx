@@ -16,7 +16,8 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
       const dept = departments.find((d: any) => d.id === (initialData as any).department_id?.toString() || (initialData as any).department_id);
       // Use IDs in state for selects
       const departmentId = dept ? String(dept.id) : '';
-      const branchId = dept && (dept as any).branch_id ? String((dept as any).branch_id) : '';
+      // Get branch_id directly from initialData (role data)
+      const branchId = (initialData as any).branch_id ? String((initialData as any).branch_id) : '';
       
       return {
         title: (initialData as any).name || '',
@@ -93,6 +94,8 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
+    console.log(`Form field changed: ${name} = ${value}`);
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -130,15 +133,17 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted, validating...');
+    console.log('Current form data:', formData);
+    
     if (validateForm()) {
-      // Convert branch and department names back to IDs for backend
-      const branchId = branches.find(b => b.name === formData.branch)?.id;
-      const departmentId = departments.find(d => d.name === formData.department)?.id;
+      console.log('Validation passed, sending data:', formData);
       
+      // formData.branch and formData.department already contain IDs
       const roleData = {
         ...formData,
-        branch: branchId, // Convert name back to ID
-        department: departmentId, // Convert name back to ID
+        branch: formData.branch, // Already an ID
+        department_id: formData.department, // Send as department_id for backend
         salaryMin: parseFloat(formData.salaryMin),
         salaryMax: parseFloat(formData.salaryMax),
         requirements: formData.requirements.split('\n').filter(req => req.trim()),
@@ -151,7 +156,10 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onSave, onCancel, branches, d
         roleData.id = Date.now().toString();
       }
       
+      console.log('Calling onSave with:', roleData);
       onSave(roleData);
+    } else {
+      console.log('Validation failed, errors:', errors);
     }
   };
 
