@@ -63,7 +63,7 @@ export default function BulkOrdersPage() {
     // If it's base64 data, return empty string (we don't want base64)
     if (url.startsWith('data:')) return '';
     // If it's a relative URL, make it absolute
-    if (url.startsWith('/')) return `http://localhost:8000${url}`;
+    if (url.startsWith('/')) return `http://localhost:4001${url}`;
     // If it's already a full URL, return as is
     return url;
   };
@@ -244,7 +244,7 @@ export default function BulkOrdersPage() {
         try {
           const formData = new FormData();
           formData.append('file', file);
-          const response = await fetch('http://localhost:8000/api/v1/upload-image', {
+          const response = await fetch('http://localhost:4001/api/v1/upload-image', {
             method: 'POST',
             body: formData
           });
@@ -263,7 +263,7 @@ export default function BulkOrdersPage() {
         try {
           const formData = new FormData();
           formData.append('file', file);
-          const response = await fetch('http://localhost:8000/api/v1/upload-video', {
+          const response = await fetch('http://localhost:4001/api/v1/upload-video', {
             method: 'POST',
             body: formData
           });
@@ -1256,7 +1256,7 @@ export default function BulkOrdersPage() {
                           console.log('Uploading main image:', file.name);
                           const formData = new FormData();
                           formData.append('file', file);
-                          const response = await fetch('http://localhost:8000/api/v1/upload-image', {
+                          const response = await fetch('http://localhost:4001/api/v1/upload-image', {
                             method: 'POST',
                             body: formData
                           });

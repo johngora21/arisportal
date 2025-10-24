@@ -144,7 +144,7 @@ export interface AnalyticsData {
 }
 
 class BulkOrdersService {
-  private static baseUrl = 'http://localhost:8000/api/v1';
+  private static baseUrl = process.env.NODE_ENV === 'production' ? 'https://your-production-api.com/api/v1' : 'http://localhost:4001/api/v1';
 
   // Get all pools with optional filtering
   static async fetchPools(search?: string, country?: string, status?: string): Promise<BulkOrderPool[]> {

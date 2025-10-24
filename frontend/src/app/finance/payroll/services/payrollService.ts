@@ -67,8 +67,11 @@ export interface Staff {
   twitter_url?: string;
   instagram_url?: string;
   branch_id: number;
+  branch_name?: string;
   department_id: number;
+  department_name?: string;
   role_id: number;
+  role_name?: string;
   employment_type: 'full_time' | 'part_time' | 'contract' | 'intern';
   employment_status: 'active' | 'inactive' | 'terminated' | 'on_leave';
   hire_date: string;

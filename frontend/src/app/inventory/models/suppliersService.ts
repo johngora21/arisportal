@@ -12,7 +12,7 @@ export interface SupplierCategory {
 }
 
 class SuppliersService {
-  private baseUrl = 'http://localhost:8000/api/v1';
+  private baseUrl = process.env.NODE_ENV === 'production' ? 'https://your-production-api.com/api/v1' : 'http://localhost:4001/api/v1';
 
   // Get all suppliers
   async getSuppliers(): Promise<Supplier[]> {

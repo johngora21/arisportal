@@ -330,7 +330,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
                 <div>
                   <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '2px' }}>Department</div>
                   <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>
-                    {`Department ${staff.department_id}`}
+                    {staff.department_name || `Department ${staff.department_id}`}
                   </span>
                 </div>
               </div>
@@ -339,7 +339,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
                 <div>
                   <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '2px' }}>Role</div>
                   <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>
-                    {`Role ${staff.role_id}`}
+                    {staff.role_name || `Role ${staff.role_id}`}
                   </span>
                 </div>
               </div>
@@ -378,7 +378,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <MapPin size={16} color="#6b7280" />
                 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
-                  {`Branch ${staff.branch_id}`}
+                  {staff.branch_name || `Branch ${staff.branch_id}`}
                 </span>
               </div>
               
@@ -786,19 +786,19 @@ const StaffTab: React.FC<StaffTabProps> = ({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Department</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.department_id || '-'}
+                        {selectedStaff.department_name || selectedStaff.department_id || '-'}
                       </p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Position/Role</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.role_id || '-'}
+                        {selectedStaff.role_name || selectedStaff.role_id || '-'}
                       </p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Branch</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.branch_id || '-'}
+                        {selectedStaff.branch_name || selectedStaff.branch_id || '-'}
                       </p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

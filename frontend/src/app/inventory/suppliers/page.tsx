@@ -27,7 +27,7 @@ function SuppliersModule() {
     // If it's base64 data, return empty string (we don't want base64)
     if (url.startsWith('data:')) return '';
     // If it's a relative URL, make it absolute
-    if (url.startsWith('/')) return `http://localhost:8000${url}`;
+    if (url.startsWith('/')) return `http://localhost:4001${url}`;
     // If it's already a full URL, return as is
     return url;
   };
@@ -852,8 +852,36 @@ function SuppliersModule() {
                   deliveryTerms: supplierForm.deliveryTerms,
                   pricingTiers: supplierForm.priceRange ? [supplierForm.priceRange] : [],
                   bulkDiscounts: supplierForm.bulkDiscount ? [supplierForm.bulkDiscount] : [],
-                  images: selectedImages.map(file => URL.createObjectURL(file)), // Convert selected images to URLs
-                  videos: selectedVideos.map(file => URL.createObjectURL(file)), // Convert selected videos to URLs
+                  images: await Promise.all(selectedImages.map(async (file) => {
+                    try {
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      const response = await fetch('http://localhost:4001/api/v1/upload-image', {
+                        method: 'POST',
+                        body: formData
+                      });
+                      const result = await response.json();
+                      return result.url;
+                    } catch (error) {
+                      console.error('Error uploading image:', error);
+                      return null;
+                    }
+                  })).then(urls => urls.filter(url => url !== null)),
+                  videos: await Promise.all(selectedVideos.map(async (file) => {
+                    try {
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      const response = await fetch('http://localhost:4001/api/v1/upload-video', {
+                        method: 'POST',
+                        body: formData
+                      });
+                      const result = await response.json();
+                      return result.url;
+                    } catch (error) {
+                      console.error('Error uploading video:', error);
+                      return null;
+                    }
+                  })).then(urls => urls.filter(url => url !== null)),
                   status: 'active',
                   verificationStatus: 'verified'
                 };
