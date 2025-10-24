@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Building, Plus, Eye, MapPin, Home, List, Warehouse } from 'lucide-react';
+import { Building, Plus, Eye, MapPin, Home, List, Warehouse, TrendingUp } from 'lucide-react';
 import { Property, InvestmentProject, UserProperty } from './marketplace/models';
 import LandTab from './marketplace/components/LandTab';
 import HouseTab from './marketplace/components/HouseTab';
 import MyListingsTab from './marketplace/components/MyListingsTab';
 import MyPropertiesTab from './marketplace/components/MyPropertiesTab';
+import RealEstateInvestmentsTab from './marketplace/components/RealEstateInvestmentsTab';
 import ListPropertyModal from './marketplace/components/ListPropertyModal';
 import PropertyDetailsModal from './marketplace/components/PropertyDetailsModal';
 import { landProperties, buildingProperties, userProperties } from './marketplace/data/mockData';
@@ -60,17 +61,24 @@ export default function RealEstatesPage() {
     {
       id: '1',
       title: 'Masaki Commercial Complex',
+      category: 'commercial',
+      description: 'Modern commercial complex with retail spaces, offices, and parking facilities in prime Masaki location.',
       location: 'Masaki, Dar es Salaam',
-      totalValue: 500000000,
+      landSize: '2.5 acres',
+      zoning: 'Commercial',
+      access: 'Main Road',
+      duration: '24 months',
+      expectedROI: 15,
+      developmentStage: 'planning',
+      status: 'active',
+      totalProjectValue: 500000000,
       minimumInvestment: 5000000,
       currentInvestors: 12,
       targetInvestors: 50,
       fundingProgress: 24,
-      expectedROI: 15,
-      projectDuration: '24 months',
+      investmentDeadline: 'Dec 2024',
+      features: ['Modern Office Spaces', 'Retail Shops', 'Underground Parking', 'Green Building Design'],
       image: '/api/placeholder/400/300',
-      description: 'Modern commercial complex with retail spaces, offices, and parking facilities in prime Masaki location.',
-      status: 'active' as const,
       coordinates: {
         lat: -6.7789,
         lng: 39.2567
@@ -79,17 +87,24 @@ export default function RealEstatesPage() {
     {
       id: '2',
       title: 'Kinondoni Residential Development',
+      category: 'residential',
+      description: 'Affordable housing development with 50 units targeting middle-income families.',
       location: 'Kinondoni, Dar es Salaam',
-      totalValue: 300000000,
+      landSize: '3.0 acres',
+      zoning: 'Residential',
+      access: 'Main Road',
+      duration: '18 months',
+      expectedROI: 12,
+      developmentStage: 'construction',
+      status: 'active',
+      totalProjectValue: 300000000,
       minimumInvestment: 2000000,
       currentInvestors: 8,
       targetInvestors: 30,
       fundingProgress: 27,
-      expectedROI: 12,
-      projectDuration: '18 months',
+      investmentDeadline: 'Mar 2025',
+      features: ['Affordable Housing', 'Community Center', 'Playground', 'Parking'],
       image: '/api/placeholder/400/300',
-      description: 'Affordable housing development with 50 units targeting middle-income families.',
-      status: 'active' as const,
       coordinates: {
         lat: -6.7924,
         lng: 39.2083
@@ -98,17 +113,24 @@ export default function RealEstatesPage() {
     {
       id: '3',
       title: 'CBD Office Tower',
+      category: 'commercial',
+      description: 'Premium office tower with modern amenities and prime CBD location.',
       location: 'CBD, Dar es Salaam',
-      totalValue: 800000000,
+      landSize: '1.8 acres',
+      zoning: 'Commercial',
+      access: 'Main Road',
+      duration: '36 months',
+      expectedROI: 18,
+      developmentStage: 'construction',
+      status: 'active',
+      totalProjectValue: 800000000,
       minimumInvestment: 10000000,
       currentInvestors: 25,
       targetInvestors: 40,
       fundingProgress: 63,
-      expectedROI: 18,
-      projectDuration: '36 months',
+      investmentDeadline: 'Jun 2025',
+      features: ['Premium Office Spaces', 'Conference Facilities', 'Underground Parking', 'Smart Building Technology'],
       image: '/api/placeholder/400/300',
-      description: 'Premium office tower with modern amenities and prime CBD location.',
-      status: 'active' as const,
       coordinates: {
         lat: -6.7924,
         lng: 39.2083
@@ -117,17 +139,24 @@ export default function RealEstatesPage() {
     {
       id: '4',
       title: 'Kigamboni Mixed-Use Project',
+      category: 'mixed-use',
+      description: 'Mixed-use development with residential and commercial components.',
       location: 'Kigamboni, Dar es Salaam',
-      totalValue: 200000000,
+      landSize: '4.0 acres',
+      zoning: 'Mixed Use',
+      access: 'Main Road',
+      duration: '20 months',
+      expectedROI: 14,
+      developmentStage: 'planning',
+      status: 'funded',
+      totalProjectValue: 200000000,
       minimumInvestment: 3000000,
       currentInvestors: 15,
       targetInvestors: 20,
       fundingProgress: 75,
-      expectedROI: 14,
-      projectDuration: '20 months',
+      investmentDeadline: 'Apr 2025',
+      features: ['Residential Units', 'Commercial Spaces', 'Recreation Area', 'Parking'],
       image: '/api/placeholder/400/300',
-      description: 'Mixed-use development with residential and commercial components.',
-      status: 'funded' as const,
       coordinates: {
         lat: -6.8234,
         lng: 39.3456
@@ -244,6 +273,17 @@ export default function RealEstatesPage() {
             onPropertyClick={handlePropertyClick}
           />
         );
+      case 'investments':
+        return (
+          <RealEstateInvestmentsTab
+            projects={investmentProjects}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            typeFilter={typeFilter}
+            setTypeFilter={setTypeFilter}
+            onProjectClick={handleProjectClick}
+          />
+        );
       case 'my-listings':
         return (
           <MyListingsTab
@@ -321,6 +361,7 @@ export default function RealEstatesPage() {
         {[
           { id: 'land', label: 'Plots', icon: <MapPin size={16} /> },
           { id: 'buildings', label: 'Structures', icon: <Warehouse size={16} /> },
+          { id: 'investments', label: 'Investments', icon: <TrendingUp size={16} /> },
           { id: 'my-listings', label: 'My Listings', icon: <List size={16} /> },
           { id: 'my-properties', label: 'My Properties', icon: <Building size={16} /> }
         ].map((tab) => (

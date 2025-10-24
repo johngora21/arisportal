@@ -4,15 +4,14 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { DollarSign, BarChart3, Package, Star, MapPin, Clock, TrendingUp, CheckCircle, Phone, Mail, Calendar, Users, Award, Shield, Truck, CreditCard, Globe, Plus } from 'lucide-react';
 import Link from 'next/link';
 import SalesPage from '../sales/page';
-import { ReportsModule } from '../reports/page';
-import { SuppliersModule } from '../suppliers/page';
+import SuppliersPage from '../suppliers/page';
 import BulkOrdersModule from '../bulk-orders/page';
 
 // Declare Leaflet types
 declare const L: any;
 
 export default function InventoryModulesPage() {
-  const [activeTab, setActiveTab] = useState<'sales'|'reports'|'suppliers'|'bulk-orders'>('sales');
+  const [activeTab, setActiveTab] = useState<'sales'|'suppliers'|'bulk-orders'>('sales');
   const [productQuery, setProductQuery] = useState('');
   const [saleQty, setSaleQty] = useState<number>(0);
   const [salePrice, setSalePrice] = useState<number>(0);
@@ -89,16 +88,74 @@ export default function InventoryModulesPage() {
   // Initialize map when supplier modal opens
   useEffect(() => {
     if (showSupplierModal && mapRef.current && !mapInstanceRef.current && selectedSupplier?.coordinates) {
-      const map = L.map(mapRef.current).setView(
+      // Initialize Leaflet map with 3D capabilities
+      const map = L.map(mapRef.current, {
+        zoomControl: true,
+        attributionControl: true,
+        // Enable 3D capabilities
+        preferCanvas: false,
+        renderer: L.canvas(),
+        // Enable dragging for 3D rotation
+        dragging: true,
+        touchZoom: true,
+        doubleClickZoom: true,
+        scrollWheelZoom: true,
+        boxZoom: true,
+        keyboard: true,
+        zoomAnimation: true,
+        fadeAnimation: true,
+        markerZoomAnimation: true
+      }).setView(
         [selectedSupplier.coordinates.lat, selectedSupplier.coordinates.lng], 
-        15
+        12
       );
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+      // Add satellite tiles as primary view
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri'
       }).addTo(map);
 
-      const marker = L.marker([selectedSupplier.coordinates.lat, selectedSupplier.coordinates.lng]).addTo(map);
+      // Add terrain layer for 3D effect
+      L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenTopoMap contributors',
+        opacity: 0.3
+      }).addTo(map);
+
+      mapInstanceRef.current = map;
+
+      // Add marker for the selected supplier with 3D effect
+      const marker = L.marker([selectedSupplier.coordinates.lat, selectedSupplier.coordinates.lng], {
+        title: selectedSupplier.name,
+        icon: L.divIcon({
+          className: 'custom-3d-marker',
+          html: `
+            <div style="
+              background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+              width: 30px;
+              height: 30px;
+              border-radius: 50% 50% 50% 0;
+              transform: rotate(-45deg);
+              box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+              border: 3px solid white;
+              position: relative;
+            ">
+              <div style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(45deg);
+                color: white;
+                font-size: 12px;
+                font-weight: bold;
+              ">📍</div>
+            </div>
+          `,
+          iconSize: [30, 30],
+          iconAnchor: [15, 30]
+        })
+      }).addTo(map);
+
+      // Add popup with supplier info
       marker.bindPopup(`
         <div style="padding: 8px; font-family: 'Poppins', sans-serif; min-width: 200px;">
           <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">
@@ -107,13 +164,149 @@ export default function InventoryModulesPage() {
           <p style="margin: 0 0 4px 0; font-size: 14px; color: #6b7280;">
             ${selectedSupplier.contact.address}
           </p>
+          <p style="margin: 0 0 4px 0; font-size: 14px; color: #059669;">
+            Category: ${selectedSupplier.category}
+          </p>
           <p style="margin: 0; font-size: 14px; color: #059669; font-weight: 600;">
             ${selectedSupplier.contact.phone}
           </p>
         </div>
       `).openPopup();
 
-      mapInstanceRef.current = map;
+      // Add 3D navigation controls
+      const nav3DControl = L.control({ position: 'topright' });
+      nav3DControl.onAdd = function(map: any) {
+        const div = L.DomUtil.create('div', 'leaflet-control-3d-nav');
+        div.innerHTML = `
+          <div style="
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          ">
+            <div style="
+              font-size: 10px;
+              color: #6b7280;
+              text-align: center;
+              margin-bottom: 4px;
+              font-weight: 600;
+            ">3D Navigation</div>
+            <button id="reset-view" style="
+              background: #10b981;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              padding: 6px 8px;
+              cursor: pointer;
+              font-size: 12px;
+            ">🔄 Reset View</button>
+            <div style="
+              font-size: 9px;
+              color: #9ca3af;
+              text-align: center;
+              margin-top: 2px;
+            ">Drag to rotate</div>
+          </div>
+        `;
+        
+        div.querySelector('#reset-view').addEventListener('click', () => {
+          map.setView([selectedSupplier.coordinates.lat, selectedSupplier.coordinates.lng], 12);
+        });
+        
+        return div;
+      };
+      nav3DControl.addTo(map);
+
+      // Add mouse-based 3D rotation functionality
+      let isDragging = false;
+      let lastMousePos = { x: 0, y: 0 };
+      let rotationX = 0;
+      let rotationY = 0;
+
+      const mapContainer = mapRef.current;
+      
+      // Mouse events for 3D rotation
+      mapContainer.addEventListener('mousedown', (e: MouseEvent) => {
+        if (e.button === 0) { // Left mouse button
+          isDragging = true;
+          lastMousePos = { x: e.clientX, y: e.clientY };
+          mapContainer.style.cursor = 'grabbing';
+        }
+      });
+
+      mapContainer.addEventListener('mousemove', (e: MouseEvent) => {
+        if (isDragging) {
+          const deltaX = e.clientX - lastMousePos.x;
+          const deltaY = e.clientY - lastMousePos.y;
+          
+          // Horizontal rotation (pan)
+          rotationY += deltaX * 0.5;
+          const center = map.getCenter();
+          const newLng = center.lng + (deltaX * 0.0001);
+          map.setView([center.lat, newLng], map.getZoom());
+          
+          // Vertical rotation (tilt effect via zoom)
+          rotationX += deltaY * 0.3;
+          const currentZoom = map.getZoom();
+          const zoomChange = deltaY * 0.01;
+          const newZoom = Math.max(3, Math.min(18, currentZoom - zoomChange));
+          map.setZoom(newZoom);
+          
+          lastMousePos = { x: e.clientX, y: e.clientY };
+        }
+      });
+
+      mapContainer.addEventListener('mouseup', () => {
+        isDragging = false;
+        mapContainer.style.cursor = 'grab';
+      });
+
+      mapContainer.addEventListener('mouseleave', () => {
+        isDragging = false;
+        mapContainer.style.cursor = 'grab';
+      });
+
+      // Touch events for mobile 3D rotation
+      let lastTouchPos = { x: 0, y: 0 };
+      let isTouching = false;
+
+      mapContainer.addEventListener('touchstart', (e: TouchEvent) => {
+        if (e.touches.length === 1) {
+          isTouching = true;
+          lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+      });
+
+      mapContainer.addEventListener('touchmove', (e: TouchEvent) => {
+        if (isTouching && e.touches.length === 1) {
+          e.preventDefault();
+          const deltaX = e.touches[0].clientX - lastTouchPos.x;
+          const deltaY = e.touches[0].clientY - lastTouchPos.y;
+          
+          // Horizontal rotation (pan)
+          const center = map.getCenter();
+          const newLng = center.lng + (deltaX * 0.0001);
+          map.setView([center.lat, newLng], map.getZoom());
+          
+          // Vertical rotation (tilt effect via zoom)
+          const currentZoom = map.getZoom();
+          const zoomChange = deltaY * 0.01;
+          const newZoom = Math.max(3, Math.min(18, currentZoom - zoomChange));
+          map.setZoom(newZoom);
+          
+          lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+      });
+
+      mapContainer.addEventListener('touchend', () => {
+        isTouching = false;
+      });
+
+      // Set initial cursor style
+      mapContainer.style.cursor = 'grab';
     }
 
     return () => {
@@ -142,7 +335,7 @@ export default function InventoryModulesPage() {
           Inventory Modules
         </h1>
         <p style={{ fontSize: '16px', color: '#6b7280', margin: 0 }}>
-          Comprehensive inventory management tools for sales, reports, suppliers, and bulk orders.
+          Comprehensive inventory management tools for sales, suppliers, and bulk orders.
         </p>
       </div>
 
@@ -237,32 +430,41 @@ export default function InventoryModulesPage() {
         </div>
       </div>
 
-      <div style={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '20px', overflow: 'hidden', marginBottom: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
-          {[
-            { id: 'sales', label: 'Sales', icon: <DollarSign size={16} /> },
-            { id: 'suppliers', label: 'Suppliers', icon: <Package size={16} /> },
-            { id: 'bulk-orders', label: 'Bulk Orders', icon: <Users size={16} /> },
-            { id: 'reports', label: 'Reports', icon: <BarChart3 size={16} /> }
-          ].map(t => (
-            <button key={t.id}
-              onClick={() => setActiveTab(t.id as any)}
-              style={{
-                padding: '14px 12px',
-                backgroundColor: activeTab === (t.id as any) ? 'var(--mc-sidebar-bg)' : 'transparent',
-                color: activeTab === (t.id as any) ? 'white' : '#6b7280',
-                border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer'
-              }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>{t.icon}{t.label}</span>
-            </button>
-          ))}
-        </div>
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+        {[
+          { id: 'sales', label: 'Sales', icon: <DollarSign size={16} /> },
+          { id: 'suppliers', label: 'Suppliers', icon: <Package size={16} /> },
+          { id: 'bulk-orders', label: 'Bulk Orders', icon: <Users size={16} /> }
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 20px',
+              border: 'none',
+              borderRadius: '20px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              backgroundColor: activeTab === tab.id ? 'var(--mc-sidebar-bg)' : 'white',
+              color: activeTab === tab.id ? 'white' : '#6b7280',
+              boxShadow: activeTab === tab.id ? '0 2px 4px rgba(59, 130, 246, 0.3)' : '0 1px 3px rgba(0,0,0,0.1)'
+            }}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {activeTab === 'sales' && <SalesPage />}
 
 
-      {activeTab === 'suppliers' && <SuppliersModule />}
+      {activeTab === 'suppliers' && <SuppliersPage />}
 
       {activeTab === 'bulk-orders' && <BulkOrdersModule />}
       {/* Supplier Details Modal */}
@@ -283,9 +485,9 @@ export default function InventoryModulesPage() {
           <div style={{
             backgroundColor: 'white',
             width: 'min(900px, 95vw)',
-            maxHeight: '95vh',
+            maxHeight: '70vh',
             borderRadius: '20px',
-            padding: '32px',
+            padding: '20px',
             overflowY: 'auto',
             position: 'relative'
           }}>
@@ -308,7 +510,7 @@ export default function InventoryModulesPage() {
             </button>
 
             {/* Header */}
-            <div style={{ marginBottom: '32px' }}>
+            <div style={{ marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <h2 style={{ fontSize: '28px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
                   {selectedSupplier.name}
@@ -334,7 +536,7 @@ export default function InventoryModulesPage() {
             </div>
 
             {/* Contact Information */}
-            <div style={{ marginBottom: '32px' }}>
+            <div style={{ marginBottom: '20px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
                 Contact Information
               </h3>
@@ -359,17 +561,17 @@ export default function InventoryModulesPage() {
             </div>
 
             {/* Map Section */}
-            <div style={{ marginBottom: '32px' }}>
+            <div style={{ marginBottom: '20px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
                 Location
               </h3>
-              <div style={{ height: '300px', borderRadius: '20px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+              <div style={{ height: '200px', borderRadius: '20px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
                 <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
               </div>
             </div>
 
             {/* Products & Services */}
-            <div style={{ marginBottom: '32px' }}>
+            <div style={{ marginBottom: '20px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
                 Products & Services
               </h3>
@@ -416,7 +618,7 @@ export default function InventoryModulesPage() {
             </div>
 
             {/* Pricing & Business Details */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '32px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
                   Pricing & Orders
@@ -456,7 +658,7 @@ export default function InventoryModulesPage() {
 
 
             {/* Customer Reviews */}
-            <div style={{ marginBottom: '32px' }}>
+            <div style={{ marginBottom: '20px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
                 Customer Reviews
               </h3>

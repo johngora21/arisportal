@@ -1,3 +1,12 @@
+export interface SupplierCategory {
+  id: number;
+  name: string;
+  description: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // Supplier Management Models - Suppliers are vendors providing goods/services to the business
 export interface SupplierLocation {
   id: string;

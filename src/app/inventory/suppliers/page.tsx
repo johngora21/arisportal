@@ -2,35 +2,27 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, CheckCircle, Phone, Mail, Globe, Star, Plus, Tag } from 'lucide-react';
-import SuppliersService, { SupplierCategory } from '../models/suppliersService';
-import { Supplier } from '../models/supplier';
+import SuppliersService from '../models/suppliersService';
 
-function SuppliersModule() {
+// Declare Leaflet types
+declare const L: any;
+
+export function SuppliersModule() {
+  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(false);
   const [supplierCountryFilter, setSupplierCountryFilter] = useState('');
   const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [showAddSupplierModal, setShowAddSupplierModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoriesModal, setShowCategoriesModal] = useState(false);
-  const [categories, setCategories] = useState<SupplierCategory[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
-  const [suppliers, setSuppliers] = useState<any[]>([]);
-  const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(false);
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [selectedVideos, setSelectedVideos] = useState<File[]>([]);
-  const [mediaIndex, setMediaIndex] = useState<number>(0);
-  
-  // Utility function to ensure we're using URLs, not base64
-  const getValidImageUrl = (url: string): string => {
-    if (!url) return '';
-    // If it's base64 data, return empty string (we don't want base64)
-    if (url.startsWith('data:')) return '';
-    // If it's a relative URL, make it absolute
-    if (url.startsWith('/')) return `http://localhost:8000${url}`;
-    // If it's already a full URL, return as is
-    return url;
-  };
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const supplierMapRef = useRef<HTMLDivElement>(null);
+  const supplierMapInstanceRef = useRef<any>(null);
 
   const [supplierForm, setSupplierForm] = useState({
     name: '',
@@ -43,9 +35,10 @@ function SuppliersModule() {
     leadTime: '',
     returnPolicy: '',
     warranty: '',
-    deliveryTerms: '',
     established: '',
+    employees: '',
     tags: '',
+    specialties: '',
     languages: '',
     certifications: '',
     paymentMethods: '',
@@ -55,6 +48,10 @@ function SuppliersModule() {
       email: '',
       website: '',
       address: ''
+    },
+    coordinates: {
+      lat: '',
+      lng: ''
     },
     customerReviews: []
   });
@@ -82,13 +79,12 @@ function SuppliersModule() {
     'Yemen', 'Zambia', 'Zimbabwe'
   ];
 
-  // Fetch categories
+  // API functions
   const fetchCategories = async () => {
-    setIsLoadingCategories(true);
     try {
-      const fetchedCategories = await SuppliersService.getCategories();
-      console.log('Fetched categories:', fetchedCategories);
-      setCategories(fetchedCategories);
+      setIsLoadingCategories(true);
+      const categoriesData = await SuppliersService.fetchCategories();
+      setCategories(categoriesData as string[]);
     } catch (error) {
       console.error('Error fetching categories:', error);
     } finally {
@@ -96,76 +92,160 @@ function SuppliersModule() {
     }
   };
 
-  // Fetch suppliers
+  const createCategory = async (categoryName: string) => {
+    try {
+      const success = await SuppliersService.createCategory(categoryName);
+      if (success) {
+        await fetchCategories(); // Refresh the list
+        setNewCategoryName(''); // Clear the input
+        return true;
+      } else {
+        alert('Error creating category: Please try again');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error creating category:', error);
+      alert('Error creating category: ' + (error as Error).message);
+      return false;
+    }
+  };
+
+  const deleteCategory = async (categoryName: string) => {
+    try {
+      const success = await SuppliersService.deleteCategory(categoryName);
+      if (success) {
+        await fetchCategories(); // Refresh the list
+        return true;
+      } else {
+        alert('Error deleting category: Please try again');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      const errorMessage = (error as Error).message;
+      if (errorMessage.includes('suppliers are using it')) {
+        alert(`Cannot delete category "${categoryName}" because suppliers are currently using it. Please change those suppliers to a different category first.`);
+      } else {
+        alert('Error deleting category: ' + errorMessage);
+      }
+      return false;
+    }
+  };
+
+  // Fetch suppliers from API
   const fetchSuppliers = async () => {
     setIsLoadingSuppliers(true);
     try {
-      const fetchedSuppliers = await SuppliersService.getSuppliers();
-      setSuppliers(fetchedSuppliers);
+      const suppliersData = await SuppliersService.fetchSuppliers();
+      setSuppliers(suppliersData);
     } catch (error) {
       console.error('Error fetching suppliers:', error);
+      setSuppliers([]);
     } finally {
       setIsLoadingSuppliers(false);
     }
   };
 
-  // Handle add category
-  const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) return;
-    
-    try {
-      const newCategory = await SuppliersService.createCategory(newCategoryName.trim());
-      if (newCategory) {
-        setCategories([...categories, newCategory]);
-        setNewCategoryName('');
-      }
-    } catch (error) {
-      console.error('Error adding category:', error);
-    }
-  };
-
-  // Handle delete category
-  const handleDeleteCategory = async (categoryId: number) => {
-    try {
-      const success = await SuppliersService.deleteCategory(categoryId);
-      if (success) {
-        setCategories(categories.filter(cat => cat.id !== categoryId));
-        alert('Category deleted successfully!');
-      }
-    } catch (error) {
-      console.error('Error deleting category:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to delete category';
-      alert(`Error: ${errorMessage}`);
-    }
-  };
-
-  // Handle image selection
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setSelectedImages(prev => [...prev, ...files]);
-  };
-
-  // Handle video selection
-  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setSelectedVideos(prev => [...prev, ...files]);
-  };
-
-  // Remove image
-  const removeImage = (index: number) => {
-    setSelectedImages(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // Remove video
-  const removeVideo = (index: number) => {
-    setSelectedVideos(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // Load data on component mount
+  // Load categories when component mounts
   useEffect(() => {
     fetchCategories();
     fetchSuppliers();
   }, []);
+
+  // Handle adding a new category
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    
+    const success = await createCategory(newCategoryName.trim());
+    if (success) {
+      // Category added successfully, input is cleared in createCategory
+    }
+  };
+
+  // Handle deleting a category
+  const handleDeleteCategory = async (categoryName: string) => {
+    if (window.confirm(`Are you sure you want to delete the category "${categoryName}"?`)) {
+      await deleteCategory(categoryName);
+    }
+  };
+
+  // Initialize map when supplier modal opens
+  useEffect(() => {
+    if (showSupplierModal && mapRef.current && !mapInstanceRef.current && selectedSupplier?.coordinates) {
+      const map = L.map(mapRef.current).setView(
+        [selectedSupplier.coordinates.lat, selectedSupplier.coordinates.lng], 
+        15
+      );
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      const marker = L.marker([selectedSupplier.coordinates.lat, selectedSupplier.coordinates.lng]).addTo(map);
+      marker.bindPopup(`
+        <div style="padding: 8px; font-family: 'Poppins', sans-serif; min-width: 200px;">
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">
+            ${selectedSupplier.name}
+          </h3>
+          <p style="margin: 0 0 4px 0; font-size: 14px; color: #6b7280;">
+            ${selectedSupplier.contact.address}
+          </p>
+          <p style="margin: 0; font-size: 14px; color: #059669; font-weight: 600;">
+            ${selectedSupplier.contact.phone}
+          </p>
+        </div>
+      `).openPopup();
+
+      mapInstanceRef.current = map;
+    }
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.off();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [showSupplierModal, selectedSupplier]);
+
+  // Initialize supplier map when add supplier modal opens
+  useEffect(() => {
+    if (showAddSupplierModal && supplierMapRef.current && !supplierMapInstanceRef.current) {
+      const map = L.map(supplierMapRef.current).setView([-6.7789, 39.2567], 10); // Default to Dar es Salaam
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Add click event to map
+      map.on('click', (e: any) => {
+        const { lat, lng } = e.latlng;
+        setSupplierForm(prev => ({ 
+          ...prev, 
+          coordinates: { lat: lat.toString(), lng: lng.toString() } 
+        }));
+
+        // Remove existing marker if any
+        map.eachLayer((layer: any) => {
+          if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+          }
+        });
+
+        // Add new marker
+        L.marker([lat, lng]).addTo(map);
+      });
+
+      supplierMapInstanceRef.current = map;
+    }
+
+    return () => {
+      if (supplierMapInstanceRef.current) {
+        supplierMapInstanceRef.current.off();
+        supplierMapInstanceRef.current.remove();
+        supplierMapInstanceRef.current = null;
+      }
+    };
+  }, [showAddSupplierModal]);
 
   return (
     <div style={{ padding: '24px', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
@@ -301,19 +381,21 @@ function SuppliersModule() {
 
       {/* Supplier Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-        {isLoadingSuppliers ? (
+        {isLoadingSuppliers && (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px' }}>
             <div style={{ fontSize: '16px', color: '#6b7280' }}>Loading suppliers...</div>
           </div>
-        ) : suppliers.length === 0 ? (
+        )}
+        {!isLoadingSuppliers && suppliers.length === 0 && (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px' }}>
-            <div style={{ fontSize: '16px', color: '#6b7280' }}>No suppliers found. Add your first supplier!</div>
+            <div style={{ fontSize: '16px', color: '#6b7280' }}>No suppliers found</div>
           </div>
-        ) : suppliers.filter(supplier => 
-          !supplierCountryFilter || supplier.location?.country === supplierCountryFilter
-        ).map((supplier, index) => (
+        )}
+        {!isLoadingSuppliers && suppliers.length > 0 && suppliers.filter(supplier => 
+          !supplierCountryFilter || supplier.country === supplierCountryFilter
+        ).map((supplier, i) => (
           <div 
-            key={index} 
+            key={i} 
             style={{ 
               background: 'white', 
               border: '1px solid #e5e7eb', 
@@ -332,11 +414,8 @@ function SuppliersModule() {
               e.currentTarget.style.transform = 'translateY(0)';
               e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
             }}
-            onClick={async () => {
-              // Fetch full supplier details including media
-              const fullSupplier = await SuppliersService.getSupplier(supplier.id);
-              setSelectedSupplier(fullSupplier || supplier);
-              setMediaIndex(0); // Reset media index when opening modal
+            onClick={() => {
+              setSelectedSupplier(supplier);
               setShowSupplierModal(true);
             }}
           >
@@ -366,30 +445,26 @@ function SuppliersModule() {
               color: '#1f2937', 
               margin: '0 0 8px 0'
             }}>
-                {supplier.name}
-              </h3>
+              {supplier.name}
+            </h3>
 
             {/* Category (location moved to footer) */}
-                <div style={{ 
+            <div style={{ 
               fontSize: '13px', 
               color: '#6b7280',
               marginBottom: '8px'
-                }}>
-                  {Array.isArray(supplier.categories) ? supplier.categories.join(', ') : (supplier.category || 'N/A')}
-                </div>
+            }}>
+              {supplier.category}
+            </div>
 
             {/* Pricing Info */}
             <div style={{ 
               marginBottom: '12px',
               fontSize: '12px'
             }}>
-              <div style={{ color: '#6b7280', marginBottom: '2px' }}>Min Order</div>
-              <div style={{ fontWeight: '600', color: '#059669', fontSize: '14px' }}>
-                {supplier.minimumOrderQuantity ? `${supplier.minimumOrderQuantity} ${supplier.minimumOrderUnit || 'units'}` : (supplier.minOrder || 'N/A')}
-              </div>
-              <div style={{ color: '#f59e0b', fontSize: '11px', marginTop: '2px' }}>
-                {Array.isArray(supplier.bulkDiscounts) ? supplier.bulkDiscounts.join(', ') : (supplier.bulkDiscount || 'N/A')}
-              </div>
+              <div style={{ color: '#6b7280', marginBottom: '2px' }}>Price Range</div>
+              <div style={{ fontWeight: '600', color: '#059669', fontSize: '14px' }}>{supplier.priceRange}</div>
+              <div style={{ color: '#f59e0b', fontSize: '11px', marginTop: '2px' }}>{supplier.bulkDiscount}</div>
             </div>
 
             {/* Key Info Grid */}
@@ -400,20 +475,67 @@ function SuppliersModule() {
               marginBottom: '16px',
               fontSize: '12px'
             }}>
-                <div>
+              <div>
                 <div style={{ color: '#6b7280', marginBottom: '2px' }}>Min Order</div>
-                  <div style={{ fontWeight: '500', color: '#1f2937' }}>
-                    {supplier.minimumOrderQuantity ? `${supplier.minimumOrderQuantity} ${supplier.minimumOrderUnit || 'units'}` : (supplier.minOrder || 'N/A')}
-                  </div>
-                </div>
-                <div>
+                <div style={{ fontWeight: '500', color: '#1f2937' }}>{supplier.minOrder}</div>
+              </div>
+              <div>
                 <div style={{ color: '#6b7280', marginBottom: '2px' }}>Lead Time</div>
-                  <div style={{ fontWeight: '500', color: '#1f2937' }}>
-                    {supplier.standardLeadTimeDays ? `${supplier.standardLeadTimeDays} days` : (supplier.leadTime || 'N/A')}
-                  </div>
+                <div style={{ fontWeight: '500', color: '#1f2937' }}>{supplier.leadTime}</div>
+              </div>
+              <div>
+                <div style={{ color: '#6b7280', marginBottom: '2px' }}>Return Policy</div>
+                <div style={{ fontWeight: '500', color: '#1f2937' }}>
+                  {supplier.returnPolicy || 'Not specified'}
+                </div>
+              </div>
+              <div>
+                <div style={{ color: '#6b7280', marginBottom: '2px' }}>Warranty</div>
+                <div style={{ fontWeight: '500', color: '#1f2937' }}>
+                  {supplier.warranty || 'Not specified'}
+                </div>
               </div>
             </div>
 
+            {/* Product Tags */}
+            <div style={{ 
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '6px',
+              marginBottom: '12px'
+            }}>
+              {supplier.tags.slice(0, 3).map((tag: string, index: number) => (
+                <span
+                  key={index}
+                  style={{
+                    backgroundColor: '#f9fafb',
+                    color: '#6b7280',
+                    padding: '4px 8px',
+                    borderRadius: '20px',
+                    fontSize: '11px',
+                    fontWeight: '500',
+                    border: '1px solid #e5e7eb'
+                  }}
+                >
+                  {tag}
+                </span>
+              ))}
+              {supplier.tags.length > 3 && (
+                <span
+                  style={{
+                    backgroundColor: '#f3f4f6',
+                    color: '#6b7280',
+                    padding: '4px 8px',
+                    borderRadius: '20px',
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    border: '1px solid #d1d5db'
+                  }}
+                >
+                  +{supplier.tags.length - 3}
+                </span>
+              )}
+            </div>
 
             {/* Footer */}
             <div style={{
@@ -431,7 +553,7 @@ function SuppliersModule() {
                 gap: '4px'
               }}>
                 <MapPin size={12} />
-                {supplier.city || supplier.location || 'N/A'}
+                {supplier.location}
               </div>
               
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -447,7 +569,7 @@ function SuppliersModule() {
                   transition: 'all 0.2s ease'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor; 'var(--mc-sidebar-bg-hover)';
+                  e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
                   e.currentTarget.style.color = 'white';
                 }}
                 onMouseLeave={(e) => {
@@ -473,13 +595,13 @@ function SuppliersModule() {
                   e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor; 'var(--mc-sidebar-bg-hover)';
+                  e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
                 }}
                 >
                   Contact
                 </button>
-                </div>
-                </div>
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -526,91 +648,18 @@ function SuppliersModule() {
               ✕
             </button>
 
-            {/* Media Gallery Section - First */}
-            <div style={{ marginBottom: '32px' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-                  Media Gallery
-                </h3>
-              </div>
-              {(() => {
-                const images = selectedSupplier.images || [];
-                const videos = selectedSupplier.videos || [];
-                const mediaItems: Array<{ type: 'image' | 'video'; src: string }> = [
-                  ...images.map((src: string) => ({ type: 'image' as const, src })),
-                  ...videos.map((src: string) => ({ type: 'video' as const, src }))
-                ];
-                if (mediaItems.length === 0) {
-                  return (
-                    <div style={{ 
-                      padding: '40px', 
-                      textAlign: 'center', 
-                      backgroundColor: '#f9fafb', 
-                      borderRadius: '12px',
-                      border: '2px dashed #d1d5db'
-                    }}>
-                      <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                        No media available for this supplier
-                      </div>
-                    </div>
-                  );
-                }
-                const current = mediaItems[Math.min(mediaIndex, mediaItems.length - 1)];
-                return (
-                  <div style={{ position: 'relative', width: '100%', height: '380px', overflow: 'hidden', borderRadius: '12px', backgroundColor: '#000', marginBottom: '32px' }}>
-                    {current.type === 'image' ? (
-                      <img src={getValidImageUrl(current.src)} alt={selectedSupplier.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                    ) : (
-                      <video src={getValidImageUrl(current.src)} controls style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                    )}
-                    {/* Status badge on media */}
-                    <div style={{
-                      position: 'absolute', top: '14px', left: '14px', padding: '8px 12px',
-                      backgroundColor: selectedSupplier.verificationStatus === 'verified' ? '#10b981' : '#9ca3af', color: 'white',
-                      borderRadius: 9999, fontSize: 12, fontWeight: 700
-                    }}>
-                      {selectedSupplier.verificationStatus === 'verified' ? 'Verified' : 'Pending'}
-                    </div>
-                    {mediaItems.length > 1 && (
-                      <>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setMediaIndex((i) => (i - 1 + mediaItems.length) % mediaItems.length); }}
-                          style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', color: '#fff', border: 'none', borderRadius: 9999, width: 32, height: 32, cursor: 'pointer' }}
-                          aria-label="Previous"
-                        >
-                          ‹
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setMediaIndex((i) => (i + 1) % mediaItems.length); }}
-                          style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', color: '#fff', border: 'none', borderRadius: 9999, width: 32, height: 32, cursor: 'pointer' }}
-                          aria-label="Next"
-                        >
-                          ›
-                        </button>
-                        <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6 }}>
-                          {mediaItems.map((_, idx) => (
-                            <span key={idx} style={{ width: 6, height: 6, borderRadius: 9999, backgroundColor: idx === Math.min(mediaIndex, mediaItems.length - 1) ? '#10b981' : 'rgba(255,255,255,0.6)' }} />
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                );
-              })()}
-            </div>
-
             {/* Header */}
             <div style={{ marginBottom: '32px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <h2 style={{ fontSize: '28px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-                {selectedSupplier.name}
-              </h2>
-                <div style={{ 
-                  backgroundColor: '#10b981', 
-                  color: 'white', 
+                  {selectedSupplier.name}
+                </h2>
+                <div style={{
+                  backgroundColor: '#10b981',
+                  color: 'white',
                   padding: '6px 12px',
                   borderRadius: '16px',
-                  fontSize: '12px', 
+                  fontSize: '12px',
                   fontWeight: '600',
                   display: 'flex',
                   alignItems: 'center',
@@ -621,33 +670,91 @@ function SuppliersModule() {
                 </div>
               </div>
               <div style={{ fontSize: '16px', color: '#6b7280' }}>
-                {Array.isArray(selectedSupplier.categories) ? selectedSupplier.categories.join(', ') : (selectedSupplier.category || 'N/A')} • {selectedSupplier.city || selectedSupplier.location || 'N/A'}
-                  </div>
-                </div>
-                {/* Contact Information */}
+                {selectedSupplier.category} • {selectedSupplier.location}
+              </div>
+            </div>
+
+            {/* Contact Information */}
             <div style={{ marginBottom: '32px' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
-                      Contact Information
-                    </h3>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
+                Contact Information
+              </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Phone size={16} color="#6b7280" />
-                  <span style={{ fontSize: '14px', color: '#374151' }}>{selectedSupplier.primaryContactPhone || selectedSupplier.phone || 'N/A'}</span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Mail size={16} color="#6b7280" />
-                  <span style={{ fontSize: '14px', color: '#374151' }}>{selectedSupplier.primaryContactEmail || selectedSupplier.email || 'N/A'}</span>
-                      </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <Globe size={16} color="#6b7280" />
-                  <span style={{ fontSize: '14px', color: '#374151' }}>{selectedSupplier.website || 'N/A'}</span>
-                        </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Phone size={16} color="#6b7280" />
+                  <span style={{ fontSize: '14px', color: '#374151' }}>{selectedSupplier.contact.phone}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Mail size={16} color="#6b7280" />
+                  <span style={{ fontSize: '14px', color: '#374151' }}>{selectedSupplier.contact.email}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Globe size={16} color="#6b7280" />
+                  <span style={{ fontSize: '14px', color: '#374151' }}>{selectedSupplier.contact.website}</span>
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <MapPin size={16} color="#6b7280" />
-                  <span style={{ fontSize: '14px', color: '#374151' }}>{selectedSupplier.address || 'N/A'}</span>
-                      </div>
-                    </div>
+                  <span style={{ fontSize: '14px', color: '#374151' }}>{selectedSupplier.contact.address}</span>
+                </div>
               </div>
+            </div>
+
+            {/* Map Section */}
+            <div style={{ marginBottom: '32px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
+                Location
+              </h3>
+              <div style={{ height: '300px', borderRadius: '20px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+                <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+              </div>
+            </div>
+
+            {/* Products & Services */}
+            <div style={{ marginBottom: '32px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
+                Products & Services
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+                {selectedSupplier.tags.map((tag: string, index: number) => (
+                  <span
+                    key={index}
+                    style={{
+                      backgroundColor: '#f9fafb',
+                      color: '#6b7280',
+                      padding: '6px 12px',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      border: '1px solid #e5e7eb'
+                    }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <div>
+                <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937', marginBottom: '8px' }}>
+                  Specialties
+                </h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {selectedSupplier.specialties.map((specialty: string, index: number) => (
+                    <span
+                      key={index}
+                      style={{
+                        backgroundColor: '#e0f2fe',
+                        color: '#0369a1',
+                        padding: '4px 8px',
+                        borderRadius: '20px',
+                        fontSize: '11px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      {specialty}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
 
             {/* Pricing & Business Details */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '32px' }}>
@@ -657,25 +764,15 @@ function SuppliersModule() {
                 </h3>
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Price Range</div>
-                  <div style={{ fontSize: '20px', fontWeight: '600', color: '#059669' }}>
-                    {Array.isArray(selectedSupplier.pricingTiers) && selectedSupplier.pricingTiers.length > 0 
-                      ? selectedSupplier.pricingTiers.join(', ') 
-                      : (selectedSupplier.priceRange || 'Contact for pricing')}
-                  </div>
+                  <div style={{ fontSize: '20px', fontWeight: '600', color: '#059669' }}>{selectedSupplier.priceRange}</div>
                 </div>
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Bulk Discount</div>
-                  <div style={{ fontSize: '14px', color: '#f59e0b', fontWeight: '500' }}>
-                    {Array.isArray(selectedSupplier.bulkDiscounts) && selectedSupplier.bulkDiscounts.length > 0 
-                      ? selectedSupplier.bulkDiscounts.join(', ') 
-                      : (selectedSupplier.bulkDiscount || 'Contact for bulk pricing')}
-                  </div>
+                  <div style={{ fontSize: '14px', color: '#f59e0b', fontWeight: '500' }}>{selectedSupplier.bulkDiscount}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Minimum Order</div>
-                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
-                    {selectedSupplier.minimumOrderQuantity ? `${selectedSupplier.minimumOrderQuantity} ${selectedSupplier.minimumOrderUnit || 'units'}` : (selectedSupplier.minOrder || 'N/A')}
-                  </div>
+                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>{selectedSupplier.minOrder}</div>
                 </div>
               </div>
 
@@ -685,64 +782,54 @@ function SuppliersModule() {
                 </h3>
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Lead Time</div>
-                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
-                    {selectedSupplier.standardLeadTimeDays ? `${selectedSupplier.standardLeadTimeDays} days` : (selectedSupplier.leadTime || 'N/A')}
-                  </div>
+                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>{selectedSupplier.leadTime}</div>
                 </div>
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Return Policy</div>
                   <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
-                    {selectedSupplier.returnPolicy || 'Contact supplier for details'}
-                  </div>
-                </div>
-                <div style={{ marginBottom: '16px' }}>
-                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Warranty</div>
-                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
-                    {selectedSupplier.warranty || 'Contact supplier for details'}
+                    {selectedSupplier.returnPolicy || 'Not specified'}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Delivery Terms</div>
-                  <div style={{ fontSize: '14px', color: '#374151' }}>
-                    {selectedSupplier.deliveryTerms || 'Contact supplier for details'}
-                  </div>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Delivery Areas</div>
+                  <div style={{ fontSize: '14px', color: '#374151' }}>{selectedSupplier.deliveryAreas.join(', ')}</div>
                 </div>
               </div>
             </div>
 
             {/* Customer Reviews */}
             <div style={{ marginBottom: '32px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
-                  Customer Reviews
-                </h3>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
+                Customer Reviews
+              </h3>
               <div style={{ display: 'grid', gap: '12px' }}>
-                {(selectedSupplier.customerReviews || []).map((review: any, index: number) => (
-                    <div 
-                      key={index}
-                      style={{ 
-                        padding: '16px', 
+                {selectedSupplier.customerReviews.map((review: any, index: number) => (
+                  <div
+                    key={index}
+                    style={{
+                      padding: '16px',
                       border: '1px solid #e5e7eb',
                       borderRadius: '20px'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>{review.name}</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              size={14}
-                              fill={i < review.rating ? '#f59e0b' : '#e5e7eb'}
-                              color={i < review.rating ? '#f59e0b' : '#e5e7eb'}
-                            />
-                          ))}
-                        </div>
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>{review.name}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            size={14}
+                            fill={i < review.rating ? '#f59e0b' : '#e5e7eb'}
+                            color={i < review.rating ? '#f59e0b' : '#e5e7eb'}
+                          />
+                        ))}
                       </div>
-                    <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>"{review.comment}"</p>
                     </div>
-                  ))}
-                </div>
+                    <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>"{review.comment}"</p>
+                  </div>
+                ))}
               </div>
+            </div>
 
             {/* Action Buttons */}
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
@@ -851,49 +938,28 @@ function SuppliersModule() {
               e.preventDefault();
               setIsSubmitting(true);
               try {
-                // Process form data to match the database schema
+                // Process form data
                 const processedData = {
-                  name: supplierForm.name,
-                  legalName: supplierForm.name, // Use company name as legal name
-                  registrationNumber: `REG-${Date.now()}`, // Generate a unique registration number
-                  taxId: `TAX-${Date.now()}`, // Generate a unique tax ID
-                  city: supplierForm.location,
-                  region: supplierForm.location, // Use location as region for now
-                  country: supplierForm.country,
-                  address: supplierForm.contact.address,
-                  website: supplierForm.contact.website,
-                  primaryContactName: supplierForm.name, // Use company name as primary contact
-                  primaryContactTitle: 'Manager', // Default title
-                  primaryContactPhone: supplierForm.contact.phone,
-                  primaryContactEmail: supplierForm.contact.email,
-                  categories: supplierForm.category ? [supplierForm.category] : [],
-                  paymentMethods: supplierForm.paymentMethods ? supplierForm.paymentMethods.split(',').map(s => s.trim()) : [],
-                  minimumOrderQuantity: supplierForm.minOrder ? parseInt(supplierForm.minOrder.replace(/\D/g, '')) : null,
-                  minimumOrderUnit: supplierForm.minOrder ? supplierForm.minOrder.replace(/\d/g, '').trim() : null,
-                  standardLeadTimeDays: supplierForm.leadTime ? parseInt(supplierForm.leadTime.replace(/\D/g, '')) : null,
-                  returnPolicy: supplierForm.returnPolicy,
-                  warranty: supplierForm.warranty,
-                  deliveryTerms: supplierForm.deliveryTerms,
-                  pricingTiers: supplierForm.priceRange ? [supplierForm.priceRange] : [],
-                  bulkDiscounts: supplierForm.bulkDiscount ? [supplierForm.bulkDiscount] : [],
-                  images: selectedImages.map(file => URL.createObjectURL(file)), // Convert selected images to URLs
-                  videos: selectedVideos.map(file => URL.createObjectURL(file)), // Convert selected videos to URLs
-                  status: 'active',
-                  verificationStatus: 'pending'
+                  ...supplierForm,
+                  tags: supplierForm.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+                  specialties: supplierForm.specialties.split(',').map(spec => spec.trim()).filter(spec => spec),
+                  languages: supplierForm.languages.split(',').map(lang => lang.trim()).filter(lang => lang),
+                  certifications: supplierForm.certifications.split(',').map(cert => cert.trim()).filter(cert => cert),
+                  paymentMethods: supplierForm.paymentMethods.split(',').map(method => method.trim()).filter(method => method),
+                  deliveryAreas: supplierForm.deliveryAreas.split(',').map(area => area.trim()).filter(area => area),
+                  coordinates: {
+                    lat: parseFloat(supplierForm.coordinates.lat) || 0,
+                    lng: parseFloat(supplierForm.coordinates.lng) || 0
+                  }
                 };
 
                 console.log('Supplier data:', processedData);
                 
-                // Create supplier via API
-                const newSupplier = await SuppliersService.createSupplier(processedData as any);
-                if (newSupplier) {
-                  alert('Supplier added successfully!');
-                  // Refresh suppliers list
-                  await fetchSuppliers();
-                } else {
-                  alert('Failed to add supplier. Please try again.');
-                }
+                // Call the backend API to create the supplier
+                const response = await SuppliersService.createSupplier(processedData);
                 
+                if (response.success) {
+                  alert('Supplier added successfully!');
                 // Reset form
                 setSupplierForm({
                   name: '',
@@ -906,9 +972,10 @@ function SuppliersModule() {
                   leadTime: '',
                   returnPolicy: '',
                   warranty: '',
-                  deliveryTerms: '',
                   established: '',
+                  employees: '',
                   tags: '',
+                  specialties: '',
                   languages: '',
                   certifications: '',
                   paymentMethods: '',
@@ -919,11 +986,20 @@ function SuppliersModule() {
                     website: '',
                     address: ''
                   },
+                  coordinates: {
+                    lat: '',
+                    lng: ''
+                  },
                   customerReviews: []
                 });
-                setSelectedImages([]);
-                setSelectedVideos([]);
                 setShowAddSupplierModal(false);
+                  // Refresh categories list to show new category if created
+                  await fetchCategories();
+                  // Refresh suppliers list to show the new supplier
+                  await fetchSuppliers();
+                } else {
+                  alert('Error adding supplier: ' + (response.message || 'Unknown error'));
+                }
               } catch (error) {
                 console.error('Error adding supplier:', error);
                 alert('Error adding supplier: ' + (error as Error).message);
@@ -956,17 +1032,9 @@ function SuppliersModule() {
                       style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
                     >
                       <option value="">Select Category</option>
-                      {isLoadingCategories ? (
-                        <option disabled>Loading categories...</option>
-                      ) : categories.length === 0 ? (
-                        <option disabled>No categories available. Add categories first.</option>
-                      ) : (
-                        categories.map((category) => (
-                        <option key={category.id} value={category.name}>
-                          {category.name}
-                        </option>
-                        ))
-                      )}
+                      {categories.map((category) => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -1093,36 +1161,6 @@ function SuppliersModule() {
                       style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
                     />
                   </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Return Policy</label>
-                    <input
-                      type="text"
-                      value={supplierForm.returnPolicy}
-                      onChange={(e) => setSupplierForm(prev => ({ ...prev, returnPolicy: e.target.value }))}
-                      placeholder="e.g., 30 days return policy"
-                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Warranty</label>
-                    <input
-                      type="text"
-                      value={supplierForm.warranty}
-                      onChange={(e) => setSupplierForm(prev => ({ ...prev, warranty: e.target.value }))}
-                      placeholder="e.g., 1 year warranty"
-                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Delivery Terms</label>
-                    <input
-                      type="text"
-                      value={supplierForm.deliveryTerms}
-                      onChange={(e) => setSupplierForm(prev => ({ ...prev, deliveryTerms: e.target.value }))}
-                      placeholder="e.g., FOB, CIF, EXW"
-                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -1140,6 +1178,16 @@ function SuppliersModule() {
                       value={supplierForm.tags}
                       onChange={(e) => setSupplierForm(prev => ({ ...prev, tags: e.target.value }))}
                       placeholder="e.g., Laptops, Phones, Tablets, Accessories"
+                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Specialties (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={supplierForm.specialties}
+                      onChange={(e) => setSupplierForm(prev => ({ ...prev, specialties: e.target.value }))}
+                      placeholder="e.g., Custom Electronics, Bulk Orders, Technical Support"
                       style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
                     />
                   </div>
@@ -1166,114 +1214,42 @@ function SuppliersModule() {
                 </div>
               </div>
 
-              {/* Product Media */}
+              {/* Location Map */}
               <div style={{ marginBottom: '24px' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>
-                  Product Media
+                  Location (Optional)
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Product Images</label>
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
-                    />
-                    <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
-                      Select multiple images (JPG, PNG, max 5MB each)
-                    </p>
-                    
-                    {/* Show selected images */}
-                    {selectedImages.length > 0 && (
-                      <div style={{ marginTop: '8px' }}>
-                        <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-                          Selected Images ({selectedImages.length}):
-                        </p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                          {selectedImages.map((file, index) => (
-                            <div key={index} style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '4px',
-                              backgroundColor: '#f3f4f6',
-                              padding: '4px 8px',
-                              borderRadius: '6px',
-                              fontSize: '11px'
-                            }}>
-                              <span>{file.name}</span>
-                              <button 
-                                type="button"
-                                onClick={() => removeImage(index)}
-                      style={{
-                                  background: 'none', 
-                                  border: 'none', 
-                                  color: '#ef4444', 
-                                  cursor: 'pointer',
-                                  fontSize: '12px'
-                                }}
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Product Videos</label>
-                    <input
-                      type="file"
-                      multiple
-                      accept="video/*"
-                      onChange={handleVideoChange}
-                      style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '12px', boxSizing: 'border-box' }}
-                    />
-                    <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
-                      Select multiple videos (MP4, MOV, max 50MB each)
-                    </p>
-                    
-                    {/* Show selected videos */}
-                    {selectedVideos.length > 0 && (
-                      <div style={{ marginTop: '8px' }}>
-                        <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-                          Selected Videos ({selectedVideos.length}):
-                        </p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                          {selectedVideos.map((file, index) => (
-                            <div key={index} style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '4px',
-                              backgroundColor: '#f3f4f6',
-                              padding: '4px 8px',
-                              borderRadius: '6px',
-                              fontSize: '11px'
-                            }}>
-                              <span>{file.name}</span>
-                              <button 
-                                type="button"
-                                onClick={() => removeVideo(index)}
-                                style={{ 
-                                  background: 'none', 
-                                  border: 'none', 
-                                  color: '#ef4444', 
-                                  cursor: 'pointer',
-                                  fontSize: '12px'
-                                }}
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>
+                  Click on the map to set the supplier's location
+                </p>
+                <div style={{ height: '300px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #d1d5db', position: 'relative' }}>
+                  <div 
+                    ref={supplierMapRef}
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                  {!supplierForm.coordinates.lat && !supplierForm.coordinates.lng && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      padding: '16px',
+                      borderRadius: '8px',
+                      textAlign: 'center',
+                      fontSize: '14px',
+                      color: '#6b7280',
+                      border: '1px solid #e5e7eb'
+                    }}>
+                      Click on the map to set location
+                    </div>
+                  )}
                 </div>
+                {(supplierForm.coordinates.lat || supplierForm.coordinates.lng) && (
+                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280' }}>
+                    Selected: {supplierForm.coordinates.lat}, {supplierForm.coordinates.lng}
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -1425,9 +1401,9 @@ function SuppliersModule() {
             {/* Categories List */}
             <div style={{ marginBottom: '24px' }}>
               <div style={{ display: 'grid', gap: '12px' }}>
-                {categories.map((category) => (
+                {categories.length > 0 ? categories.map((category, index) => (
                   <div
-                    key={category.id}
+                    key={index}
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -1448,12 +1424,12 @@ function SuppliersModule() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Tag size={16} color="#6b7280" />
                       <span style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>
-                        {category.name}
+                        {category}
                       </span>
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
-                        onClick={() => handleDeleteCategory(category.id)}
+                        onClick={() => handleDeleteCategory(category)}
                         style={{
                           backgroundColor: 'transparent',
                           color: '#ef4444',
@@ -1478,7 +1454,16 @@ function SuppliersModule() {
                       </button>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '24px',
+                    color: '#6b7280',
+                    fontSize: '14px'
+                  }}>
+                    No categories found. Add your first category above.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1521,5 +1506,4 @@ export default function SuppliersPage() {
       <SuppliersModule />
     </div>
   );
-} 
-        
+}

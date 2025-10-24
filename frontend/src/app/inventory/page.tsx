@@ -61,7 +61,6 @@ export default function InventoryPage() {
 
   const [newItemForm, setNewItemForm] = useState<NewInventoryForm>({
     name: '',
-    sku: '',
     category: '',
     description: '',
     supplier: '',
@@ -83,8 +82,7 @@ export default function InventoryPage() {
   const loadData = async () => {
     setDataLoading(true);
     try {
-      // Test API config
-      InventoryService.testApiConfig();
+      // API config test removed to prevent errors
       
       const [itemsData, categoriesData, statsData] = await Promise.all([
         InventoryService.fetchItems(),
@@ -105,7 +103,6 @@ export default function InventoryPage() {
   // Filter items
   const filteredItems = inventoryItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.category.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || item.status.toLowerCase() === statusFilter.toLowerCase();
@@ -118,7 +115,7 @@ export default function InventoryPage() {
     setFormLoading(true);
     try {
       // Validate required fields
-      if (!newItemForm.name || !newItemForm.sku || !newItemForm.category || !newItemForm.unit) {
+      if (!newItemForm.name || !newItemForm.category || !newItemForm.unit) {
         alert('Please fill in all required fields');
         return;
       }
@@ -153,7 +150,6 @@ export default function InventoryPage() {
       // Reset form and close modal
       setNewItemForm({
         name: '',
-        sku: '',
         category: '',
         description: '',
         supplier: '',
@@ -201,7 +197,6 @@ export default function InventoryPage() {
     setIsEditing(true);
     setNewItemForm({
       name: item.name,
-      sku: item.sku,
       category: item.category,
       description: item.description,
       supplier: item.supplier || '',
@@ -469,7 +464,6 @@ export default function InventoryPage() {
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Item</th>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Category</th>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Supplier</th>
-                <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>SKU</th>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Quantity</th>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Unit Price</th>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Status</th>
@@ -489,9 +483,6 @@ export default function InventoryPage() {
                   </td>
                   <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
                     {item.supplier || 'No supplier'}
-                  </td>
-                  <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
-                    {item.sku}
                   </td>
                   <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
                     {item.quantity} {item.unit}
@@ -641,24 +632,6 @@ export default function InventoryPage() {
                     type="text"
                     value={newItemForm.name}
                     onChange={(e) => setNewItemForm(prev => ({ ...prev, name: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '20px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                    SKU *
-                  </label>
-                  <input
-                    type="text"
-                    value={newItemForm.sku}
-                    onChange={(e) => setNewItemForm(prev => ({ ...prev, sku: e.target.value }))}
                     style={{
                       width: '100%',
                       padding: '12px',
@@ -912,7 +885,7 @@ export default function InventoryPage() {
               </button>
               <button
                 onClick={handleAddItem}
-                disabled={formLoading || !newItemForm.name || !newItemForm.sku || !newItemForm.category}
+                disabled={formLoading || !newItemForm.name || !newItemForm.category}
                 style={{
                   padding: '12px 24px',
                   backgroundColor: 'var(--mc-sidebar-bg-hover)',
@@ -993,28 +966,10 @@ export default function InventoryPage() {
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
-                      SKU
-                    </label>
-                    <div style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', padding: '12px 0' }}>
-                      {selectedItem.sku}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
                       Category
                     </label>
                     <div style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', padding: '12px 0' }}>
                       {selectedItem.category}
-                    </div>
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
-                      Unit
-                    </label>
-                    <div style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937', padding: '12px 0' }}>
-                      {selectedItem.unit}
                     </div>
                   </div>
                 </div>
@@ -1057,7 +1012,7 @@ export default function InventoryPage() {
                       Phone
                     </label>
                     <div style={{ fontSize: '16px', color: '#1f2937', padding: '12px 0' }}>
-                      {(selectedItem as any).supplierContact ? (selectedItem as any).supplierContact.split(' - ')[1] || (selectedItem as any).supplierContact : 'No contact information'}
+                      {selectedItem.supplierContact ? selectedItem.supplierContact.split(' - ')[1] || selectedItem.supplierContact : 'No contact information'}
                     </div>
                   </div>
                   <div>
@@ -1065,7 +1020,7 @@ export default function InventoryPage() {
                       Portfolio
                     </label>
                     <div style={{ fontSize: '16px', color: '#1f2937', padding: '12px 0', minHeight: '60px' }}>
-                      {(selectedItem as any).supplierSocial || 'No portfolio information'}
+                      {selectedItem.supplierSocial || 'No portfolio information'}
                     </div>
                   </div>
                 </div>

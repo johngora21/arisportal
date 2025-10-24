@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.supplier import Supplier
 from models.supplierService import SupplierService
+from models.supplierCategory import SupplierCategory
 import logging
 
 logger = logging.getLogger(__name__)
@@ -53,6 +54,59 @@ async def get_suppliers(
         }
     except Exception as e:
         logger.error(f"Error getting suppliers: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Categories endpoints (must be before /{supplier_id} to avoid route conflicts)
+@router.get("/categories")
+async def get_supplier_categories(db: Session = Depends(get_db)):
+    """Get all supplier categories"""
+    try:
+        supplier_service = SupplierService(db)
+        categories = supplier_service.get_supplier_categories()
+        
+        return {
+            "success": True,
+            "categories": [category.to_dict() for category in categories]
+        }
+    except Exception as e:
+        logger.error(f"Error getting supplier categories: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/categories")
+async def create_supplier_category(category_data: dict, db: Session = Depends(get_db)):
+    """Create a new supplier category"""
+    try:
+        supplier_service = SupplierService(db)
+        category = supplier_service.create_supplier_category(
+            category_data.get('name'),
+            category_data.get('description', '')
+        )
+        
+        return {
+            "success": True,
+            "message": "Category created successfully",
+            "category": category.to_dict()
+        }
+    except Exception as e:
+        logger.error(f"Error creating supplier category: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/categories/{category_id}")
+async def delete_supplier_category(category_id: int, db: Session = Depends(get_db)):
+    """Delete a supplier category"""
+    try:
+        supplier_service = SupplierService(db)
+        success = supplier_service.delete_supplier_category(category_id)
+        
+        if success:
+            return {
+                "success": True,
+                "message": "Category deleted successfully"
+            }
+        else:
+            raise HTTPException(status_code=400, detail="Category could not be deleted")
+    except Exception as e:
+        logger.error(f"Error deleting supplier category: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{supplier_id}")
@@ -135,6 +189,29 @@ async def verify_supplier(supplier_id: int, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         logger.error(f"Error verifying supplier {supplier_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/meta/categories/{category_name}")
+async def delete_supplier_category(category_name: str, db: Session = Depends(get_db)):
+    """Delete a supplier category"""
+    try:
+        supplier_service = SupplierService(db)
+        success = supplier_service.delete_supplier_category(category_name)
+        
+        if not success:
+            raise HTTPException(status_code=404, detail="Category not found")
+        
+        return {
+            "success": True,
+            "message": "Category deleted successfully"
+        }
+    except ValueError as e:
+        # Handle the case where suppliers are using the category
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting supplier category: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/meta/categories")

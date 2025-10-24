@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from database import get_db, Base, engine
 from datetime import datetime
@@ -19,14 +20,17 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4000"],
+    allow_origins=["http://localhost:3002", "http://localhost:4000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Mount static files for uploaded images and videos
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 # Import all routers
-from routers import auth, properties, investments, finance, inventory, suppliers, crm, payroll
+from routers import auth, properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload
 
 # Include all routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
@@ -35,6 +39,8 @@ app.include_router(investments.router, prefix="/api/v1/investments", tags=["Inve
 app.include_router(finance.router, prefix="/api/v1/finance", tags=["Finance"])
 app.include_router(inventory.router, prefix="/api/v1/inventory", tags=["Inventory"])
 app.include_router(suppliers.router, prefix="/api/v1/suppliers", tags=["Suppliers"])
+app.include_router(pools.router, prefix="/api/v1", tags=["Pools"])
+app.include_router(upload.router, prefix="/api/v1", tags=["Upload"])
 app.include_router(crm.router, prefix="/api/v1", tags=["CRM"])
 app.include_router(payroll.router, prefix="/api/v1/payroll", tags=["Payroll"])
 
@@ -73,4 +79,4 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
