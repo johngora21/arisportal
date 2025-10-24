@@ -125,6 +125,7 @@ class StaffCreate(BaseModel):
     total_package: float
     bank_name: Optional[str] = None
     bank_account: Optional[str] = None
+    account_name: Optional[str] = None
     tax_id: Optional[str] = None
     last_review_date: Optional[date] = None
     next_review_date: Optional[date] = None
@@ -140,17 +141,30 @@ class StaffCreate(BaseModel):
     personal_leave_balance: Optional[int] = 5
     maternity_leave_balance: Optional[int] = 0
 
+class SimpleStaffResponse(BaseModel):
+    id: int
+    first_name: str
+    last_name: str
+    email: str
+    phone: str
+    department_name: Optional[str] = None
+    role_name: Optional[str] = None
+    branch_name: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
 class StaffResponse(BaseModel):
     id: int
-    employee_id: str
-    employee_number: str
+    employee_id: Optional[str]
+    employee_number: Optional[str]
     first_name: str
     last_name: str
     middle_name: Optional[str]
     date_of_birth: Optional[date]
-    gender: Optional[Gender]
+    gender: Optional[str]
     national_id: Optional[str]
-    marital_status: Optional[MaritalStatus]
+    marital_status: Optional[str]
     blood_group: Optional[str]
     email: str
     phone: str
@@ -172,9 +186,9 @@ class StaffResponse(BaseModel):
     branch_id: int
     department_id: int
     role_id: int
-    employment_type: EmploymentType
-    employment_status: EmploymentStatus
-    hire_date: date
+    employment_type: Optional[str]
+    employment_status: Optional[str]
+    hire_date: Optional[date]
     probation_end_date: Optional[date]
     contract_end_date: Optional[date]
     reporting_manager_id: Optional[int]
@@ -184,22 +198,32 @@ class StaffResponse(BaseModel):
     total_package: float
     bank_name: Optional[str]
     bank_account: Optional[str]
+    account_name: Optional[str]
     tax_id: Optional[str]
+    paye_eligible: Optional[bool]
+    allowances_detail: Optional[str]
+    social_security: Optional[str]
+    insurance: Optional[str]
+    loans: Optional[str]
     last_review_date: Optional[date]
     next_review_date: Optional[date]
-    benefits: Optional[dict]
+    benefits: Optional[str]
     performance_rating: Optional[str]
     technical_skills: Optional[str]
     languages: Optional[str]
-    certifications: Optional[dict]
+    certifications: Optional[str]
+    documents: Optional[str]
     work_schedule: Optional[str]
-    holiday_entitlement: int
-    annual_leave_balance: int
-    sick_leave_balance: int
-    personal_leave_balance: int
-    maternity_leave_balance: int
-    is_active: bool
-    created_at: datetime
+    holiday_entitlement: Optional[int]
+    leave_status: Optional[str]
+    leave_end_date: Optional[date]
+    annual_leave_balance: Optional[int]
+    sick_leave_balance: Optional[int]
+    personal_leave_balance: Optional[int]
+    maternity_leave_balance: Optional[int]
+    is_active: Optional[bool]
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
     department_name: Optional[str] = None
     role_name: Optional[str] = None
     branch_name: Optional[str] = None
@@ -464,45 +488,88 @@ async def get_roles(
     db: Session = Depends(get_db)
 ):
     """Get all roles with optional filtering"""
-    query = db.query(Role).filter(Role.is_active == True)
-    
-    if department_id:
-        query = query.filter(Role.department_id == department_id)
-    
-    if search:
-        query = query.filter(Role.name.ilike(f"%{search}%"))
-    
-    roles = query.offset(skip).limit(limit).all()
-    
-    # Transform to match frontend expectations
-    result = []
-    for role in roles:
-        # Get department name
-        department = db.query(Department).filter(Department.id == role.department_id).first()
-        department_name = department.name if department else f"Department {role.department_id}"
+    try:
+        query = db.query(Role).filter(Role.is_active == True)
         
-        result.append({
-            "id": str(role.id),
-            "name": role.name,
-            "description": role.description or "",
-            "department": department_name,
-            "department_id": role.department_id,  # Add department_id for frontend filtering
-            "level": role.level or "Mid",
-            "branch": "Unknown Branch",  # TODO: Add branch to role model
-            "reports_to": role.reports_to or "",
-            "status": role.status or "active",
-            "experience_required": role.experience_required or "",
-            "education_required": role.education_required or "",
-            "key_skills": json.loads(role.key_skills) if role.key_skills else [],
-            "minSalary": role.min_salary or 0,
-            "maxSalary": role.max_salary or 0,
-            "responsibilities": json.loads(role.responsibilities) if role.responsibilities else [],
-            "requirements": json.loads(role.requirements) if role.requirements else [],
-            "createdDate": role.created_at.strftime("%Y-%m-%d") if role.created_at else "",
-            "employees": 0  # TODO: Count actual employees
-        })
+        if department_id:
+            query = query.filter(Role.department_id == department_id)
+        
+        if search:
+            query = query.filter(Role.name.ilike(f"%{search}%"))
+        
+        roles = query.offset(skip).limit(limit).all()
+        
+        # Transform to match frontend expectations
+        result = []
+        for role in roles:
+            try:
+                # Get department name
+                department = db.query(Department).filter(Department.id == role.department_id).first()
+                department_name = department.name if department else f"Department {role.department_id}"
+                
+                # Get branch name from department
+                branch_name = "Unknown Branch"
+                if department and department.branch_id:
+                    branch = db.query(Branch).filter(Branch.id == department.branch_id).first()
+                    branch_name = branch.name if branch else f"Branch {department.branch_id}"
+                
+                # Safely parse JSON fields
+                key_skills = []
+                responsibilities = []
+                requirements = []
+                
+                if role.key_skills:
+                    try:
+                        key_skills = json.loads(role.key_skills)
+                    except json.JSONDecodeError:
+                        print(f"Warning: Invalid JSON in key_skills for role {role.id}: {role.key_skills}")
+                        key_skills = []
+                
+                if role.responsibilities:
+                    try:
+                        responsibilities = json.loads(role.responsibilities)
+                    except json.JSONDecodeError:
+                        print(f"Warning: Invalid JSON in responsibilities for role {role.id}: {role.responsibilities}")
+                        responsibilities = []
+                
+                if role.requirements:
+                    try:
+                        requirements = json.loads(role.requirements)
+                    except json.JSONDecodeError:
+                        print(f"Warning: Invalid JSON in requirements for role {role.id}: {role.requirements}")
+                        requirements = []
+                
+                result.append({
+                    "id": str(role.id),
+                    "name": role.name,
+                    "description": role.description or "",
+                    "department": department_name,
+                    "department_id": role.department_id,  # Add department_id for frontend filtering
+                    "level": role.level or "Mid",
+                    "branch": branch_name,
+                    "branch_id": department.branch_id if department else None,  # Add branch_id for frontend
+                    "reports_to": role.reports_to or "",
+                    "status": role.status or "active",
+                    "experience_required": role.experience_required or "",
+                    "education_required": role.education_required or "",
+                    "key_skills": key_skills,
+                    "minSalary": role.min_salary or 0,
+                    "maxSalary": role.max_salary or 0,
+                    "responsibilities": responsibilities,
+                    "requirements": requirements,
+                    "createdDate": role.created_at.strftime("%Y-%m-%d") if role.created_at else "",
+                    "employees": 0  # TODO: Count actual employees
+                })
+            except Exception as e:
+                print(f"Error processing role {role.id}: {str(e)}")
+                # Skip this role and continue with others
+                continue
+        
+        return result
     
-    return result
+    except Exception as e:
+        print(f"Error fetching roles: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching roles: {str(e)}")
 
 @router.post("/roles")
 async def create_role(role_data: dict, db: Session = Depends(get_db)):
@@ -575,67 +642,113 @@ async def update_role(role_id: int, role_data: dict, db: Session = Depends(get_d
     """Update an existing role"""
     print(f"Updating role {role_id} with data: {role_data}")
     
-    # Find the role
-    role = db.query(Role).filter(Role.id == role_id).first()
-    if not role:
-        raise HTTPException(status_code=404, detail="Role not found")
+    try:
+        # Find the role
+        role = db.query(Role).filter(Role.id == role_id).first()
+        if not role:
+            raise HTTPException(status_code=404, detail="Role not found")
+        
+        # Handle department_id if provided
+        if 'department_id' in role_data:
+            # Convert to integer and validate that the department exists
+            try:
+                dept_id = int(role_data['department_id'])
+                department = db.query(Department).filter(Department.id == dept_id).first()
+                if not department:
+                    raise HTTPException(status_code=400, detail=f"Department with ID {dept_id} not found")
+                role_data['department_id'] = dept_id
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid department ID format")
+        elif 'department' in role_data:
+            # Handle department name to department_id conversion if provided (legacy support)
+            department = db.query(Department).filter(Department.name == role_data['department']).first()
+            if department:
+                role_data['department_id'] = department.id
+            del role_data['department']  # Remove the department name from update data
+        
+        # Handle branch field - for now, get branch from department since roles table doesn't have branch_id yet
+        branch_name = "Unknown Branch"
+        if 'branch' in role_data:
+            try:
+                branch_id = int(role_data['branch'])
+                # Validate branch exists
+                branch = db.query(Branch).filter(Branch.id == branch_id).first()
+                if branch:
+                    branch_name = branch.name
+                del role_data['branch']  # Remove branch from update data since we don't store it
+            except ValueError:
+                # Invalid branch ID, just ignore it
+                del role_data['branch']
+        
+        # Map frontend field names to backend field names
+        field_mapping = {
+            'title': 'name',
+            'experience': 'experience_required',
+            'education': 'education_required',
+            'skills': 'key_skills',
+            'reportsTo': 'reports_to',
+            'salaryMin': 'min_salary',
+            'salaryMax': 'max_salary'
+        }
+        
+        # Apply field mapping
+        for frontend_field, backend_field in field_mapping.items():
+            if frontend_field in role_data:
+                role_data[backend_field] = role_data[frontend_field]
+                del role_data[frontend_field]
+        
+        # Update fields (exclude id and other non-updatable fields)
+        excluded_fields = ['id', 'created_at', 'updated_at', 'branch']
+        for field, value in role_data.items():
+            if hasattr(role, field) and value is not None and field not in excluded_fields:
+                if field in ['key_skills', 'responsibilities', 'requirements'] and isinstance(value, list):
+                    setattr(role, field, json.dumps(value))
+                else:
+                    setattr(role, field, value)
+        
+        db.commit()
+        db.refresh(role)
+        
+        # Get department and branch names for response
+        department_name = "Unknown Department"
+        response_branch_name = "Unknown Branch"
+        
+        if role.department_id:
+            dept = db.query(Department).filter(Department.id == role.department_id).first()
+            department_name = dept.name if dept else "Unknown Department"
+            
+            # Get branch name from department
+            if dept and dept.branch_id:
+                branch = db.query(Branch).filter(Branch.id == dept.branch_id).first()
+                response_branch_name = branch.name if branch else "Unknown Branch"
+        
+        # Return in the format the frontend expects
+        return {
+            "id": str(role.id),
+            "name": role.name,
+            "description": role.description or "",
+            "department": department_name,
+            "level": role.level or "Mid",
+            "branch": response_branch_name,
+            "reports_to": role.reports_to or "",
+            "status": role.status or "active",
+            "experience_required": role.experience_required or "",
+            "education_required": role.education_required or "",
+            "key_skills": json.loads(role.key_skills) if role.key_skills else [],
+            "minSalary": role.min_salary or 0,
+            "maxSalary": role.max_salary or 0,
+            "responsibilities": json.loads(role.responsibilities) if role.responsibilities else [],
+            "requirements": json.loads(role.requirements) if role.requirements else [],
+            "createdDate": role.created_at.strftime("%Y-%m-%d") if role.created_at else "",
+            "employees": 0
+        }
     
-    # Handle department name to department_id conversion if provided
-    if 'department' in role_data:
-        department = db.query(Department).filter(Department.name == role_data['department']).first()
-        if department:
-            role_data['department_id'] = department.id
-        del role_data['department']  # Remove the department name from update data
-    
-    # Map frontend field names to backend field names
-    field_mapping = {
-        'title': 'name',
-        'experience': 'experience_required',
-        'education': 'education_required',
-        'skills': 'key_skills',
-        'reportsTo': 'reports_to',
-        'salaryMin': 'min_salary',
-        'salaryMax': 'max_salary'
-    }
-    
-    # Apply field mapping
-    for frontend_field, backend_field in field_mapping.items():
-        if frontend_field in role_data:
-            role_data[backend_field] = role_data[frontend_field]
-            del role_data[frontend_field]
-    
-    # Update fields (exclude id and other non-updatable fields)
-    excluded_fields = ['id', 'created_at', 'updated_at']
-    for field, value in role_data.items():
-        if hasattr(role, field) and value is not None and field not in excluded_fields:
-            if field in ['key_skills', 'responsibilities', 'requirements'] and isinstance(value, list):
-                setattr(role, field, json.dumps(value))
-            else:
-                setattr(role, field, value)
-    
-    db.commit()
-    db.refresh(role)
-    
-    # Return in the format the frontend expects
-    return {
-        "id": str(role.id),
-        "name": role.name,
-        "description": role.description or "",
-        "department": role_data.get('department') or "Unknown Department",
-        "level": role.level or "Mid",
-        "branch": role_data.get('branch') or "Unknown Branch",
-        "reports_to": role.reports_to or "",
-        "status": role.status or "active",
-        "experience_required": role.experience_required or "",
-        "education_required": role.education_required or "",
-        "key_skills": json.loads(role.key_skills) if role.key_skills else [],
-        "minSalary": role.min_salary or 0,
-        "maxSalary": role.max_salary or 0,
-        "responsibilities": json.loads(role.responsibilities) if role.responsibilities else [],
-        "requirements": json.loads(role.requirements) if role.requirements else [],
-        "createdDate": role.created_at.strftime("%Y-%m-%d") if role.created_at else "",
-        "employees": 0
-    }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating role: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error updating role: {str(e)}")
 
 @router.delete("/roles/{role_id}")
 async def delete_role(role_id: int, db: Session = Depends(get_db)):
@@ -712,6 +825,9 @@ async def get_staff(
         if member.branch_id:
             branch = db.query(Branch).filter(Branch.id == member.branch_id).first()
             member.branch_name = branch.name if branch else None
+        
+        # JSON fields are already stored as strings in the database
+        # No need to parse them here as they'll be returned as strings
     
     return staff
 
@@ -753,7 +869,12 @@ async def create_staff(staff_data: dict, db: Session = Depends(get_db)):
         'position': 'role_id',         # Form sends position as role ID
         'bankName': 'bank_name',
         'bankAccount': 'bank_account',
-        'taxId': 'tax_id'
+        'taxId': 'tax_id',
+        'workSchedule': 'work_schedule',
+        'holidayEntitlement': 'holiday_entitlement',
+        'leaveStatus': 'leave_status',
+        'leaveEndDate': 'leave_end_date',
+        'documents': 'documents'
     }
     
     # Apply field mapping
@@ -877,6 +998,12 @@ async def create_staff(staff_data: dict, db: Session = Depends(get_db)):
         basic_salary = float(staff_data.get('basic_salary', 0)) if staff_data.get('basic_salary') else 0
         staff_data['total_package'] = basic_salary + allowances_total
     
+    # Process JSON fields
+    json_fields = ['allowances_detail', 'social_security', 'insurance', 'loans', 'documents']
+    for field in json_fields:
+        if field in staff_data and staff_data[field]:
+            staff_data[field] = json.dumps(staff_data[field])
+    
     # Filter out fields that don't exist in the Staff model
     valid_fields = {}
     for field, value in staff_data.items():
@@ -907,24 +1034,28 @@ async def create_staff(staff_data: dict, db: Session = Depends(get_db)):
 @router.get("/staff/{staff_id}", response_model=StaffResponse)
 async def get_staff_member(staff_id: int, db: Session = Depends(get_db)):
     """Get a specific staff member"""
-    staff = db.query(Staff).filter(Staff.id == staff_id).first()
-    if not staff:
-        raise HTTPException(status_code=404, detail="Staff member not found")
-    
-    # Add names to the staff member
-    if staff.department_id:
-        dept = db.query(Department).filter(Department.id == staff.department_id).first()
-        staff.department_name = dept.name if dept else None
-    
-    if staff.role_id:
-        role = db.query(Role).filter(Role.id == staff.role_id).first()
-        staff.role_name = role.name if role else None
-    
-    if staff.branch_id:
-        branch = db.query(Branch).filter(Branch.id == staff.branch_id).first()
-        staff.branch_name = branch.name if branch else None
-    
-    return staff
+    try:
+        staff = db.query(Staff).filter(Staff.id == staff_id).first()
+        if not staff:
+            raise HTTPException(status_code=404, detail="Staff member not found")
+        
+        # Add names to the staff member
+        if staff.department_id:
+            dept = db.query(Department).filter(Department.id == staff.department_id).first()
+            staff.department_name = dept.name if dept else None
+        
+        if staff.role_id:
+            role = db.query(Role).filter(Role.id == staff.role_id).first()
+            staff.role_name = role.name if role else None
+        
+        if staff.branch_id:
+            branch = db.query(Branch).filter(Branch.id == staff.branch_id).first()
+            staff.branch_name = branch.name if branch else None
+        
+        return staff
+    except Exception as e:
+        print(f"Error in get_staff_member: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.put("/staff/{staff_id}", response_model=StaffResponse)
 async def update_staff(staff_id: int, staff_data: dict, db: Session = Depends(get_db)):
@@ -957,6 +1088,7 @@ async def update_staff(staff_id: int, staff_data: dict, db: Session = Depends(ge
         'emergencyContactName2': 'emergency_contact2_name',
         'emergencyContactRelationship2': 'emergency_contact2_relationship',
         'emergencyContactPhone2': 'emergency_contact2_phone',
+        'addressFull': 'address_full',
         'addressCity': 'address_city',
         'addressState': 'address_state',
         'addressCountry': 'address_country',
@@ -970,12 +1102,21 @@ async def update_staff(staff_id: int, staff_data: dict, db: Session = Depends(ge
         'reportingManager': 'reporting_manager_id',
         'branch': 'branch_id',
         'basicSalary': 'basic_salary',
-        'allowances': 'allowances',
+        'allowances': 'allowances_detail',
         'bankName': 'bank_name',
         'bankAccount': 'bank_account',
+        'accountName': 'account_name',
         'taxId': 'tax_id',
         'payeEligible': 'paye_eligible',
-        'sdlEligible': 'sdl_eligible'
+        'allowancesDetail': 'allowances_detail',
+        'socialSecurity': 'social_security',
+        'insurance': 'insurance',
+        'loans': 'loans',
+        'workSchedule': 'work_schedule',
+        'holidayEntitlement': 'holiday_entitlement',
+        'leaveStatus': 'leave_status',
+        'leaveEndDate': 'leave_end_date',
+        'documents': 'documents'
     }
     
     # Apply field mapping and data conversion
@@ -995,8 +1136,8 @@ async def update_staff(staff_id: int, staff_data: dict, db: Session = Depends(ge
                     updated_fields[backend_field] = float(value)
                 except (ValueError, TypeError):
                     updated_fields[backend_field] = 0.0
-            elif backend_field == 'allowances' and isinstance(value, list):
-                # Calculate total allowances
+            elif backend_field == 'allowances_detail' and isinstance(value, list):
+                # Calculate total allowances and store detail
                 total_allowances = 0
                 for allowance in value:
                     if isinstance(allowance, dict) and 'amount' in allowance:
@@ -1004,9 +1145,49 @@ async def update_staff(staff_id: int, staff_data: dict, db: Session = Depends(ge
                             total_allowances += float(allowance['amount'])
                         except (ValueError, TypeError):
                             pass
-                updated_fields[backend_field] = total_allowances
-            elif backend_field in ['paye_eligible', 'sdl_eligible']:
+                # Store the detail and calculate total
+                updated_fields['allowances_detail'] = json.dumps(value) if value else None
+                updated_fields['allowances'] = total_allowances
+            elif backend_field in ['social_security', 'insurance', 'loans', 'documents']:
+                # Store JSON data directly
+                updated_fields[backend_field] = json.dumps(value) if value else None
+            elif backend_field in ['paye_eligible']:
                 updated_fields[backend_field] = bool(value)
+            elif backend_field == 'employment_type':
+                # Convert frontend values to enum values
+                employment_type_mapping = {
+                    'full-time': 'full_time',
+                    'part-time': 'part_time',
+                    'contract': 'contract',
+                    'intern': 'intern'
+                }
+                updated_fields[backend_field] = employment_type_mapping.get(value, value)
+            elif backend_field == 'employment_status':
+                # Convert frontend values to enum values
+                employment_status_mapping = {
+                    'active': 'active',
+                    'inactive': 'inactive',
+                    'terminated': 'terminated',
+                    'on-leave': 'on_leave'
+                }
+                updated_fields[backend_field] = employment_status_mapping.get(value, value)
+            elif backend_field == 'gender':
+                # Convert frontend values to enum values
+                gender_mapping = {
+                    'male': 'male',
+                    'female': 'female',
+                    'other': 'other'
+                }
+                updated_fields[backend_field] = gender_mapping.get(value, value)
+            elif backend_field == 'marital_status':
+                # Convert frontend values to enum values
+                marital_status_mapping = {
+                    'single': 'single',
+                    'married': 'married',
+                    'divorced': 'divorced',
+                    'widowed': 'widowed'
+                }
+                updated_fields[backend_field] = marital_status_mapping.get(value, value)
             elif value is not None and value != '':
                 updated_fields[backend_field] = value
     
@@ -1036,6 +1217,9 @@ async def update_staff(staff_id: int, staff_data: dict, db: Session = Depends(ge
         branch = db.query(Branch).filter(Branch.id == staff.branch_id).first()
         staff.branch_name = branch.name if branch else None
     
+    # JSON fields are already stored as strings in the database
+    # No need to parse them here as they'll be returned as strings
+    
     return staff
 
 @router.delete("/staff/{staff_id}")
@@ -1063,70 +1247,45 @@ async def delete_staff(staff_id: int, db: Session = Depends(get_db)):
     return {"message": "Staff member deleted successfully"}
 
 # Payroll calculation function
-def calculate_payroll(basic_salary: float, allowances: float = 0, overtime_pay: float = 0, bonus: float = 0):
+def calculate_payroll(basic_salary: float, allowances: float = 0, paye_eligible: bool = True):
     """Calculate payroll deductions and net salary"""
-    gross_salary = basic_salary + allowances + overtime_pay + bonus
+    # Total Package = Basic Salary + Allowances (without deductions)
+    total_package = basic_salary + allowances
+    # Gross Salary = Basic Salary + Allowances (no overtime/bonus)
+    gross_salary = basic_salary + allowances
     
-    # Tax calculations (Kenya rates as example)
+    # Tax calculations (Tanzania PAYE rates) - ONLY ON BASIC SALARY
     paye_tax = 0
-    if gross_salary > 288000:  # Annual threshold
-        annual_gross = gross_salary * 12
-        if annual_gross <= 288000:
+    if paye_eligible:
+        # Tanzania monthly tax brackets - using basic_salary only
+        if basic_salary <= 270000:
             paye_tax = 0
-        elif annual_gross <= 388000:
-            paye_tax = (annual_gross - 288000) * 0.1 / 12
-        elif annual_gross <= 688000:
-            paye_tax = (100000 * 0.1 + (annual_gross - 388000) * 0.25) / 12
+        elif basic_salary <= 520000:
+            paye_tax = (basic_salary - 270000) * 0.08
+        elif basic_salary <= 760000:
+            paye_tax = 20000 + (basic_salary - 520000) * 0.20
+        elif basic_salary <= 1000000:
+            paye_tax = 68000 + (basic_salary - 760000) * 0.25
         else:
-            paye_tax = (100000 * 0.1 + 300000 * 0.25 + (annual_gross - 688000) * 0.3) / 12
+            paye_tax = 128000 + (basic_salary - 1000000) * 0.30
     
-    # SDL Tax (1.5% of gross salary)
-    sdl_tax = gross_salary * 0.015
+    # SDL Tax (3.5% of gross salary) - paid by employer, not deducted from employee
+    # Note: In Tanzania, SDL is paid by the company, not deducted from employee salary
+    sdl_tax = 0  # This should be tracked separately as employer cost, not employee deduction
     
-    # NSSF (6% of basic salary, max 2160)
-    nssf = min(basic_salary * 0.06, 2160)
+    # NSSF (National Social Security Fund) - Tanzania: 10% employee contribution - ONLY ON BASIC SALARY
+    nssf = basic_salary * 0.10
     
-    # NHIF (based on gross salary brackets)
+    # NHIF - Not applicable in Tanzania (this is Kenya's system)
+    # Tanzania uses different health insurance schemes
     nhif = 0
-    if gross_salary <= 5999:
-        nhif = 150
-    elif gross_salary <= 7999:
-        nhif = 300
-    elif gross_salary <= 11999:
-        nhif = 400
-    elif gross_salary <= 14999:
-        nhif = 500
-    elif gross_salary <= 19999:
-        nhif = 600
-    elif gross_salary <= 24999:
-        nhif = 750
-    elif gross_salary <= 29999:
-        nhif = 850
-    elif gross_salary <= 34999:
-        nhif = 900
-    elif gross_salary <= 39999:
-        nhif = 950
-    elif gross_salary <= 44999:
-        nhif = 1000
-    elif gross_salary <= 49999:
-        nhif = 1100
-    elif gross_salary <= 59999:
-        nhif = 1200
-    elif gross_salary <= 69999:
-        nhif = 1300
-    elif gross_salary <= 79999:
-        nhif = 1400
-    elif gross_salary <= 89999:
-        nhif = 1500
-    elif gross_salary <= 99999:
-        nhif = 1600
-    else:
-        nhif = 1700
     
     total_deductions = paye_tax + sdl_tax + nssf + nhif
-    net_salary = gross_salary - total_deductions
+    # Net Salary = Basic Salary - Deductions + Allowances
+    net_salary = basic_salary - total_deductions + allowances
     
     return {
+        "total_package": total_package,
         "gross_salary": gross_salary,
         "paye_tax": paye_tax,
         "sdl_tax": sdl_tax,
@@ -1134,6 +1293,26 @@ def calculate_payroll(basic_salary: float, allowances: float = 0, overtime_pay: 
         "nhif": nhif,
         "total_deductions": total_deductions,
         "net_salary": net_salary
+    }
+
+def calculate_employer_costs(gross_salary: float, basic_salary: float):
+    """Calculate employer costs (SDL, WCF, NSSF employer portion)"""
+    # SDL (Skills Development Levy) - 3.5% of gross salary, paid by employer
+    sdl_employer_cost = gross_salary * 0.035
+    
+    # WCF (Workers Compensation Fund) - 0.5% of gross salary, paid by employer
+    wcf_cost = gross_salary * 0.005
+    
+    # NSSF employer portion - 10% of BASIC SALARY ONLY, paid by employer
+    nssf_employer_cost = basic_salary * 0.10
+    
+    total_employer_costs = sdl_employer_cost + wcf_cost + nssf_employer_cost
+    
+    return {
+        "sdl_employer_cost": sdl_employer_cost,
+        "wcf_cost": wcf_cost,
+        "nssf_employer_cost": nssf_employer_cost,
+        "total_employer_costs": total_employer_costs
     }
 
 # Payroll processing endpoints
@@ -1155,7 +1334,17 @@ async def process_payroll(request: PayrollProcessRequest, db: Session = Depends(
     
     for staff in staff_members:
         # Calculate payroll for this staff member
-        calculation = calculate_payroll(staff.basic_salary, staff.allowances)
+        calculation = calculate_payroll(
+            staff.basic_salary, 
+            staff.allowances, 
+            paye_eligible=staff.paye_eligible
+        )
+        
+        # Calculate employer costs
+        employer_costs = calculate_employer_costs(
+            calculation["gross_salary"],
+            staff.basic_salary
+        )
         
         # Create payroll record
         payroll_record = PayrollRecord(

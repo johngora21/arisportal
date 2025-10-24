@@ -78,6 +78,7 @@ class Role(Base):
     name = Column(String(100), nullable=False)
     description = Column(Text)
     department_id = Column(Integer, ForeignKey("departments.id"), nullable=False)
+    # branch_id = Column(Integer, ForeignKey("branches.id"), nullable=True)  # Temporarily commented out
     level = Column(String(50))  # Senior, Junior, Manager
     reports_to = Column(String(100))  # Reports To
     status = Column(String(20), default='active')  # Active/Inactive
@@ -94,6 +95,7 @@ class Role(Base):
     
     # Relationships
     department = relationship("Department", back_populates="roles")
+    # branch = relationship("Branch")  # Temporarily commented out
     staff = relationship("Staff", back_populates="role", foreign_keys="Staff.role_id")
 
 class Staff(Base):
@@ -159,7 +161,17 @@ class Staff(Base):
     # Banking Information
     bank_name = Column(String(100))
     bank_account = Column(String(50))
+    account_name = Column(String(100))
     tax_id = Column(String(50))
+    
+    # Tax Eligibility
+    paye_eligible = Column(Boolean, default=True)
+    
+    # Detailed Allowances, Benefits, etc.
+    allowances_detail = Column(JSON)  # Array of allowance objects
+    social_security = Column(JSON)  # Array of social security objects
+    insurance = Column(JSON)  # Array of insurance objects
+    loans = Column(JSON)  # Array of loan objects
     
     # Performance & Benefits
     last_review_date = Column(Date)
@@ -171,10 +183,13 @@ class Staff(Base):
     technical_skills = Column(Text)
     languages = Column(Text)
     certifications = Column(JSON)  # Array of certification objects
+    documents = Column(JSON)  # Array of document objects
     
     # Attendance Information
     work_schedule = Column(String(50))
     holiday_entitlement = Column(Integer, default=21)
+    leave_status = Column(String(20), default='available')  # available, on-leave, suspended
+    leave_end_date = Column(Date)
     annual_leave_balance = Column(Integer, default=21)
     sick_leave_balance = Column(Integer, default=10)
     personal_leave_balance = Column(Integer, default=5)
