@@ -447,7 +447,7 @@ function SuppliersModule() {
                   transition: 'all 0.2s ease'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor; 'var(--mc-sidebar-bg-hover)';
+                  e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
                   e.currentTarget.style.color = 'white';
                 }}
                 onMouseLeave={(e) => {
@@ -473,7 +473,7 @@ function SuppliersModule() {
                   e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor; 'var(--mc-sidebar-bg-hover)';
+                  e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
                 }}
                 >
                   Contact
@@ -504,9 +504,10 @@ function SuppliersModule() {
             width: 'min(900px, 95vw)',
             maxHeight: '95vh',
             borderRadius: '20px',
-            padding: '32px',
-            overflowY: 'auto',
-            position: 'relative'
+            overflow: 'hidden',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column'
           }}>
             {/* Close Button */}
             <button
@@ -516,23 +517,22 @@ function SuppliersModule() {
                 top: '16px',
                 right: '16px',
                 padding: '8px',
-                backgroundColor: 'transparent',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
                 border: 'none',
                 cursor: 'pointer',
                 borderRadius: '20px',
-                color: '#6b7280'
+                color: '#6b7280',
+                zIndex: 1002,
+                backdropFilter: 'blur(4px)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
               }}
             >
               ✕
             </button>
 
-            {/* Media Gallery Section - First */}
-            <div style={{ marginBottom: '32px' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-                  Media Gallery
-                </h3>
-              </div>
+            {/* Scrollable Content Container */}
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              {/* Media gallery (images/videos) */}
               {(() => {
                 const images = selectedSupplier.images || [];
                 const videos = selectedSupplier.videos || [];
@@ -540,37 +540,25 @@ function SuppliersModule() {
                   ...images.map((src: string) => ({ type: 'image' as const, src })),
                   ...videos.map((src: string) => ({ type: 'video' as const, src }))
                 ];
-                if (mediaItems.length === 0) {
-                  return (
-                    <div style={{ 
-                      padding: '40px', 
-                      textAlign: 'center', 
-                      backgroundColor: '#f9fafb', 
-                      borderRadius: '12px',
-                      border: '2px dashed #d1d5db'
-                    }}>
-                      <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                        No media available for this supplier
-                      </div>
-                    </div>
-                  );
-                }
+                if (mediaItems.length === 0) return null;
                 const current = mediaItems[Math.min(mediaIndex, mediaItems.length - 1)];
                 return (
-                  <div style={{ position: 'relative', width: '100%', height: '380px', overflow: 'hidden', borderRadius: '12px', backgroundColor: '#000', marginBottom: '32px' }}>
+                  <div style={{ position: 'relative', width: '100%', height: '380px', overflow: 'hidden', backgroundColor: '#000' }}>
                     {current.type === 'image' ? (
                       <img src={getValidImageUrl(current.src)} alt={selectedSupplier.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                     ) : (
                       <video src={getValidImageUrl(current.src)} controls style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                     )}
                     {/* Status badge on media */}
-                    <div style={{
-                      position: 'absolute', top: '14px', left: '14px', padding: '8px 12px',
-                      backgroundColor: selectedSupplier.verificationStatus === 'verified' ? '#10b981' : '#9ca3af', color: 'white',
-                      borderRadius: 9999, fontSize: 12, fontWeight: 700
-                    }}>
-                      {selectedSupplier.verificationStatus === 'verified' ? 'Verified' : 'Pending'}
-                    </div>
+                    {selectedSupplier.verificationStatus === 'verified' && (
+                      <div style={{
+                        position: 'absolute', top: '14px', left: '14px', padding: '8px 12px',
+                        backgroundColor: '#10b981', color: 'white',
+                        borderRadius: 9999, fontSize: 12, fontWeight: 700
+                      }}>
+                        Verified
+                      </div>
+                    )}
                     {mediaItems.length > 1 && (
                       <>
                         <button
@@ -597,35 +585,37 @@ function SuppliersModule() {
                   </div>
                 );
               })()}
-            </div>
 
-            {/* Header */}
-            <div style={{ marginBottom: '32px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                <h2 style={{ fontSize: '28px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-                {selectedSupplier.name}
-              </h2>
-                <div style={{ 
-                  backgroundColor: '#10b981', 
-                  color: 'white', 
-                  padding: '6px 12px',
-                  borderRadius: '16px',
-                  fontSize: '12px', 
-                  fontWeight: '600',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}>
-                  <CheckCircle size={12} />
-                  Verified
-                </div>
-              </div>
-              <div style={{ fontSize: '16px', color: '#6b7280' }}>
-                {Array.isArray(selectedSupplier.categories) ? selectedSupplier.categories.join(', ') : (selectedSupplier.category || 'N/A')} • {selectedSupplier.city || selectedSupplier.location || 'N/A'}
+              {/* Content Area with Padding */}
+              <div style={{ padding: '32px' }}>
+              {/* Header */}
+              <div style={{ marginBottom: '32px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                  <h2 style={{ fontSize: '28px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
+                    {selectedSupplier.name}
+                  </h2>
+                  <div style={{ 
+                    backgroundColor: '#10b981', 
+                    color: 'white', 
+                    padding: '6px 12px',
+                    borderRadius: '16px',
+                    fontSize: '12px', 
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <CheckCircle size={12} />
+                    Verified
                   </div>
                 </div>
-                {/* Contact Information */}
-            <div style={{ marginBottom: '32px' }}>
+                <div style={{ fontSize: '16px', color: '#6b7280' }}>
+                  {Array.isArray(selectedSupplier.categories) ? selectedSupplier.categories.join(', ') : (selectedSupplier.category || 'N/A')} • {selectedSupplier.city || selectedSupplier.location || 'N/A'}
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div style={{ marginBottom: '32px' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
                       Contact Information
                     </h3>
@@ -710,85 +700,69 @@ function SuppliersModule() {
               </div>
             </div>
 
-            {/* Customer Reviews */}
+            {/* Products & Services */}
             <div style={{ marginBottom: '32px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
-                  Customer Reviews
-                </h3>
-              <div style={{ display: 'grid', gap: '12px' }}>
-                {(selectedSupplier.customerReviews || []).map((review: any, index: number) => (
-                    <div 
-                      key={index}
-                      style={{ 
-                        padding: '16px', 
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '20px'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>{review.name}</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              size={14}
-                              fill={i < review.rating ? '#f59e0b' : '#e5e7eb'}
-                              color={i < review.rating ? '#f59e0b' : '#e5e7eb'}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>"{review.comment}"</p>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
+                Products & Services
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+                <div>
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Product Specialties</div>
+                    <div style={{ fontSize: '14px', color: '#374151' }}>
+                      {Array.isArray(selectedSupplier.specialties) && selectedSupplier.specialties.length > 0 
+                        ? selectedSupplier.specialties.join(', ') 
+                        : 'Not specified'}
                     </div>
-                  ))}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Payment Methods</div>
+                    <div style={{ fontSize: '14px', color: '#374151' }}>
+                      {Array.isArray(selectedSupplier.paymentMethods) && selectedSupplier.paymentMethods.length > 0 
+                        ? selectedSupplier.paymentMethods.join(', ') 
+                        : 'Not specified'}
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Delivery Methods</div>
+                    <div style={{ fontSize: '14px', color: '#374151' }}>
+                      {Array.isArray(selectedSupplier.deliveryMethods) && selectedSupplier.deliveryMethods.length > 0 
+                        ? selectedSupplier.deliveryMethods.join(', ') 
+                        : 'Not specified'}
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
 
-            {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
-              <button style={{
-                backgroundColor: 'transparent',
-                color: 'var(--mc-sidebar-bg)',
-                border: '1px solid var(--mc-sidebar-bg)',
-                borderRadius: '20px',
-                padding: '12px 24px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor; 'var(--mc-sidebar-bg-hover)';
-                e.currentTarget.style.color = 'white';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = 'var(--mc-sidebar-bg)';
-              }}
-              >
-                View Portfolio
-              </button>
-              
-              <button style={{
-                backgroundColor: 'var(--mc-sidebar-bg-hover)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '20px',
-                padding: '12px 24px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor; 'var(--mc-sidebar-bg-hover)';
-              }}
-              >
-                Contact Supplier
-              </button>
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
+                
+                <button style={{
+                  backgroundColor: 'var(--mc-sidebar-bg-hover)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '20px',
+                  padding: '12px 24px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+                }}
+                >
+                  Contact Supplier
+                </button>
+              </div>
+              </div>
             </div>
           </div>
         </div>
@@ -867,7 +841,9 @@ function SuppliersModule() {
                   primaryContactPhone: supplierForm.contact.phone,
                   primaryContactEmail: supplierForm.contact.email,
                   categories: supplierForm.category ? [supplierForm.category] : [],
+                  specialties: supplierForm.tags ? supplierForm.tags.split(',').map(s => s.trim()) : [],
                   paymentMethods: supplierForm.paymentMethods ? supplierForm.paymentMethods.split(',').map(s => s.trim()) : [],
+                  deliveryMethods: supplierForm.deliveryAreas ? supplierForm.deliveryAreas.split(',').map(s => s.trim()) : [],
                   minimumOrderQuantity: supplierForm.minOrder ? parseInt(supplierForm.minOrder.replace(/\D/g, '')) : null,
                   minimumOrderUnit: supplierForm.minOrder ? supplierForm.minOrder.replace(/\d/g, '').trim() : null,
                   standardLeadTimeDays: supplierForm.leadTime ? parseInt(supplierForm.leadTime.replace(/\D/g, '')) : null,
@@ -879,7 +855,7 @@ function SuppliersModule() {
                   images: selectedImages.map(file => URL.createObjectURL(file)), // Convert selected images to URLs
                   videos: selectedVideos.map(file => URL.createObjectURL(file)), // Convert selected videos to URLs
                   status: 'active',
-                  verificationStatus: 'pending'
+                  verificationStatus: 'verified'
                 };
 
                 console.log('Supplier data:', processedData);

@@ -30,10 +30,10 @@ app.add_middleware(
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Import all routers
-from routers import auth, properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload
+from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload
 
 # Include all routers
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+# app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(properties.router, prefix="/api/v1/properties", tags=["Properties"])
 app.include_router(investments.router, prefix="/api/v1/investments", tags=["Investments"])
 app.include_router(finance.router, prefix="/api/v1/finance", tags=["Finance"])
