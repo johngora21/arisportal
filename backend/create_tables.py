@@ -29,6 +29,7 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from models.escrow import Escrow, EscrowMilestone
+from models.transaction import Transaction
 
 def create_tables():
     """Create all database tables"""

@@ -3,3 +3,4 @@
 
 # Import escrow models to ensure they are registered with SQLAlchemy
 from .escrow import Escrow, EscrowMilestone
+from .transaction import Transaction
