@@ -20,12 +20,13 @@ import {
   PayrollTab,
   AddNewModal
 } from './components';
-import { BranchService, DepartmentService, RoleService, StaffService } from './services/payrollService';
+import { BranchService, DepartmentService, RoleService, StaffService, PayrollService } from './services/payrollService';
 
 export default function PayrollPage() {
   const [activeTab, setActiveTab] = useState<'branches' | 'departments' | 'roles' | 'staff' | 'payroll'>('branches');
   const [searchQuery, setSearchQuery] = useState('');
   const [branchFilter, setBranchFilter] = useState<string>('all');
+  const [monthFilter, setMonthFilter] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [addModalType, setAddModalType] = useState<'branch' | 'department' | 'role' | 'staff'>('branch');
   const [editingStaff, setEditingStaff] = useState<any>(null);
@@ -35,6 +36,7 @@ export default function PayrollPage() {
   const [branches, setBranches] = useState<Array<{ id: string; name: string }>>([]);
   const [departments, setDepartments] = useState<Array<{ id: string; name: string }>>([]);
   const [roles, setRoles] = useState<Array<{ id: string; name: string }>>([]);
+  const [staff, setStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -43,21 +45,24 @@ export default function PayrollPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [branchesData, departmentsData, rolesData] = await Promise.all([
+        const [branchesData, departmentsData, rolesData, staffData] = await Promise.all([
           BranchService.fetchBranches(),
           DepartmentService.fetchDepartments(),
-          RoleService.fetchRoles()
+          RoleService.fetchRoles(),
+          StaffService.fetchStaff()
         ]);
         
         setBranches(branchesData.map(b => ({ id: b.id.toString(), name: b.name })));
         setDepartments(departmentsData.map(d => ({ id: d.id.toString(), name: d.name })));
         setRoles(rolesData.map(r => ({ id: r.id.toString(), name: r.name })));
+        setStaff(staffData);
       } catch (error) {
         console.error('Error fetching payroll data:', error);
         // Fallback to empty arrays
         setBranches([]);
         setDepartments([]);
         setRoles([]);
+        setStaff([]);
       } finally {
         setLoading(false);
       }
@@ -157,6 +162,8 @@ export default function PayrollPage() {
             setSearchQuery={setSearchQuery}
             branchFilter={branchFilter}
             setBranchFilter={setBranchFilter}
+            monthFilter={monthFilter}
+            setMonthFilter={setMonthFilter}
             branches={branches}
           />
         );
@@ -202,8 +209,14 @@ export default function PayrollPage() {
         </div>
 
         {/* Stats Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: '16px', 
+          marginBottom: '24px',
+          overflowX: 'auto',
+          paddingBottom: '8px'
+        }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minWidth: '200px', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <Building size={20} color="var(--mc-sidebar-bg)" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Branches</span>
@@ -213,7 +226,7 @@ export default function PayrollPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minWidth: '200px', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <Briefcase size={20} color="#10b981" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Departments</span>
@@ -223,23 +236,192 @@ export default function PayrollPage() {
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minWidth: '200px', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <Users size={20} color="#f59e0b" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Staff</span>
             </div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              {loading ? '...' : '0'}
+              {loading ? '...' : staff.filter(s => s.employment_status === 'active').length}
             </div>
           </div>
 
-          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minWidth: '200px', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <DollarSign size={20} color="#8b5cf6" />
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Monthly Payroll</span>
             </div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              {loading ? '...' : '$0'}
+              {loading ? '...' : `$${staff.filter(s => s.employment_status === 'active').reduce((sum, s) => sum + (s.total_package || 0), 0).toLocaleString()}`}
+            </div>
+          </div>
+
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minWidth: '200px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <Receipt size={20} color="#C50F11" />
+              <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Tax</span>
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
+              {loading ? '...' : `$${(() => {
+                const activeStaff = staff.filter(s => s.employment_status === 'active');
+                let totalPAYE = 0;
+                let totalSDL = 0;
+                
+                activeStaff.forEach(staffMember => {
+                  // Calculate PAYE tax if eligible
+                  if (staffMember.paye_eligible && staffMember.basic_salary) {
+                    const basicSalary = staffMember.basic_salary;
+                    let allowancesTotal = 0;
+                    
+                    // Calculate total allowances from actual data
+                    try {
+                      const allowancesDetail = JSON.parse(staffMember.allowances_detail || '[]');
+                      if (Array.isArray(allowancesDetail)) {
+                        allowancesDetail.forEach((item: any) => {
+                          if (item.amount) allowancesTotal += parseFloat(item.amount);
+                        });
+                      }
+                    } catch (e) {
+                      // Use numeric allowances if JSON parsing fails
+                      allowancesTotal = staffMember.allowances || 0;
+                    }
+                    
+                    const grossTaxableIncome = basicSalary + allowancesTotal;
+                    
+                    // Progressive PAYE calculation
+                    let payeTax = 0;
+                    if (grossTaxableIncome > 270000) {
+                      payeTax += (grossTaxableIncome - 270000) * 0.30;
+                      if (grossTaxableIncome > 100000) {
+                        payeTax += (Math.min(grossTaxableIncome, 270000) - 100000) * 0.20;
+                        if (grossTaxableIncome > 50000) {
+                          payeTax += (Math.min(grossTaxableIncome, 100000) - 50000) * 0.15;
+                          payeTax += (Math.min(grossTaxableIncome, 50000)) * 0.10;
+                        } else {
+                          payeTax += grossTaxableIncome * 0.10;
+                        }
+                      } else if (grossTaxableIncome > 50000) {
+                        payeTax += (grossTaxableIncome - 50000) * 0.15;
+                        payeTax += 50000 * 0.10;
+                      } else {
+                        payeTax += grossTaxableIncome * 0.10;
+                      }
+                    } else if (grossTaxableIncome > 100000) {
+                      payeTax += (grossTaxableIncome - 100000) * 0.20;
+                      if (grossTaxableIncome > 50000) {
+                        payeTax += (grossTaxableIncome - 50000) * 0.15;
+                        payeTax += 50000 * 0.10;
+                      } else {
+                        payeTax += grossTaxableIncome * 0.10;
+                      }
+                    } else if (grossTaxableIncome > 50000) {
+                      payeTax += (grossTaxableIncome - 50000) * 0.15;
+                      payeTax += 50000 * 0.10;
+                    } else {
+                      payeTax += grossTaxableIncome * 0.10;
+                    }
+                    
+                    totalPAYE += payeTax;
+                  }
+                  
+                  // Calculate total gross for SDL calculation
+                  if (staffMember.total_package) {
+                    totalSDL += staffMember.total_package;
+                  }
+                });
+                
+                // SDL only applies if company has at least 10 employees
+                const sdlAmount = activeStaff.length >= 10 ? (totalSDL * 0.035) : 0;
+                
+                return (totalPAYE + sdlAmount).toLocaleString();
+              })()}`}
+            </div>
+          </div>
+
+          {/* SDL Card */}
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minWidth: '200px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <Receipt size={20} color="#059669" />
+              <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>SDL</span>
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
+              {loading ? '...' : `$${(() => {
+                const activeStaff = staff.filter(s => s.employment_status === 'active');
+                const totalGross = activeStaff.reduce((sum, s) => sum + (s.total_package || 0), 0);
+                const sdlAmount = activeStaff.length >= 10 ? (totalGross * 0.035) : 0;
+                return sdlAmount.toLocaleString();
+              })()}`}
+            </div>
+          </div>
+
+          {/* PAYE Card */}
+          <div style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', minWidth: '200px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <Receipt size={20} color="#dc2626" />
+              <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>PAYE</span>
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
+              {loading ? '...' : `$${(() => {
+                const activeStaff = staff.filter(s => s.employment_status === 'active');
+                let totalPAYE = 0;
+                
+                activeStaff.forEach(staffMember => {
+                  if (staffMember.paye_eligible && staffMember.basic_salary) {
+                    const basicSalary = staffMember.basic_salary;
+                    let allowancesTotal = 0;
+                    
+                    try {
+                      const allowancesDetail = JSON.parse(staffMember.allowances_detail || '[]');
+                      if (Array.isArray(allowancesDetail)) {
+                        allowancesDetail.forEach((item: any) => {
+                          if (item.amount) allowancesTotal += parseFloat(item.amount);
+                        });
+                      }
+                    } catch (e) {
+                      allowancesTotal = staffMember.allowances || 0;
+                    }
+                    
+                    const grossTaxableIncome = basicSalary + allowancesTotal;
+                    
+                    // Progressive PAYE calculation
+                    let payeTax = 0;
+                    if (grossTaxableIncome > 270000) {
+                      payeTax += (grossTaxableIncome - 270000) * 0.30;
+                      if (grossTaxableIncome > 100000) {
+                        payeTax += (Math.min(grossTaxableIncome, 270000) - 100000) * 0.20;
+                        if (grossTaxableIncome > 50000) {
+                          payeTax += (Math.min(grossTaxableIncome, 100000) - 50000) * 0.15;
+                          payeTax += (Math.min(grossTaxableIncome, 50000)) * 0.10;
+                        } else {
+                          payeTax += grossTaxableIncome * 0.10;
+                        }
+                      } else if (grossTaxableIncome > 50000) {
+                        payeTax += (grossTaxableIncome - 50000) * 0.15;
+                        payeTax += 50000 * 0.10;
+                      } else {
+                        payeTax += grossTaxableIncome * 0.10;
+                      }
+                    } else if (grossTaxableIncome > 100000) {
+                      payeTax += (grossTaxableIncome - 100000) * 0.20;
+                      if (grossTaxableIncome > 50000) {
+                        payeTax += (grossTaxableIncome - 50000) * 0.15;
+                        payeTax += 50000 * 0.10;
+                      } else {
+                        payeTax += grossTaxableIncome * 0.10;
+                      }
+                    } else if (grossTaxableIncome > 50000) {
+                      payeTax += (grossTaxableIncome - 50000) * 0.15;
+                      payeTax += 50000 * 0.10;
+                    } else {
+                      payeTax += grossTaxableIncome * 0.10;
+                    }
+                    
+                    totalPAYE += payeTax;
+                  }
+                });
+                
+                return totalPAYE.toLocaleString();
+              })()}`}
             </div>
           </div>
         </div>
@@ -382,6 +564,9 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
   const [selectedBranch, setSelectedBranch] = useState('');
   const [payrollData, setPayrollData] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isMakingPayment, setIsMakingPayment] = useState(false);
+  const [payrollSummary, setPayrollSummary] = useState<any>(null);
+  const [error, setError] = useState<string>('');
 
   const currentYear = new Date().getFullYear();
   const months = [
@@ -393,45 +578,64 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
     if (!selectedMonth) return;
     
     setIsProcessing(true);
-    // Simulate API call
-    setTimeout(() => {
-      // Mock payroll data
-      setPayrollData([
-        {
-          id: '1',
-          name: 'John Doe',
-          basicSalary: 500000,
-          allowances: 50000,
-          grossSalary: 550000,
-          payeTax: 55000,
-          sdlTax: 27500,
-          nssf: 22000,
-          nhif: 16500,
-          deductions: 121000,
-          netSalary: 429000
-        },
-        {
-          id: '2',
-          name: 'Jane Smith',
-          basicSalary: 450000,
-          allowances: 40000,
-          grossSalary: 490000,
-          payeTax: 49000,
-          sdlTax: 24500,
-          nssf: 19600,
-          nhif: 14700,
-          deductions: 107800,
-          netSalary: 382200
-        }
-      ]);
+    setError('');
+    
+    try {
+      const branchId = selectedBranch ? parseInt(selectedBranch) : undefined;
+      const response = await PayrollService.processPayroll({
+        payroll_period: selectedMonth,
+        branch_id: branchId
+      });
+      
+      if (response.status === 'success') {
+        setPayrollData(response.detailed_records || []);
+        setPayrollSummary({
+          total_employees: response.total_employees,
+          total_gross_salary: response.total_gross_salary,
+          total_deductions: response.total_deductions,
+          total_net_salary: response.total_net_salary
+        });
+      } else if (response.status === 'already_exists') {
+        setError('Payroll for this period already exists. You can reprocess by deleting the existing records first.');
+        setPayrollData([]);
+        setPayrollSummary(null);
+      } else if (response.status === 'no_staff') {
+        setError('No active staff members found for payroll processing.');
+        setPayrollData([]);
+        setPayrollSummary(null);
+      }
+    } catch (error: any) {
+      console.error('Error processing payroll:', error);
+      setError(error.message || 'Failed to process payroll. Please try again.');
+      setPayrollData([]);
+      setPayrollSummary(null);
+    } finally {
       setIsProcessing(false);
-    }, 2000);
+    }
   };
 
-  const handleMakePayment = () => {
-    // Process payment logic here
-    alert('Payment processing initiated for all employees!');
-    onClose();
+  const handleMakePayment = async () => {
+    if (!selectedMonth) return;
+    
+    setIsMakingPayment(true);
+    setError('');
+    
+    try {
+      const branchId = selectedBranch ? parseInt(selectedBranch) : undefined;
+      const response = await PayrollService.markPayrollPaid(selectedMonth, branchId);
+      
+      if (response.status === 'success') {
+        alert(`Payment processing completed! ${response.paid_records} payroll records marked as paid.`);
+        onClose();
+      } else {
+        setError(response.message || 'Failed to process payment.');
+      }
+    } catch (error: any) {
+      console.error('Error making payment:', error);
+      setError(error.message || 'Failed to process payment. Please try again.');
+    } finally {
+      setIsMakingPayment(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -534,6 +738,21 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div style={{
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '16px',
+            color: '#dc2626',
+            fontSize: '14px'
+          }}>
+            {error}
+          </div>
+        )}
+
         {/* Process Button */}
         <div style={{ marginBottom: '24px' }}>
           <button
@@ -566,28 +785,34 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
             </h3>
             
             {/* Summary Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '24px' }}>
               <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-                  {payrollData.length}
+                  {payrollSummary?.total_employees || payrollData.length}
                 </div>
                 <div style={{ fontSize: '12px', color: '#6b7280' }}>Total Employees</div>
               </div>
               <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#10b981' }}>
-                  {payrollData.reduce((sum, emp) => sum + emp.grossSalary, 0).toLocaleString()}
+                  {payrollData.reduce((sum, emp) => sum + (emp.gross_salary || 0), 0).toLocaleString()}
                 </div>
                 <div style={{ fontSize: '12px', color: '#6b7280' }}>Total Gross Salary</div>
               </div>
               <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#dc2626' }}>
-                  {payrollData.reduce((sum, emp) => sum + emp.deductions, 0).toLocaleString()}
+                  {payrollData.reduce((sum, emp) => sum + (emp.deductions || 0), 0).toLocaleString()}
                 </div>
                 <div style={{ fontSize: '12px', color: '#6b7280' }}>Total Deductions</div>
               </div>
               <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: '700', color: '#10b981' }}>
+                  {payrollData.reduce((sum, emp) => sum + (emp.allowances || 0), 0).toLocaleString()}
+                </div>
+                <div style={{ fontSize: '12px', color: '#6b7280' }}>Total Allowances</div>
+              </div>
+              <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#2563eb' }}>
-                  {payrollData.reduce((sum, emp) => sum + emp.netSalary, 0).toLocaleString()}
+                  {payrollData.reduce((sum, emp) => sum + (emp.net_salary || 0), 0).toLocaleString()}
                 </div>
                 <div style={{ fontSize: '12px', color: '#6b7280' }}>Total Net Salary</div>
               </div>
@@ -612,19 +837,19 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
                       <tr key={employee.id} style={{ borderTop: '1px solid #e5e7eb' }}>
                         <td style={{ padding: '12px', fontSize: '14px', color: '#1f2937' }}>{employee.name}</td>
                         <td style={{ padding: '12px', textAlign: 'right', fontSize: '14px', color: '#1f2937' }}>
-                          {employee.basicSalary.toLocaleString()}
+                          {employee.basic_salary?.toLocaleString() || '0'}
                         </td>
                         <td style={{ padding: '12px', textAlign: 'right', fontSize: '14px', color: '#10b981' }}>
-                          {employee.allowances.toLocaleString()}
+                          {employee.allowances?.toLocaleString() || '0'}
                         </td>
                         <td style={{ padding: '12px', textAlign: 'right', fontSize: '14px', color: '#1f2937', fontWeight: '600' }}>
-                          {employee.grossSalary.toLocaleString()}
+                          {employee.gross_salary?.toLocaleString() || '0'}
                         </td>
                         <td style={{ padding: '12px', textAlign: 'right', fontSize: '14px', color: '#dc2626' }}>
-                          {employee.deductions.toLocaleString()}
+                          {employee.deductions?.toLocaleString() || '0'}
                         </td>
                         <td style={{ padding: '12px', textAlign: 'right', fontSize: '14px', color: '#2563eb', fontWeight: '600' }}>
-                          {employee.netSalary.toLocaleString()}
+                          {employee.net_salary?.toLocaleString() || '0'}
                         </td>
                       </tr>
                     ))}
@@ -652,22 +877,23 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
               </button>
               <button
                 onClick={handleMakePayment}
+                disabled={isMakingPayment}
                 style={{
                   padding: '12px 24px',
-                  backgroundColor: '#10b981',
+                  backgroundColor: isMakingPayment ? '#d1d5db' : '#10b981',
                   color: 'white',
                   border: 'none',
                   borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
-                  cursor: 'pointer',
+                  cursor: isMakingPayment ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px'
                 }}
               >
                 <DollarSign size={16} />
-                Make Payment
+                {isMakingPayment ? 'Processing Payment...' : 'Make Payment'}
               </button>
             </div>
           </div>

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from database import get_db
 from models.payroll import Staff, Branch, Department, Role, PayrollRecord, PayrollCalculation, EmploymentStatus, EmploymentType, MaritalStatus, Gender
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import List, Optional
 from datetime import datetime, date
 import logging
@@ -826,8 +826,52 @@ async def get_staff(
             branch = db.query(Branch).filter(Branch.id == member.branch_id).first()
             member.branch_name = branch.name if branch else None
         
-        # JSON fields are already stored as strings in the database
-        # No need to parse them here as they'll be returned as strings
+        # Parse JSON fields and ensure amounts are floats
+        json_fields = ['allowances_detail', 'social_security', 'insurance', 'loans', 'documents']
+        for field in json_fields:
+            if hasattr(member, field) and getattr(member, field):
+                try:
+                    parsed_data = json.loads(getattr(member, field))
+                    if isinstance(parsed_data, list):
+                        # Convert amounts to floats for proper decimal handling
+                        if field == 'allowances_detail':
+                            for item in parsed_data:
+                                if isinstance(item, dict) and 'amount' in item:
+                                    try:
+                                        item['amount'] = float(item['amount'])
+                                    except (ValueError, TypeError):
+                                        pass
+                        elif field == 'social_security':
+                            for item in parsed_data:
+                                if isinstance(item, dict) and 'percentage' in item:
+                                    try:
+                                        item['percentage'] = float(item['percentage'])
+                                    except (ValueError, TypeError):
+                                        pass
+                        elif field == 'insurance':
+                            for item in parsed_data:
+                                if isinstance(item, dict) and 'annualAmount' in item:
+                                    try:
+                                        item['annualAmount'] = float(item['annualAmount'])
+                                    except (ValueError, TypeError):
+                                        pass
+                        elif field == 'loans':
+                            for item in parsed_data:
+                                if isinstance(item, dict):
+                                    if 'amount' in item:
+                                        try:
+                                            item['amount'] = float(item['amount'])
+                                        except (ValueError, TypeError):
+                                            pass
+                                    if 'monthlyDeduction' in item:
+                                        try:
+                                            item['monthlyDeduction'] = float(item['monthlyDeduction'])
+                                        except (ValueError, TypeError):
+                                            pass
+                        # Store the parsed data back as JSON string with float amounts
+                        setattr(member, field, json.dumps(parsed_data))
+                except (json.JSONDecodeError, TypeError):
+                    pass  # Keep original value if parsing fails
     
     return staff
 
@@ -861,6 +905,7 @@ async def create_staff(staff_data: dict, db: Session = Depends(get_db)):
         'probationEndDate': 'probation_end_date',
         'contractEndDate': 'contract_end_date',
         'basicSalary': 'basic_salary',
+        'allowances': 'allowances',
         'employmentType': 'employment_type',
         'maritalStatus': 'marital_status',
         'reportingManager': 'reporting_manager_id',
@@ -981,6 +1026,8 @@ async def create_staff(staff_data: dict, db: Session = Depends(get_db)):
     allowances_total = 0
     if 'allowances' in staff_data and staff_data['allowances']:
         if isinstance(staff_data['allowances'], list):
+            # Map allowances to allowances_detail for storage
+            staff_data['allowances_detail'] = staff_data['allowances']
             for allowance in staff_data['allowances']:
                 if isinstance(allowance, dict) and 'amount' in allowance:
                     try:
@@ -989,7 +1036,6 @@ async def create_staff(staff_data: dict, db: Session = Depends(get_db)):
                         pass
         elif isinstance(staff_data['allowances'], (int, float)):
             allowances_total = float(staff_data['allowances'])
-    
     # Store the numeric total instead of JSON
     staff_data['allowances'] = allowances_total
     
@@ -998,10 +1044,45 @@ async def create_staff(staff_data: dict, db: Session = Depends(get_db)):
         basic_salary = float(staff_data.get('basic_salary', 0)) if staff_data.get('basic_salary') else 0
         staff_data['total_package'] = basic_salary + allowances_total
     
-    # Process JSON fields
+    # Process JSON fields and convert amounts to floats
     json_fields = ['allowances_detail', 'social_security', 'insurance', 'loans', 'documents']
     for field in json_fields:
         if field in staff_data and staff_data[field]:
+            # Convert amounts to floats for proper decimal handling
+            if field == 'allowances_detail' and isinstance(staff_data[field], list):
+                for item in staff_data[field]:
+                    if isinstance(item, dict) and 'amount' in item:
+                        try:
+                            item['amount'] = float(item['amount'])
+                        except (ValueError, TypeError):
+                            pass
+            elif field == 'social_security' and isinstance(staff_data[field], list):
+                for item in staff_data[field]:
+                    if isinstance(item, dict) and 'percentage' in item:
+                        try:
+                            item['percentage'] = float(item['percentage'])
+                        except (ValueError, TypeError):
+                            pass
+            elif field == 'insurance' and isinstance(staff_data[field], list):
+                for item in staff_data[field]:
+                    if isinstance(item, dict) and 'annualAmount' in item:
+                        try:
+                            item['annualAmount'] = float(item['annualAmount'])
+                        except (ValueError, TypeError):
+                            pass
+            elif field == 'loans' and isinstance(staff_data[field], list):
+                for item in staff_data[field]:
+                    if isinstance(item, dict) and 'amount' in item:
+                        try:
+                            item['amount'] = float(item['amount'])
+                        except (ValueError, TypeError):
+                            pass
+                    if isinstance(item, dict) and 'monthlyDeduction' in item:
+                        try:
+                            item['monthlyDeduction'] = float(item['monthlyDeduction'])
+                        except (ValueError, TypeError):
+                            pass
+            
             staff_data[field] = json.dumps(staff_data[field])
     
     # Filter out fields that don't exist in the Staff model
@@ -1039,6 +1120,17 @@ async def get_staff_member(staff_id: int, db: Session = Depends(get_db)):
         if not staff:
             raise HTTPException(status_code=404, detail="Staff member not found")
         
+        print(f"DEBUG: Staff {staff_id} data from DB:")
+        print(f"  - allowances_detail: {staff.allowances_detail}")
+        print(f"  - allowances: {staff.allowances}")
+        print(f"  - basic_salary: {staff.basic_salary}")
+        print(f"  - total_package: {staff.total_package}")
+        print(f"  - social_security: {staff.social_security}")
+        print(f"  - insurance: {staff.insurance}")
+        print(f"  - loans: {staff.loans}")
+        print(f"  - paye_eligible: {staff.paye_eligible}")
+        
+        
         # Add names to the staff member
         if staff.department_id:
             dept = db.query(Department).filter(Department.id == staff.department_id).first()
@@ -1051,6 +1143,53 @@ async def get_staff_member(staff_id: int, db: Session = Depends(get_db)):
         if staff.branch_id:
             branch = db.query(Branch).filter(Branch.id == staff.branch_id).first()
             staff.branch_name = branch.name if branch else None
+        
+        # Parse JSON fields and ensure amounts are floats
+        json_fields = ['allowances_detail', 'social_security', 'insurance', 'loans', 'documents']
+        for field in json_fields:
+            if hasattr(staff, field) and getattr(staff, field):
+                try:
+                    parsed_data = json.loads(getattr(staff, field))
+                    if isinstance(parsed_data, list):
+                        # Convert amounts to floats for proper decimal handling
+                        if field == 'allowances_detail':
+                            for item in parsed_data:
+                                if isinstance(item, dict) and 'amount' in item:
+                                    try:
+                                        item['amount'] = float(item['amount'])
+                                    except (ValueError, TypeError):
+                                        pass
+                        elif field == 'social_security':
+                            for item in parsed_data:
+                                if isinstance(item, dict) and 'percentage' in item:
+                                    try:
+                                        item['percentage'] = float(item['percentage'])
+                                    except (ValueError, TypeError):
+                                        pass
+                        elif field == 'insurance':
+                            for item in parsed_data:
+                                if isinstance(item, dict) and 'annualAmount' in item:
+                                    try:
+                                        item['annualAmount'] = float(item['annualAmount'])
+                                    except (ValueError, TypeError):
+                                        pass
+                        elif field == 'loans':
+                            for item in parsed_data:
+                                if isinstance(item, dict):
+                                    if 'amount' in item:
+                                        try:
+                                            item['amount'] = float(item['amount'])
+                                        except (ValueError, TypeError):
+                                            pass
+                                    if 'monthlyDeduction' in item:
+                                        try:
+                                            item['monthlyDeduction'] = float(item['monthlyDeduction'])
+                                        except (ValueError, TypeError):
+                                            pass
+                        # Store the parsed data back as JSON string with float amounts
+                        setattr(staff, field, json.dumps(parsed_data))
+                except (json.JSONDecodeError, TypeError):
+                    pass  # Keep original value if parsing fails
         
         return staff
     except Exception as e:
@@ -1108,7 +1247,6 @@ async def update_staff(staff_id: int, staff_data: dict, db: Session = Depends(ge
         'accountName': 'account_name',
         'taxId': 'tax_id',
         'payeEligible': 'paye_eligible',
-        'allowancesDetail': 'allowances_detail',
         'socialSecurity': 'social_security',
         'insurance': 'insurance',
         'loans': 'loans',
@@ -1142,13 +1280,46 @@ async def update_staff(staff_id: int, staff_data: dict, db: Session = Depends(ge
                 for allowance in value:
                     if isinstance(allowance, dict) and 'amount' in allowance:
                         try:
-                            total_allowances += float(allowance['amount'])
+                            allowance['amount'] = float(allowance['amount'])  # Convert to float
+                            total_allowances += allowance['amount']
                         except (ValueError, TypeError):
                             pass
                 # Store the detail and calculate total
                 updated_fields['allowances_detail'] = json.dumps(value) if value else None
                 updated_fields['allowances'] = total_allowances
-            elif backend_field in ['social_security', 'insurance', 'loans', 'documents']:
+            elif backend_field == 'social_security' and isinstance(value, list):
+                # Convert percentages to floats
+                for item in value:
+                    if isinstance(item, dict) and 'percentage' in item:
+                        try:
+                            item['percentage'] = float(item['percentage'])
+                        except (ValueError, TypeError):
+                            pass
+                updated_fields[backend_field] = json.dumps(value) if value else None
+            elif backend_field == 'insurance' and isinstance(value, list):
+                # Convert amounts to floats
+                for item in value:
+                    if isinstance(item, dict) and 'annualAmount' in item:
+                        try:
+                            item['annualAmount'] = float(item['annualAmount'])
+                        except (ValueError, TypeError):
+                            pass
+                updated_fields[backend_field] = json.dumps(value) if value else None
+            elif backend_field == 'loans' and isinstance(value, list):
+                # Convert amounts to floats
+                for item in value:
+                    if isinstance(item, dict) and 'amount' in item:
+                        try:
+                            item['amount'] = float(item['amount'])
+                        except (ValueError, TypeError):
+                            pass
+                    if isinstance(item, dict) and 'monthlyDeduction' in item:
+                        try:
+                            item['monthlyDeduction'] = float(item['monthlyDeduction'])
+                        except (ValueError, TypeError):
+                            pass
+                updated_fields[backend_field] = json.dumps(value) if value else None
+            elif backend_field in ['documents']:
                 # Store JSON data directly
                 updated_fields[backend_field] = json.dumps(value) if value else None
             elif backend_field in ['paye_eligible']:
@@ -1246,34 +1417,93 @@ async def delete_staff(staff_id: int, db: Session = Depends(get_db)):
     
     return {"message": "Staff member deleted successfully"}
 
+# Payroll calculation function without SDL (for initial calculation)
+def calculate_payroll_without_sdl(basic_salary: float, allowances: float = 0, paye_eligible: bool = True, loans: float = 0, insurance: float = 0):
+    """Calculate payroll deductions and net salary without SDL"""
+    # Total Package = Basic Salary + Allowances (without deductions)
+    total_package = basic_salary + allowances
+    # Gross Salary = Basic Salary + Allowances (no overtime/bonus)
+    gross_salary = basic_salary + allowances
+    
+    # Tax calculations (Tanzania PAYE rates) - ON GROSS TAXABLE INCOME (Basic Salary + Taxable Allowances)
+    paye_tax = 0
+    if paye_eligible:
+        # Gross Taxable Income = Basic Salary + Taxable Allowances
+        gross_taxable_income = basic_salary + allowances
+        
+        # Tanzania monthly tax brackets - using gross_taxable_income
+        if gross_taxable_income <= 270000:
+            paye_tax = 0
+        elif gross_taxable_income <= 520000:
+            paye_tax = (gross_taxable_income - 270000) * 0.08
+        elif gross_taxable_income <= 760000:
+            paye_tax = 20000 + (gross_taxable_income - 520000) * 0.20
+        elif gross_taxable_income <= 1000000:
+            paye_tax = 68000 + (gross_taxable_income - 760000) * 0.25
+        else:
+            paye_tax = 128000 + (gross_taxable_income - 1000000) * 0.30
+    
+    # NSSF (National Social Security Fund) - Tanzania: 10% employee contribution - ONLY ON BASIC SALARY
+    # NSSF is calculated only on basic salary, not on allowances
+    nssf = basic_salary * 0.10
+    
+    # NHIF - Not applicable in Tanzania (this is Kenya's system)
+    # Tanzania uses different health insurance schemes
+    nhif = 0
+    
+    total_deductions = paye_tax + nssf + nhif
+    # Net Salary = Basic Salary - Deductions + Allowances - Loans - Insurance
+    # Loans and Insurance are deducted from employee's net salary but don't affect tax calculations
+    net_salary = basic_salary - total_deductions + allowances - loans - insurance
+    
+    return {
+        "total_package": total_package,
+        "gross_salary": gross_salary,
+        "paye_tax": paye_tax,
+        "sdl_tax": 0,  # No SDL in this calculation
+        "nssf": nssf,
+        "nhif": nhif,
+        "loans": loans,
+        "insurance": insurance,
+        "total_deductions": total_deductions,
+        "net_salary": net_salary
+    }
+
 # Payroll calculation function
-def calculate_payroll(basic_salary: float, allowances: float = 0, paye_eligible: bool = True):
+def calculate_payroll(basic_salary: float, allowances: float = 0, paye_eligible: bool = True, total_sdl: float = 0, total_employees: int = 1):
     """Calculate payroll deductions and net salary"""
     # Total Package = Basic Salary + Allowances (without deductions)
     total_package = basic_salary + allowances
     # Gross Salary = Basic Salary + Allowances (no overtime/bonus)
     gross_salary = basic_salary + allowances
     
-    # Tax calculations (Tanzania PAYE rates) - ONLY ON BASIC SALARY
+    # Tax calculations (Tanzania PAYE rates) - ON GROSS TAXABLE INCOME (Basic Salary + Taxable Allowances)
     paye_tax = 0
     if paye_eligible:
-        # Tanzania monthly tax brackets - using basic_salary only
-        if basic_salary <= 270000:
+        # Gross Taxable Income = Basic Salary + Taxable Allowances
+        gross_taxable_income = basic_salary + allowances
+        
+        # Tanzania monthly tax brackets - using gross_taxable_income
+        if gross_taxable_income <= 270000:
             paye_tax = 0
-        elif basic_salary <= 520000:
-            paye_tax = (basic_salary - 270000) * 0.08
-        elif basic_salary <= 760000:
-            paye_tax = 20000 + (basic_salary - 520000) * 0.20
-        elif basic_salary <= 1000000:
-            paye_tax = 68000 + (basic_salary - 760000) * 0.25
+        elif gross_taxable_income <= 520000:
+            paye_tax = (gross_taxable_income - 270000) * 0.08
+        elif gross_taxable_income <= 760000:
+            paye_tax = 20000 + (gross_taxable_income - 520000) * 0.20
+        elif gross_taxable_income <= 1000000:
+            paye_tax = 68000 + (gross_taxable_income - 760000) * 0.25
         else:
-            paye_tax = 128000 + (basic_salary - 1000000) * 0.30
+            paye_tax = 128000 + (gross_taxable_income - 1000000) * 0.30
     
-    # SDL Tax (3.5% of gross salary) - paid by employer, not deducted from employee
-    # Note: In Tanzania, SDL is paid by the company, not deducted from employee salary
-    sdl_tax = 0  # This should be tracked separately as employer cost, not employee deduction
+    # SDL Tax (3.5% of total basic salary) - distributed per employee
+    # SDL is calculated as 3.5% of total basic salary paid by employer
+    # We distribute this amount among employees based on their basic salary proportion
+    # Formula: (employee_basic_salary / total_basic_salary) * total_sdl
+    total_basic_salary_for_sdl = total_sdl / 0.035  # Reverse calculate total basic salary
+    sdl_tax = (basic_salary / total_basic_salary_for_sdl) * total_sdl if total_basic_salary_for_sdl > 0 else 0
     
     # NSSF (National Social Security Fund) - Tanzania: 10% employee contribution - ONLY ON BASIC SALARY
+    # NSSF is calculated only on basic salary, not on allowances
     nssf = basic_salary * 0.10
     
     # NHIF - Not applicable in Tanzania (this is Kenya's system)
@@ -1319,85 +1549,264 @@ def calculate_employer_costs(gross_salary: float, basic_salary: float):
 @router.post("/payroll/process")
 async def process_payroll(request: PayrollProcessRequest, db: Session = Depends(get_db)):
     """Process payroll for a specific period"""
-    # Get all active staff
-    query = db.query(Staff).filter(Staff.is_active == True, Staff.employment_status == EmploymentStatus.ACTIVE)
-    
-    if request.branch_id:
-        query = query.filter(Staff.branch_id == request.branch_id)
-    
-    staff_members = query.all()
-    
-    payroll_records = []
-    total_gross = 0
-    total_deductions = 0
-    total_net = 0
-    
-    for staff in staff_members:
-        # Calculate payroll for this staff member
-        calculation = calculate_payroll(
-            staff.basic_salary, 
-            staff.allowances, 
-            paye_eligible=staff.paye_eligible
-        )
+    try:
+        # Allow reprocessing payroll for any period - no duplicate check
         
-        # Calculate employer costs
-        employer_costs = calculate_employer_costs(
-            calculation["gross_salary"],
-            staff.basic_salary
-        )
+        # Get all active staff
+        query = db.query(Staff).filter(Staff.is_active == True, Staff.employment_status == EmploymentStatus.ACTIVE)
         
-        # Create payroll record
-        payroll_record = PayrollRecord(
-            staff_id=staff.id,
+        if request.branch_id:
+            query = query.filter(Staff.branch_id == request.branch_id)
+        
+        staff_members = query.all()
+        
+        if not staff_members:
+            return {
+                "message": "No active staff members found for payroll processing",
+                "payroll_period": request.payroll_period,
+                "total_employees": 0,
+                "total_gross_salary": 0,
+                "total_deductions": 0,
+                "total_net_salary": 0,
+                "payroll_records": 0,
+                "status": "no_staff"
+            }
+        
+        payroll_records = []
+        total_gross = 0
+        total_deductions = 0
+        total_net = 0
+        total_basic_salary = 0
+        detailed_records = []
+        
+        # First pass: Calculate individual payrolls without SDL to get net salaries
+        individual_calculations = []
+        for staff in staff_members:
+            # Extract loan amount from loans JSON field
+            loan_amount = 0
+            if staff.loans and isinstance(staff.loans, list):
+                # Sum up all active loan deductions
+                for loan in staff.loans:
+                    if isinstance(loan, dict) and loan.get('status') == 'active':
+                        loan_amount += loan.get('monthly_deduction', 0)
+            
+            # Extract insurance amount from insurance JSON field
+            insurance_amount = 0
+            if staff.insurance and isinstance(staff.insurance, list):
+                # Sum up all active insurance deductions
+                for insurance in staff.insurance:
+                    if isinstance(insurance, dict) and insurance.get('status') == 'active':
+                        insurance_amount += insurance.get('monthly_premium', 0)
+            
+            # Calculate payroll without SDL first
+            calculation = calculate_payroll_without_sdl(
+                staff.basic_salary, 
+                staff.allowances, 
+                paye_eligible=staff.paye_eligible,
+                loans=loan_amount,
+                insurance=insurance_amount
+            )
+            individual_calculations.append({
+                'staff': staff,
+                'calculation': calculation,
+                'loan_amount': loan_amount,
+                'insurance_amount': insurance_amount
+            })
+            total_net += calculation['net_salary']
+        
+        # Calculate SDL as 3.5% of total net salary paid to employees
+        total_sdl = total_net * 0.035
+        
+        # Second pass: Distribute SDL proportionally and create final payroll records
+        for item in individual_calculations:
+            staff = item['staff']
+            base_calculation = item['calculation']
+            loan_amount = item['loan_amount']
+            insurance_amount = item['insurance_amount']
+            
+            # Just fetch the exact values from staff data - NO CALCULATIONS AT ALL
+            # Use the values exactly as they are stored in the staff record
+            
+            # Calculate deductions from staff data (same logic as frontend staff details page)
+            total_deductions = 0
+            
+            # Social Security deductions (percentage-based on basic salary)
+            if staff.social_security:
+                try:
+                    social_security = json.loads(staff.social_security) if isinstance(staff.social_security, str) else staff.social_security
+                    if isinstance(social_security, list):
+                        for item_ss in social_security:
+                            if isinstance(item_ss, dict):
+                                if item_ss.get('percentage') and staff.basic_salary:
+                                    deduction = (staff.basic_salary * float(item_ss['percentage'])) / 100
+                                    total_deductions += deduction
+                except (json.JSONDecodeError, TypeError, ValueError):
+                    pass
+            
+            # Insurance deductions (annual amounts converted to monthly)
+            if staff.insurance:
+                try:
+                    insurance_data = json.loads(staff.insurance) if isinstance(staff.insurance, str) else staff.insurance
+                    if isinstance(insurance_data, list):
+                        for item_ins in insurance_data:
+                            if isinstance(item_ins, dict):
+                                if item_ins.get('annualAmount'):
+                                    deduction = float(item_ins['annualAmount']) / 12
+                                    total_deductions += deduction
+                                elif item_ins.get('amount'):
+                                    deduction = float(item_ins['amount'])
+                                    total_deductions += deduction
+                except (json.JSONDecodeError, TypeError, ValueError):
+                    pass
+            
+            # Loan deductions (monthly amounts)
+            if staff.loans:
+                try:
+                    loans_data = json.loads(staff.loans) if isinstance(staff.loans, str) else staff.loans
+                    if isinstance(loans_data, list):
+                        for item_loan in loans_data:
+                            if isinstance(item_loan, dict) and item_loan.get('amount'):
+                                deduction = float(item_loan['amount'])
+                                total_deductions += deduction
+                except (json.JSONDecodeError, TypeError, ValueError):
+                    pass
+            
+            # PAYE Tax calculation (if eligible) - calculated on gross taxable income (basic salary + allowances)
+            if staff.paye_eligible and staff.basic_salary:
+                basic_salary = staff.basic_salary
+                allowances_total = staff.allowances or 0
+                
+                gross_taxable_income = basic_salary + allowances_total
+                paye_tax = 0
+                
+                # Tanzania monthly tax brackets - using gross_taxable_income
+                if gross_taxable_income <= 270000:
+                    paye_tax = 0
+                elif gross_taxable_income <= 520000:
+                    paye_tax = (gross_taxable_income - 270000) * 0.08
+                elif gross_taxable_income <= 760000:
+                    paye_tax = 20000 + (gross_taxable_income - 520000) * 0.20
+                elif gross_taxable_income <= 1000000:
+                    paye_tax = 68000 + (gross_taxable_income - 760000) * 0.25
+                else:
+                    paye_tax = 128000 + (gross_taxable_income - 1000000) * 0.30
+                
+                total_deductions += paye_tax
+            
+            # Calculate net salary
+            net_salary = (staff.basic_salary or 0) + (staff.allowances or 0) - total_deductions
+            
+            # Create final calculation using the exact staff data values
+            calculation = {
+                'total_package': staff.total_package or 0,
+                'gross_salary': staff.total_package or 0,  # Total Package IS the gross salary
+                'paye_tax': 0,  # No calculations - will be calculated in frontend
+                'sdl_tax': 0,  # No calculations - will be calculated in frontend
+                'nssf': 0,  # No calculations - will be calculated in frontend
+                'nhif': 0,  # No calculations - will be calculated in frontend
+                'loans': 0,  # No calculations - will be calculated in frontend
+                'insurance': 0,  # No calculations - will be calculated in frontend
+                'total_deductions': total_deductions,  # Fetch calculated deductions
+                'net_salary': net_salary  # Fetch calculated net salary
+            }
+            
+            print(f"DEBUG: Payroll calculation for {staff.first_name} {staff.last_name}:")
+            print(f"  - Basic Salary: {staff.basic_salary}")
+            print(f"  - Allowances: {staff.allowances}")
+            print(f"  - Gross Salary: {calculation['gross_salary']}")
+            print(f"  - PAYE Tax: {calculation['paye_tax']}")
+            print(f"  - SDL Tax: {calculation['sdl_tax']}")
+            print(f"  - NSSF: {calculation['nssf']}")
+            print(f"  - Total Deductions: {calculation['total_deductions']}")
+            print(f"  - Net Salary: {calculation['net_salary']}")
+            
+            # Calculate employer costs
+            employer_costs = calculate_employer_costs(
+                calculation["gross_salary"],
+                staff.basic_salary
+            )
+            
+            # Create payroll record
+            payroll_record = PayrollRecord(
+                staff_id=staff.id,
+                payroll_period=request.payroll_period,
+                pay_date=datetime.now().date(),
+                basic_salary=staff.basic_salary,
+                allowances=staff.allowances,
+                gross_salary=calculation["gross_salary"],
+                paye_tax=calculation["paye_tax"],
+                sdl_tax=calculation["sdl_tax"],
+                nssf=calculation["nssf"],
+                nhif=calculation["nhif"],
+                other_deductions=loan_amount + insurance_amount,  # Store loans + insurance in other_deductions
+                total_deductions=calculation["total_deductions"],
+                net_salary=calculation["net_salary"],
+                status="calculated",
+                processed_at=datetime.utcnow()
+            )
+            
+            db.add(payroll_record)
+            payroll_records.append(payroll_record)
+            
+            # Add detailed record for frontend display
+            detailed_records.append({
+                "id": staff.id,
+                "name": f"{staff.first_name} {staff.last_name}",
+                "basic_salary": staff.basic_salary,
+                "allowances": staff.allowances,
+                "gross_salary": calculation["gross_salary"],
+                "paye_tax": calculation["paye_tax"],
+                "sdl_tax": calculation["sdl_tax"],
+                "nssf": calculation["nssf"],
+                "nhif": calculation["nhif"],
+                "loans": loan_amount,
+                "insurance": insurance_amount,
+                "deductions": calculation["total_deductions"],
+                "net_salary": calculation["net_salary"],
+                "department_name": staff.department_name if hasattr(staff, 'department_name') else None,
+                "branch_name": staff.branch_name if hasattr(staff, 'branch_name') else None
+            })
+            
+            total_gross += calculation["gross_salary"]
+            total_deductions += calculation["total_deductions"]
+            total_net += calculation["net_salary"]
+        
+        # Create payroll calculation summary
+        payroll_calculation = PayrollCalculation(
             payroll_period=request.payroll_period,
-            pay_date=datetime.now().date(),
-            basic_salary=staff.basic_salary,
-            allowances=staff.allowances,
-            gross_salary=calculation["gross_salary"],
-            paye_tax=calculation["paye_tax"],
-            sdl_tax=calculation["sdl_tax"],
-            nssf=calculation["nssf"],
-            nhif=calculation["nhif"],
-            total_deductions=calculation["total_deductions"],
-            net_salary=calculation["net_salary"],
-            status="calculated"
+            branch_id=request.branch_id,
+            total_employees=len(staff_members),
+            total_gross_salary=total_gross,
+            total_deductions=total_deductions,
+            total_net_salary=total_net,
+            total_paye_tax=sum(r.paye_tax for r in payroll_records),
+            total_sdl_tax=sum(r.sdl_tax for r in payroll_records),
+            total_nssf=sum(r.nssf for r in payroll_records),
+            total_nhif=sum(r.nhif for r in payroll_records),
+            status="calculated",
+            calculated_at=datetime.utcnow()
         )
         
-        db.add(payroll_record)
-        payroll_records.append(payroll_record)
+        db.add(payroll_calculation)
+        db.commit()
         
-        total_gross += calculation["gross_salary"]
-        total_deductions += calculation["total_deductions"]
-        total_net += calculation["net_salary"]
-    
-    # Create payroll calculation summary
-    payroll_calculation = PayrollCalculation(
-        payroll_period=request.payroll_period,
-        branch_id=request.branch_id,
-        total_employees=len(staff_members),
-        total_gross_salary=total_gross,
-        total_deductions=total_deductions,
-        total_net_salary=total_net,
-        total_paye_tax=sum(r.paye_tax for r in payroll_records),
-        total_sdl_tax=sum(r.sdl_tax for r in payroll_records),
-        total_nssf=sum(r.nssf for r in payroll_records),
-        total_nhif=sum(r.nhif for r in payroll_records),
-        status="calculated",
-        calculated_at=datetime.utcnow()
-    )
-    
-    db.add(payroll_calculation)
-    db.commit()
-    
-    return {
-        "message": f"Payroll processed for {len(staff_members)} employees",
-        "payroll_period": request.payroll_period,
-        "total_employees": len(staff_members),
-        "total_gross_salary": total_gross,
-        "total_deductions": total_deductions,
-        "total_net_salary": total_net,
-        "payroll_records": len(payroll_records)
-    }
+        return {
+            "message": f"Payroll processed successfully for {len(staff_members)} employees",
+            "payroll_period": request.payroll_period,
+            "total_employees": len(staff_members),
+            "total_gross_salary": total_gross,
+            "total_deductions": total_deductions,
+            "total_net_salary": total_net,
+            "total_sdl": total_sdl,
+            "payroll_records": len(payroll_records),
+            "detailed_records": detailed_records,
+            "status": "success"
+        }
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error processing payroll: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing payroll: {str(e)}")
 
 @router.get("/payroll/records", response_model=List[PayrollRecordResponse])
 async def get_payroll_records(
@@ -1418,6 +1827,79 @@ async def get_payroll_records(
     
     records = query.offset(skip).limit(limit).all()
     return records
+
+@router.get("/payroll/records/detailed")
+async def get_detailed_payroll_records(
+    payroll_period: Optional[str] = None,
+    branch_id: Optional[int] = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: Session = Depends(get_db)
+):
+    """Get detailed payroll records with staff information"""
+    try:
+        # Join PayrollRecord with Staff to get staff details
+        query = db.query(PayrollRecord, Staff).join(Staff, PayrollRecord.staff_id == Staff.id)
+        
+        if payroll_period:
+            query = query.filter(PayrollRecord.payroll_period == payroll_period)
+        
+        if branch_id:
+            query = query.filter(Staff.branch_id == branch_id)
+        
+        results = query.offset(skip).limit(limit).all()
+        
+        detailed_records = []
+        for payroll_record, staff in results:
+            # Get department and branch names
+            department_name = None
+            branch_name = None
+            
+            if staff.department_id:
+                department = db.query(Department).filter(Department.id == staff.department_id).first()
+                department_name = department.name if department else None
+            
+            if staff.branch_id:
+                branch = db.query(Branch).filter(Branch.id == staff.branch_id).first()
+                branch_name = branch.name if branch else None
+            
+            detailed_records.append({
+                "id": payroll_record.id,
+                "staff_id": staff.id,
+                "name": f"{staff.first_name} {staff.last_name}",
+                "email": staff.email,
+                "employee_id": staff.employee_id,
+                "department_name": department_name,
+                "branch_name": branch_name,
+                "payroll_period": payroll_record.payroll_period,
+                "pay_date": payroll_record.pay_date,
+                "basic_salary": payroll_record.basic_salary,
+                "allowances": payroll_record.allowances,
+                "overtime_pay": payroll_record.overtime_pay,
+                "bonus": payroll_record.bonus,
+                "gross_salary": payroll_record.gross_salary,
+                "paye_tax": payroll_record.paye_tax,
+                "sdl_tax": payroll_record.sdl_tax,
+                "nssf": payroll_record.nssf,
+                "nhif": payroll_record.nhif,
+                "pension_contribution": payroll_record.pension_contribution,
+                "other_deductions": payroll_record.other_deductions,
+                "total_deductions": payroll_record.total_deductions,
+                "net_salary": payroll_record.net_salary,
+                "hours_worked": payroll_record.hours_worked,
+                "days_worked": payroll_record.days_worked,
+                "notes": payroll_record.notes,
+                "status": payroll_record.status,
+                "processed_at": payroll_record.processed_at,
+                "paid_at": payroll_record.paid_at,
+                "created_at": payroll_record.created_at
+            })
+        
+        return detailed_records
+        
+    except Exception as e:
+        logger.error(f"Error fetching detailed payroll records: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching detailed payroll records: {str(e)}")
 
 @router.get("/payroll/summary")
 async def get_payroll_summary(
@@ -1461,3 +1943,104 @@ async def get_payroll_summary(
     }
     
     return summary
+
+@router.post("/payroll/mark-paid")
+async def mark_payroll_paid(
+    payroll_period: str,
+    branch_id: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    """Mark all payroll records for a period as paid"""
+    try:
+        # Get all payroll records for the period
+        query = db.query(PayrollRecord).filter(PayrollRecord.payroll_period == payroll_period)
+        
+        if branch_id:
+            # Join with Staff to filter by branch
+            query = query.join(Staff, PayrollRecord.staff_id == Staff.id).filter(Staff.branch_id == branch_id)
+        
+        payroll_records = query.all()
+        
+        if not payroll_records:
+            return {
+                "message": f"No payroll records found for period {payroll_period}",
+                "status": "not_found"
+            }
+        
+        # Update all records to paid status
+        paid_count = 0
+        for record in payroll_records:
+            if record.status != "paid":
+                record.status = "paid"
+                record.paid_at = datetime.utcnow()
+                paid_count += 1
+        
+        # Update payroll calculation status
+        calculation_query = db.query(PayrollCalculation).filter(PayrollCalculation.payroll_period == payroll_period)
+        if branch_id:
+            calculation_query = calculation_query.filter(PayrollCalculation.branch_id == branch_id)
+        
+        calculation = calculation_query.first()
+        if calculation:
+            calculation.status = "processed"
+            calculation.processed_at = datetime.utcnow()
+        
+        db.commit()
+        
+        return {
+            "message": f"Marked {paid_count} payroll records as paid for period {payroll_period}",
+            "payroll_period": payroll_period,
+            "paid_records": paid_count,
+            "total_records": len(payroll_records),
+            "status": "success"
+        }
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error marking payroll as paid: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error marking payroll as paid: {str(e)}")
+
+@router.delete("/payroll/delete-period")
+async def delete_payroll_period(
+    payroll_period: str,
+    branch_id: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    """Delete all payroll records for a specific period (for reprocessing)"""
+    try:
+        # Get all payroll records for the period
+        query = db.query(PayrollRecord).filter(PayrollRecord.payroll_period == payroll_period)
+        
+        if branch_id:
+            # Join with Staff to filter by branch
+            query = query.join(Staff, PayrollRecord.staff_id == Staff.id).filter(Staff.branch_id == branch_id)
+        
+        payroll_records = query.all()
+        
+        # Delete payroll records
+        deleted_count = len(payroll_records)
+        for record in payroll_records:
+            db.delete(record)
+        
+        # Delete payroll calculation
+        calculation_query = db.query(PayrollCalculation).filter(PayrollCalculation.payroll_period == payroll_period)
+        if branch_id:
+            calculation_query = calculation_query.filter(PayrollCalculation.branch_id == branch_id)
+        
+        calculation = calculation_query.first()
+        if calculation:
+            db.delete(calculation)
+        
+        db.commit()
+        
+        return {
+            "message": f"Deleted {deleted_count} payroll records for period {payroll_period}",
+            "payroll_period": payroll_period,
+            "deleted_records": deleted_count,
+            "status": "success"
+        }
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error deleting payroll period: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting payroll period: {str(e)}")

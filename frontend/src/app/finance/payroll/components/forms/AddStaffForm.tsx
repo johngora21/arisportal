@@ -1152,11 +1152,11 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({ onSave, onCancel, branches,
           </div>
         </div>
 
-      {/* Loans & Deductions */}
+      {/* Loans */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-            Loans & Deductions
+            Loans
           </h3>
           <button
             type="button"

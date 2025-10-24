@@ -108,10 +108,20 @@ const StaffTab: React.FC<StaffTabProps> = ({
 
   const filteredStaff = staff;
 
-  const handleViewStaff = (staff: Staff) => {
-    setSelectedStaff(staff);
-    setShowStaffModal(true);
-    setStaffModalTab('personal');
+  const handleViewStaff = async (staff: Staff) => {
+    try {
+      // Fetch fresh staff data from individual endpoint to ensure we have complete data
+      const freshStaffData = await StaffService.getStaffMember(staff.id);
+      setSelectedStaff(freshStaffData);
+      setShowStaffModal(true);
+      setStaffModalTab('personal');
+    } catch (error) {
+      console.error('Error fetching staff details:', error);
+      // Fallback to using the staff data from the list
+      setSelectedStaff(staff);
+      setShowStaffModal(true);
+      setStaffModalTab('personal');
+    }
   };
 
   const handleEditStaff = (staff: Staff) => {
@@ -870,7 +880,7 @@ const StaffTab: React.FC<StaffTabProps> = ({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>PAYE Tax Eligible</label>
                       <p style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', margin: 0 }}>
-                        {selectedStaff.paye_eligible ? 'Yes' : 'No'}
+                        {selectedStaff.paye_eligible !== undefined ? (selectedStaff.paye_eligible ? 'Yes' : 'No') : '-'}
                       </p>
                     </div>
                   </div>
@@ -911,49 +921,68 @@ const StaffTab: React.FC<StaffTabProps> = ({
                                 // Calculate percentage of basic salary
                                 totalDeductions += (selectedStaff.basic_salary * parseFloat(item.percentage)) / 100;
                               } else if (item.amount) {
-                                totalDeductions += parseFloat(item.amount);
+                                const deduction = parseFloat(item.amount);
+                                totalDeductions += deduction;
+                                console.log(`DEBUG: ${item.name} deduction: ${deduction}`);
                               }
                             });
                           }
                           
                           // Insurance deductions (annual amounts converted to monthly)
-                          const insurance = safeJsonParse(selectedStaff.insurance);
-                          if (Array.isArray(insurance)) {
-                            insurance.forEach((item: any) => {
+                          const insuranceData = safeJsonParse(selectedStaff.insurance);
+                          if (Array.isArray(insuranceData)) {
+                            insuranceData.forEach((item: any) => {
                               if (item.annualAmount) {
-                                totalDeductions += parseFloat(item.annualAmount) / 12;
+                                const deduction = parseFloat(item.annualAmount) / 12;
+                                totalDeductions += deduction;
+                                console.log(`DEBUG: ${item.name} deduction: ${deduction} (${item.annualAmount}/12)`);
                               } else if (item.amount) {
-                                totalDeductions += parseFloat(item.amount);
+                                const deduction = parseFloat(item.amount);
+                                totalDeductions += deduction;
+                                console.log(`DEBUG: ${item.name} deduction: ${deduction}`);
                               }
                             });
                           }
                           
                           // Loan deductions (monthly amounts)
-                          const loans = safeJsonParse(selectedStaff.loans);
-                          if (Array.isArray(loans)) {
-                            loans.forEach((item: any) => {
+                          const loansData = safeJsonParse(selectedStaff.loans);
+                          if (Array.isArray(loansData)) {
+                            loansData.forEach((item: any) => {
                               if (item.amount) {
-                                totalDeductions += parseFloat(item.amount);
+                                const deduction = parseFloat(item.amount);
+                                totalDeductions += deduction;
+                                console.log(`DEBUG: ${item.name} deduction: ${deduction}`);
                               }
                             });
                           }
                           
-                          // PAYE Tax calculation (if eligible)
+                          // PAYE Tax calculation (if eligible) - calculated on gross taxable income (basic salary + allowances)
                           if (selectedStaff.paye_eligible && selectedStaff.basic_salary) {
                             const basicSalary = selectedStaff.basic_salary;
+                            let allowancesTotal = 0;
+                            
+                            // Calculate total allowances from actual data
+                            const allowancesDetail = safeJsonParse(selectedStaff.allowances_detail);
+                            if (Array.isArray(allowancesDetail)) {
+                              allowancesDetail.forEach((item: any) => {
+                                if (item.amount) allowancesTotal += parseFloat(item.amount);
+                              });
+                            }
+                            
+                            const grossTaxableIncome = basicSalary + allowancesTotal;
                             let payeTax = 0;
                             
-                            // Tanzania monthly tax brackets - using basic_salary only
-                            if (basicSalary <= 270000) {
+                            // Tanzania monthly tax brackets - using gross_taxable_income
+                            if (grossTaxableIncome <= 270000) {
                               payeTax = 0;
-                            } else if (basicSalary <= 520000) {
-                              payeTax = (basicSalary - 270000) * 0.08;
-                            } else if (basicSalary <= 760000) {
-                              payeTax = 20000 + (basicSalary - 520000) * 0.20;
-                            } else if (basicSalary <= 1000000) {
-                              payeTax = 68000 + (basicSalary - 760000) * 0.25;
+                            } else if (grossTaxableIncome <= 520000) {
+                              payeTax = (grossTaxableIncome - 270000) * 0.08;
+                            } else if (grossTaxableIncome <= 760000) {
+                              payeTax = 20000 + (grossTaxableIncome - 520000) * 0.20;
+                            } else if (grossTaxableIncome <= 1000000) {
+                              payeTax = 68000 + (grossTaxableIncome - 760000) * 0.25;
                             } else {
-                              payeTax = 128000 + (basicSalary - 1000000) * 0.30;
+                              payeTax = 128000 + (grossTaxableIncome - 1000000) * 0.30;
                             }
                             
                             totalDeductions += payeTax;
@@ -986,12 +1015,22 @@ const StaffTab: React.FC<StaffTabProps> = ({
                           };
                           
                           const allowancesDetail = safeJsonParse(selectedStaff.allowances_detail);
+                          console.log('DEBUG: Staff allowances data:', {
+                            staffId: selectedStaff.id,
+                            allowances_detail_raw: selectedStaff.allowances_detail,
+                            allowances_detail_parsed: allowancesDetail,
+                            allowances_numeric: selectedStaff.allowances,
+                            isArray: Array.isArray(allowancesDetail),
+                            arrayLength: Array.isArray(allowancesDetail) ? allowancesDetail.length : 'not array'
+                          });
+                          
                           if (Array.isArray(allowancesDetail)) {
                             allowancesDetail.forEach((item: any) => {
                               if (item.amount) totalAllowances += parseFloat(item.amount);
                             });
                           }
                           
+                          console.log('DEBUG: Total allowances calculated:', totalAllowances);
                           return totalAllowances > 0 ? `$${totalAllowances.toLocaleString()}` : '-';
                         })()}
                       </p>
@@ -1020,63 +1059,98 @@ const StaffTab: React.FC<StaffTabProps> = ({
                           // Calculate ALL deductions from basic salary only
                           let totalDeductions = 0;
                           
+                          console.log('DEBUG: Staff deduction data:', {
+                            social_security: selectedStaff.social_security,
+                            insurance: selectedStaff.insurance,
+                            loans: selectedStaff.loans,
+                            paye_eligible: selectedStaff.paye_eligible
+                          });
+                          
                           // Social Security deductions (percentage-based on basic salary)
                           const socialSecurity = safeJsonParse(selectedStaff.social_security);
                           if (Array.isArray(socialSecurity)) {
                             socialSecurity.forEach((item: any) => {
                               if (item.percentage && selectedStaff.basic_salary) {
-                                totalDeductions += (selectedStaff.basic_salary * parseFloat(item.percentage)) / 100;
+                                const deduction = (selectedStaff.basic_salary * parseFloat(item.percentage)) / 100;
+                                totalDeductions += deduction;
+                                console.log(`DEBUG: ${item.name} deduction: ${deduction} (${item.percentage}% of ${selectedStaff.basic_salary})`);
                               } else if (item.amount) {
-                                totalDeductions += parseFloat(item.amount);
+                                const deduction = parseFloat(item.amount);
+                                totalDeductions += deduction;
+                                console.log(`DEBUG: ${item.name} deduction: ${deduction}`);
+                                console.log(`DEBUG: ${item.name} deduction: ${item.amount}`);
                               }
                             });
                           }
                           
                           // Insurance deductions (annual amounts converted to monthly)
-                          const insurance = safeJsonParse(selectedStaff.insurance);
-                          if (Array.isArray(insurance)) {
-                            insurance.forEach((item: any) => {
+                          const insuranceData = safeJsonParse(selectedStaff.insurance);
+                          if (Array.isArray(insuranceData)) {
+                            insuranceData.forEach((item: any) => {
                               if (item.annualAmount) {
-                                totalDeductions += parseFloat(item.annualAmount) / 12;
+                                const deduction = parseFloat(item.annualAmount) / 12;
+                                totalDeductions += deduction;
+                                console.log(`DEBUG: ${item.name} deduction: ${deduction} (${item.annualAmount}/12)`);
                               } else if (item.amount) {
-                                totalDeductions += parseFloat(item.amount);
+                                const deduction = parseFloat(item.amount);
+                                totalDeductions += deduction;
+                                console.log(`DEBUG: ${item.name} deduction: ${deduction}`);
                               }
                             });
                           }
                           
                           // Loan deductions (monthly amounts)
-                          const loans = safeJsonParse(selectedStaff.loans);
-                          if (Array.isArray(loans)) {
-                            loans.forEach((item: any) => {
+                          const loansData = safeJsonParse(selectedStaff.loans);
+                          if (Array.isArray(loansData)) {
+                            loansData.forEach((item: any) => {
                               if (item.amount) {
-                                totalDeductions += parseFloat(item.amount);
+                                const deduction = parseFloat(item.amount);
+                                totalDeductions += deduction;
+                                console.log(`DEBUG: ${item.name} deduction: ${deduction}`);
                               }
                             });
                           }
                           
-                          // PAYE Tax calculation (if eligible) - calculated on basic salary only
+                          // PAYE Tax calculation (if eligible) - calculated on gross taxable income (basic salary + allowances)
+                          console.log('DEBUG: PAYE eligibility check:', selectedStaff.paye_eligible, selectedStaff.basic_salary);
                           if (selectedStaff.paye_eligible && selectedStaff.basic_salary) {
                             const basicSalary = selectedStaff.basic_salary;
+                            let allowancesTotal = 0;
+                            
+                            // Calculate total allowances from actual data
+                            const allowancesDetail = safeJsonParse(selectedStaff.allowances_detail);
+                            if (Array.isArray(allowancesDetail)) {
+                              allowancesDetail.forEach((item: any) => {
+                                if (item.amount) allowancesTotal += parseFloat(item.amount);
+                              });
+                            }
+                            
+                            const grossTaxableIncome = basicSalary + allowancesTotal;
                             let payeTax = 0;
                             
-                            // Tanzania monthly tax brackets - using basic_salary only
-                            if (basicSalary <= 270000) {
+                            // Tanzania monthly tax brackets - using gross_taxable_income
+                            if (grossTaxableIncome <= 270000) {
                               payeTax = 0;
-                            } else if (basicSalary <= 520000) {
-                              payeTax = (basicSalary - 270000) * 0.08;
-                            } else if (basicSalary <= 760000) {
-                              payeTax = 20000 + (basicSalary - 520000) * 0.20;
-                            } else if (basicSalary <= 1000000) {
-                              payeTax = 68000 + (basicSalary - 760000) * 0.25;
+                            } else if (grossTaxableIncome <= 520000) {
+                              payeTax = (grossTaxableIncome - 270000) * 0.08;
+                            } else if (grossTaxableIncome <= 760000) {
+                              payeTax = 20000 + (grossTaxableIncome - 520000) * 0.20;
+                            } else if (grossTaxableIncome <= 1000000) {
+                              payeTax = 68000 + (grossTaxableIncome - 760000) * 0.25;
                             } else {
-                              payeTax = 128000 + (basicSalary - 1000000) * 0.30;
+                              payeTax = 128000 + (grossTaxableIncome - 1000000) * 0.30;
                             }
                             
                             totalDeductions += payeTax;
+                            console.log(`DEBUG: PAYE Tax deduction: ${payeTax} (calculated on gross taxable income: ${grossTaxableIncome})`);
                           }
                           
-                          // Net Salary = (Basic Salary - All Deductions) + Allowances
-                          netSalary = netSalary - totalDeductions;
+                          // NSSF and other social security deductions are already included in the socialSecurity calculation above
+                          console.log(`DEBUG: Total deductions calculated: ${totalDeductions}`);
+                          
+                          // Net Salary = Basic Salary + Allowances - All Deductions
+                          // All deductions (PAYE, Social Security, Insurance, Loans) are already calculated above
+                          netSalary = selectedStaff.basic_salary;
                           
                           // Add allowances (allowances are NEVER deducted)
                           const allowancesDetail = safeJsonParse(selectedStaff.allowances_detail);
@@ -1085,6 +1159,9 @@ const StaffTab: React.FC<StaffTabProps> = ({
                               if (item.amount) netSalary += parseFloat(item.amount);
                             });
                           }
+                          
+                          // Subtract all deductions (PAYE, Social Security, Insurance, Loans)
+                          netSalary -= totalDeductions;
                           
                           return netSalary > 0 ? `$${Math.round(netSalary).toLocaleString()}` : '-';
                         })()}

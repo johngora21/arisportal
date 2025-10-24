@@ -54,9 +54,9 @@ export const API_CONFIG = {
       DEPARTMENTS: '/payroll/departments',
       ROLES: '/payroll/roles',
       STAFF: '/payroll/staff',
-      PROCESS: '/payroll/process',
-      RECORDS: '/payroll/records',
-      SUMMARY: '/payroll/summary',
+      PROCESS: '/payroll/payroll/process',
+      RECORDS: '/payroll/payroll/records',
+      SUMMARY: '/payroll/payroll/summary',
     },
     
     // Suppliers endpoints

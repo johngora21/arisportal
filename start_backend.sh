@@ -20,5 +20,5 @@ echo "📥 Installing dependencies..."
 pip install -r requirements_fastapi.txt
 
 # Start FastAPI server from the backend directory
-echo "🌟 Starting FastAPI server on port 8000..."
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+echo "🌟 Starting FastAPI server on port 4001..."
+uvicorn main:app --host 0.0.0.0 --port 4001 --reload

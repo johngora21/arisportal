@@ -162,6 +162,40 @@ export interface PayrollProcessResponse {
   total_deductions: number;
   total_net_salary: number;
   payroll_records: number;
+  detailed_records?: any[];
+  status: string;
+}
+
+export interface DetailedPayrollRecord {
+  id: number;
+  staff_id: number;
+  name: string;
+  email: string;
+  employee_id: string;
+  department_name?: string;
+  branch_name?: string;
+  payroll_period: string;
+  pay_date: string;
+  basic_salary: number;
+  allowances: number;
+  overtime_pay: number;
+  bonus: number;
+  gross_salary: number;
+  paye_tax: number;
+  sdl_tax: number;
+  nssf: number;
+  nhif: number;
+  pension_contribution: number;
+  other_deductions: number;
+  total_deductions: number;
+  net_salary: number;
+  hours_worked: number;
+  days_worked: number;
+  notes?: string;
+  status: string;
+  processed_at?: string;
+  paid_at?: string;
+  created_at: string;
 }
 
 // Service classes for API calls
@@ -464,6 +498,69 @@ export class PayrollService {
         total_nssf: 0,
         total_nhif: 0
       };
+    }
+  }
+
+  static async fetchDetailedPayrollRecords(
+    payrollPeriod?: string,
+    branchId?: number
+  ): Promise<DetailedPayrollRecord[]> {
+    try {
+      const url = new URL(getApiUrl('PAYROLL.RECORDS') + '/detailed');
+      if (payrollPeriod) url.searchParams.append('payroll_period', payrollPeriod);
+      if (branchId) url.searchParams.append('branch_id', branchId.toString());
+      
+      const response = await fetch(url.toString());
+      if (!response.ok) throw new Error('Failed to fetch detailed payroll records');
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching detailed payroll records:', error);
+      return [];
+    }
+  }
+
+  static async markPayrollPaid(
+    payrollPeriod: string,
+    branchId?: number
+  ): Promise<any> {
+    try {
+      const url = new URL(getApiUrl('PAYROLL.PROCESS') + '/mark-paid');
+      url.searchParams.append('payroll_period', payrollPeriod);
+      if (branchId) url.searchParams.append('branch_id', branchId.toString());
+      
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) throw new Error('Failed to mark payroll as paid');
+      return await response.json();
+    } catch (error) {
+      console.error('Error marking payroll as paid:', error);
+      throw error;
+    }
+  }
+
+  static async deletePayrollPeriod(
+    payrollPeriod: string,
+    branchId?: number
+  ): Promise<any> {
+    try {
+      const url = new URL(getApiUrl('PAYROLL.PROCESS') + '/delete-period');
+      url.searchParams.append('payroll_period', payrollPeriod);
+      if (branchId) url.searchParams.append('branch_id', branchId.toString());
+      
+      const response = await fetch(url.toString(), {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete payroll period');
+      return await response.json();
+    } catch (error) {
+      console.error('Error deleting payroll period:', error);
+      throw error;
     }
   }
 }
