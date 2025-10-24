@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
   Shield,
@@ -15,47 +15,180 @@ import {
   User
 } from 'lucide-react';
 import CreateEscrowModal from './components/CreateEscrowModal';
+import ViewEscrowModal from './components/ViewEscrowModal';
+
+interface EscrowAccount {
+  id: number;
+  escrow_id: string;
+  title: string;
+  description: string;
+  payer_name: string;
+  payer_email: string;
+  payer_phone: string;
+  payee_name: string;
+  payee_email: string;
+  payee_phone: string;
+  total_amount: number;
+  payment_type: string;
+  release_date: string;
+  terms: string;
+  additional_notes: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  milestones?: any[];
+  created_by: string;
+  completed_at?: string;
+  cancelled_at?: string;
+  cancelled_reason?: string;
+}
 
 export default function EscrowPage() {
   const [activeTab, setActiveTab] = useState('active');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedEscrow, setSelectedEscrow] = useState<EscrowAccount | null>(null);
+  const [escrowAccounts, setEscrowAccounts] = useState<EscrowAccount[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock escrow data
-  const escrowAccounts = [
-    {
-      id: 'ESC-001',
-      title: 'Property Purchase - Dar es Salaam',
-      buyer: 'John Mwalimu',
-      seller: 'ABC Real Estate Ltd',
-      amount: 45000000,
-      status: 'active',
-      createdDate: '2024-01-15',
-      releaseDate: '2024-02-15',
-      description: 'Escrow for apartment purchase in Kinondoni'
-    },
-    {
-      id: 'ESC-002',
-      title: 'Equipment Sale Contract',
-      buyer: 'Tech Solutions Inc',
-      seller: 'Industrial Equipment Co',
-      amount: 12500000,
-      status: 'pending',
-      createdDate: '2024-01-20',
-      releaseDate: '2024-02-05',
-      description: 'Heavy machinery sale with inspection period'
-    },
-    {
-      id: 'ESC-003',
-      title: 'Service Agreement - Consulting',
-      buyer: 'Government Agency',
-      seller: 'Professional Consultants',
-      amount: 8500000,
-      status: 'completed',
-      createdDate: '2024-01-10',
-      releaseDate: '2024-01-25',
-      description: 'IT consulting services completion'
+  // Fetch escrows from API
+  const fetchEscrows = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:4001/api/v1/escrow/');
+      if (!response.ok) {
+        throw new Error('Failed to fetch escrows');
+      }
+      const data = await response.json();
+      // Sort by creation date (newest first)
+      const sortedData = data.sort((a: EscrowAccount, b: EscrowAccount) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setEscrowAccounts(sortedData);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching escrows:', err);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  // Fetch escrow statistics
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('http://localhost:4001/api/v1/escrow/stats/summary');
+      if (!response.ok) {
+        throw new Error('Failed to fetch stats');
+      }
+      const stats = await response.json();
+      return stats;
+    } catch (err) {
+      console.error('Error fetching stats:', err);
+      return {
+        total_escrows: 0,
+        active_escrows: 0,
+        pending_escrows: 0,
+        completed_escrows: 0,
+        cancelled_escrows: 0,
+        total_amount_in_escrow: 0
+      };
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchEscrows();
+  }, []);
+
+  // Create new escrow
+  const handleCreateEscrow = async (escrowData: any) => {
+    try {
+      const response = await fetch('http://localhost:4001/api/v1/escrow/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(escrowData),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error:', errorText);
+        throw new Error(`Failed to create escrow: ${response.status} ${errorText}`);
+      }
+
+      const result = await response.json();
+      
+      // Refresh the escrow list
+      await fetchEscrows();
+      setShowCreateModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create escrow');
+      console.error('Error creating escrow:', err);
+    }
+  };
+
+  // Update escrow status
+  const handleUpdateStatus = async (escrowId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`http://localhost:4001/api/v1/escrow/${escrowId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+
+      // Refresh the escrow list
+      await fetchEscrows();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update status');
+      console.error('Error updating status:', err);
+    }
+  };
+
+  // View escrow details
+  const handleViewEscrow = (escrowId: string) => {
+    const escrow = escrowAccounts.find(acc => acc.escrow_id === escrowId);
+    if (escrow) {
+      setSelectedEscrow(escrow);
+      setShowViewModal(true);
+    }
+  };
+
+  // Release escrow funds
+  const handleReleaseEscrow = async (escrowId: string) => {
+    if (!confirm(`Are you sure you want to release funds for escrow ${escrowId}?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:4001/api/v1/escrow/${escrowId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'COMPLETED' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to release escrow');
+      }
+
+      // Refresh the escrow list
+      await fetchEscrows();
+      alert(`Escrow ${escrowId} has been released successfully!`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to release escrow');
+      console.error('Error releasing escrow:', err);
+    }
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-TZ', {
@@ -67,20 +200,22 @@ export default function EscrowPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'active': return <Lock size={16} color="#3b82f6" />;
-      case 'pending': return <Clock size={16} color="#f59e0b" />;
-      case 'completed': return <CheckCircle size={16} color="#10b981" />;
-      case 'cancelled': return <XCircle size={16} color="#ef4444" />;
+      case 'ACTIVE': return <Lock size={16} color="#3b82f6" />;
+      case 'PENDING': return <Clock size={16} color="#f59e0b" />;
+      case 'COMPLETED': return <CheckCircle size={16} color="#10b981" />;
+      case 'CANCELLED': return <XCircle size={16} color="#ef4444" />;
+      case 'DISPUTED': return <XCircle size={16} color="#8b5cf6" />;
       default: return <Lock size={16} />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return '#3b82f6';
-      case 'pending': return '#f59e0b';
-      case 'completed': return '#10b981';
-      case 'cancelled': return '#ef4444';
+      case 'ACTIVE': return '#3b82f6';
+      case 'PENDING': return '#f59e0b';
+      case 'COMPLETED': return '#10b981';
+      case 'CANCELLED': return '#ef4444';
+      case 'DISPUTED': return '#8b5cf6';
       default: return '#6b7280';
     }
   };
@@ -129,7 +264,7 @@ export default function EscrowPage() {
             <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Active Escrows</span>
           </div>
           <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-            {escrowAccounts.filter(acc => acc.status === 'active').length}
+            {escrowAccounts.filter(acc => acc.status === 'ACTIVE').length}
           </div>
         </div>
 
@@ -139,7 +274,7 @@ export default function EscrowPage() {
             <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total in Escrow</span>
           </div>
           <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-            {formatCurrency(escrowAccounts.reduce((sum, acc) => sum + acc.amount, 0))}
+            {formatCurrency(escrowAccounts.reduce((sum, acc) => sum + acc.total_amount, 0))}
           </div>
         </div>
 
@@ -149,7 +284,7 @@ export default function EscrowPage() {
             <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Pending Release</span>
           </div>
           <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-            {escrowAccounts.filter(acc => acc.status === 'pending').length}
+            {escrowAccounts.filter(acc => acc.status === 'PENDING').length}
           </div>
         </div>
 
@@ -159,7 +294,7 @@ export default function EscrowPage() {
             <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Completed</span>
           </div>
           <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-            {escrowAccounts.filter(acc => acc.status === 'completed').length}
+            {escrowAccounts.filter(acc => acc.status === 'COMPLETED').length}
           </div>
         </div>
       </div>
@@ -168,9 +303,9 @@ export default function EscrowPage() {
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
         {[
           { id: 'all', label: 'All', icon: <Shield size={16} /> },
-          { id: 'active', label: 'Active', icon: <Lock size={16} /> },
-          { id: 'pending', label: 'Pending', icon: <Clock size={16} /> },
-          { id: 'completed', label: 'Completed', icon: <CheckCircle size={16} /> }
+          { id: 'ACTIVE', label: 'Active', icon: <Lock size={16} /> },
+          { id: 'PENDING', label: 'Pending', icon: <Clock size={16} /> },
+          { id: 'COMPLETED', label: 'Completed', icon: <CheckCircle size={16} /> }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -246,7 +381,7 @@ export default function EscrowPage() {
                         color: '#6b7280',
                         fontWeight: '500'
                       }}>
-                        {account.id}
+                        {account.escrow_id}
                       </span>
           </div>
 
@@ -271,13 +406,13 @@ export default function EscrowPage() {
                     <div style={{ display: 'flex', gap: '24px', fontSize: '14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <User size={14} color="#6b7280" />
-                        <span style={{ color: '#6b7280' }}>Buyer: </span>
-                        <span style={{ color: '#1f2937', fontWeight: '500' }}>{account.buyer}</span>
+                        <span style={{ color: '#6b7280' }}>Payer: </span>
+                        <span style={{ color: '#1f2937', fontWeight: '500' }}>{account.payer_name}</span>
           </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Building size={14} color="#6b7280" />
-                        <span style={{ color: '#6b7280' }}>Seller: </span>
-                        <span style={{ color: '#1f2937', fontWeight: '500' }}>{account.seller}</span>
+                        <span style={{ color: '#6b7280' }}>Payee: </span>
+                        <span style={{ color: '#1f2937', fontWeight: '500' }}>{account.payee_name}</span>
           </div>
         </div>
       </div>
@@ -289,14 +424,16 @@ export default function EscrowPage() {
                       color: '#1f2937', 
                       marginBottom: '4px' 
                     }}>
-                      {formatCurrency(account.amount)}
+                      {formatCurrency(account.total_amount)}
                     </div>
                     <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>
-                      Release: {new Date(account.releaseDate).toLocaleDateString()}
+                      Release: {account.release_date ? new Date(account.release_date).toLocaleDateString() : 'TBD'}
                     </div>
                     
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                      <button style={{
+                      <button 
+                        onClick={() => handleViewEscrow(account.escrow_id)}
+                        style={{
                         padding: '8px 12px',
                         backgroundColor: '#f1f5f9',
                         border: '1px solid #e2e8f0',
@@ -307,13 +444,25 @@ export default function EscrowPage() {
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px'
-                      }}>
+                          gap: '4px',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.backgroundColor = '#e2e8f0';
+                          e.currentTarget.style.color = '#374151';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f1f5f9';
+                          e.currentTarget.style.color = '#6b7280';
+                        }}
+                      >
                         <Eye size={12} />
                         View
                       </button>
-                      {account.status === 'pending' && (
-                        <button style={{
+                      {account.status === 'PENDING' && (
+                        <button 
+                          onClick={() => handleReleaseEscrow(account.escrow_id)}
+                          style={{
                           padding: '8px 12px',
                           backgroundColor: "var(--mc-sidebar-bg)",
                           border: 'none',
@@ -324,10 +473,50 @@ export default function EscrowPage() {
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '4px'
-                        }}>
+                            gap: '4px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = '#1d4ed8';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = "var(--mc-sidebar-bg)";
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
+                        >
                           <LockOpen size={12} />
                           Release
+                        </button>
+                      )}
+                      {account.status === 'ACTIVE' && (
+                        <button 
+                          onClick={() => handleReleaseEscrow(account.escrow_id)}
+                          style={{
+                            padding: '8px 12px',
+                            backgroundColor: '#10b981',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: '500',
+                            color: 'white',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = '#059669';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = '#10b981';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
+                        >
+                          <CheckCircle size={12} />
+                          Complete
                         </button>
                       )}
                     </div>
@@ -342,12 +531,57 @@ export default function EscrowPage() {
       <CreateEscrowModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onCreate={(escrowData) => {
-          console.log('New escrow created:', escrowData);
-          // Here you would typically add the new escrow to your state or API
-          setShowCreateModal(false);
-        }}
+        onCreate={handleCreateEscrow}
       />
+
+      {/* View Escrow Modal */}
+      <ViewEscrowModal
+        isOpen={showViewModal}
+        onClose={() => {
+          setShowViewModal(false);
+          setSelectedEscrow(null);
+        }}
+        escrow={selectedEscrow}
+      />
+
+      {/* Error Display */}
+      {error && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          backgroundColor: '#ef4444',
+          color: 'white',
+          padding: '12px 20px',
+          borderRadius: '8px',
+          fontSize: '14px',
+          fontWeight: '500',
+          zIndex: 1000,
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+        }}>
+          {error}
+        </div>
+      )}
+
+      {/* Loading Display */}
+      {loading && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          backgroundColor: 'white',
+          padding: '20px',
+          borderRadius: '12px',
+          fontSize: '16px',
+          fontWeight: '500',
+          color: '#6b7280',
+          zIndex: 1000,
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+        }}>
+          Loading escrows...
+        </div>
+      )}
     </div>
   );
 }

@@ -23,14 +23,14 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    buyerName: '',
-    buyerEmail: '',
-    buyerPhone: '',
-    sellerName: '',
-    sellerEmail: '',
-    sellerPhone: '',
+    payerName: '',
+    payerEmail: '',
+    payerPhone: '',
+    payeeName: '',
+    payeeEmail: '',
+    payeePhone: '',
     totalAmount: '',
-    paymentType: 'full', // 'full' or 'milestone'
+    paymentType: 'FULL', // 'FULL' or 'MILESTONE'
     releaseDate: '',
     terms: '',
     additionalNotes: ''
@@ -94,12 +94,49 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
     e.preventDefault();
     
     // Validation
-    if (!formData.title || !formData.totalAmount || !formData.buyerName || !formData.sellerName) {
-      alert('Please fill in all required fields.');
+    const requiredFields = [
+      { field: 'title', label: 'Transaction Title' },
+      { field: 'payerName', label: 'Payer Name' },
+      { field: 'payerEmail', label: 'Payer Email' },
+      { field: 'payerPhone', label: 'Payer Phone' },
+      { field: 'payeeName', label: 'Payee Name' },
+      { field: 'payeeEmail', label: 'Payee Email' },
+      { field: 'payeePhone', label: 'Payee Phone' },
+      { field: 'totalAmount', label: 'Total Amount' }
+    ];
+
+    for (const { field, label } of requiredFields) {
+      if (!formData[field] || formData[field].trim() === '') {
+        alert(`Please fill in ${label}.`);
+        return;
+      }
+    }
+
+    // Validate email formats
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.payerEmail)) {
+      alert('Please enter a valid payer email address.');
+      return;
+    }
+    if (!emailRegex.test(formData.payeeEmail)) {
+      alert('Please enter a valid payee email address.');
       return;
     }
 
-    if (formData.paymentType === 'milestone') {
+    // Validate amount
+    const amount = parseFloat(formData.totalAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert('Please enter a valid total amount.');
+      return;
+    }
+
+    // Validate release date for full payments
+    if (formData.paymentType === 'FULL' && !formData.releaseDate) {
+      alert('Please select a release date for full payment.');
+      return;
+    }
+
+    if (formData.paymentType === 'MILESTONE') {
       const totalMilestoneAmount = getTotalMilestoneAmount();
       if (totalMilestoneAmount !== parseFloat(formData.totalAmount)) {
         alert('Total milestone amounts must equal the total amount.');
@@ -115,10 +152,10 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
 
     const escrowData = {
       ...formData,
-      milestones: formData.paymentType === 'milestone' ? milestones : null
+      milestones: formData.paymentType === 'MILESTONE' ? milestones : null,
+      createdBy: 'frontend-user'
     };
     
-    console.log('Creating escrow:', escrowData);
     onCreate?.(escrowData);
     onClose();
   };
@@ -278,7 +315,7 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
             </div>
           </div>
 
-          {/* Vendor Information */}
+          {/* Payer Information */}
           <div style={{ marginBottom: '32px' }}>
             <h3 style={{ 
               fontSize: '18px', 
@@ -289,8 +326,8 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
               alignItems: 'center',
               gap: '8px'
             }}>
-              <Building size={20} />
-              Vendor Information
+              <User size={20} />
+              Payer Information
             </h3>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
@@ -306,10 +343,10 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
                 </label>
                 <input
                   type="text"
-                  name="sellerName"
-                  value={formData.sellerName}
+                  name="payerName"
+                  value={formData.payerName}
                   onChange={handleInputChange}
-                  placeholder="Vendor's full name or company"
+                  placeholder="Payer's full name"
                   required
                   style={inputStyle()}
                   onFocus={(e) => {
@@ -335,10 +372,10 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
                 </label>
                 <input
                   type="email"
-                  name="sellerEmail"
-                  value={formData.sellerEmail}
+                  name="payerEmail"
+                  value={formData.payerEmail}
                   onChange={handleInputChange}
-                  placeholder="vendor@example.com"
+                  placeholder="payer@example.com"
                   required
                   style={inputStyle()}
                   onFocus={(e) => {
@@ -364,8 +401,8 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
                 </label>
                 <input
                   type="tel"
-                  name="sellerPhone"
-                  value={formData.sellerPhone}
+                  name="payerPhone"
+                  value={formData.payerPhone}
                   onChange={handleInputChange}
                   placeholder="+255 123 456 789"
                   required
@@ -383,7 +420,7 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
             </div>
           </div>
 
-          {/* Client Information */}
+          {/* Payee Information */}
           <div style={{ marginBottom: '32px' }}>
             <h3 style={{ 
               fontSize: '18px', 
@@ -394,8 +431,8 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
               alignItems: 'center',
               gap: '8px'
             }}>
-              <User size={20} />
-              Client Information
+              <Building size={20} />
+              Payee Information
             </h3>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
@@ -411,10 +448,10 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
                 </label>
                 <input
                   type="text"
-                  name="buyerName"
-                  value={formData.buyerName}
+                  name="payeeName"
+                  value={formData.payeeName}
                   onChange={handleInputChange}
-                  placeholder="Client's full name"
+                  placeholder="Payee's full name or company"
                   required
                   style={inputStyle()}
                   onFocus={(e) => {
@@ -440,10 +477,10 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
                 </label>
                 <input
                   type="email"
-                  name="buyerEmail"
-                  value={formData.buyerEmail}
+                  name="payeeEmail"
+                  value={formData.payeeEmail}
                   onChange={handleInputChange}
-                  placeholder="client@example.com"
+                  placeholder="payee@example.com"
                   required
                   style={inputStyle()}
                   onFocus={(e) => {
@@ -469,8 +506,8 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
                 </label>
                 <input
                   type="tel"
-                  name="buyerPhone"
-                  value={formData.buyerPhone}
+                  name="payeePhone"
+                  value={formData.payeePhone}
                   onChange={handleInputChange}
                   placeholder="+255 123 456 789"
                   required
@@ -559,13 +596,13 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
                     e.target.style.boxShadow = 'none';
                   }}
                 >
-                  <option value="full">Full Payment</option>
-                  <option value="milestone">Milestone Payments</option>
+                  <option value="FULL">Full Payment</option>
+                  <option value="MILESTONE">Milestone Payments</option>
                 </select>
               </div>
             </div>
 
-            {formData.paymentType === 'full' && (
+            {formData.paymentType === 'FULL' && (
               <div style={{ marginTop: '16px' }}>
                 <label style={{ 
                   display: 'block', 
@@ -598,7 +635,7 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
           </div>
 
           {/* Milestone Payments */}
-          {formData.paymentType === 'milestone' && (
+          {formData.paymentType === 'MILESTONE' && (
             <div style={{ marginBottom: '32px' }}>
               <h3 style={{ 
                 fontSize: '18px', 
