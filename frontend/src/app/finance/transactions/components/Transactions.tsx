@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   Filter,
@@ -16,30 +16,40 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
+import { buildApiUrl } from '../../../../config/api';
 
 interface Transaction {
-  id: string;
-  date: string;
+  transaction_id: string;
+  transaction_date: string;
   description: string;
-  type: 'revenue' | 'expense' | 'asset' | 'liability' | 'equity' | 'transfer' | 'reversal' | 'other';
-  category: string;
+  type: 'REVENUE' | 'EXPENSE' | 'ASSET' | 'LIABILITY' | 'EQUITY' | 'TRANSFER' | 'REVERSAL' | 'OTHER';
+  category: string | null;
   amount: number;
-  paymentMethod: 'cash' | 'bank';
-  reference: string;
-  account: string;
+  payment_method: 'CASH' | 'BANK' | 'CARD' | 'MOBILE_MONEY' | 'OTHER';
+  reference: string | null;
+  account: string | null;
+  notes: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string | null;
 }
 
 interface TransactionsProps {
-  // Add any props you need for the transactions component
+  onRefresh?: () => void;
+  onEditTransaction?: (transaction: Transaction) => void;
 }
 
-function Transactions({}: TransactionsProps) {
+function Transactions({ onRefresh, onEditTransaction }: TransactionsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [timePeriod, setTimePeriod] = useState('all');
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const formatPrice = (value: number) => new Intl.NumberFormat('en-TZ', {
     style: 'currency', 
@@ -55,131 +65,68 @@ function Transactions({}: TransactionsProps) {
     });
   };
 
-  // Sample transaction data
-  const transactions: Transaction[] = [
-    {
-      id: 'TXN001',
-      date: '2024-01-15',
-      description: 'Client Payment - Project Alpha',
-      type: 'revenue',
-      category: 'Services',
-      amount: 750000,
-      paymentMethod: 'bank',
-      reference: 'INV-2024-001',
-      account: 'Business Account'
-    },
-    {
-      id: 'TXN002',
-      date: '2024-01-14',
-      description: 'Office Rent Payment',
-      type: 'expense',
-      category: 'Rent',
-      amount: 250000,
-      paymentMethod: 'bank',
-      reference: 'RENT-001',
-      account: 'Business Account'
-    },
-    {
-      id: 'TXN003',
-      date: '2024-01-13',
-      description: 'Software License Renewal',
-      type: 'expense',
-      category: 'Software',
-      amount: 120000,
-      paymentMethod: 'cash',
-      reference: 'SOFT-2024',
-      account: 'Business Account'
-    },
-    {
-      id: 'TXN004',
-      date: '2024-01-12',
-      description: 'Bank Transfer to Savings',
-      type: 'transfer',
-      category: 'Transfer',
-      amount: 500000,
-      paymentMethod: 'bank',
-      reference: 'TRF-001',
-      account: 'Savings Account'
-    },
-    {
-      id: 'TXN005',
-      date: '2024-01-11',
-      description: 'Equipment Purchase',
-      type: 'asset',
-      category: 'Equipment',
-      amount: 180000,
-      paymentMethod: 'bank',
-      reference: 'EQ-001',
-      account: 'Business Account'
-    },
-    {
-      id: 'TXN006',
-      date: '2024-01-10',
-      description: 'Client Payment - Project Beta',
-      type: 'revenue',
-      category: 'Services',
-      amount: 450000,
-      paymentMethod: 'bank',
-      reference: 'INV-2024-002',
-      account: 'Business Account'
-    },
-    {
-      id: 'TXN007',
-      date: '2024-01-09',
-      description: 'Employee Salary Payment',
-      type: 'expense',
-      category: 'Payroll',
-      amount: 320000,
-      paymentMethod: 'bank',
-      reference: 'PAY-001',
-      account: 'Business Account'
-    },
-    {
-      id: 'TXN008',
-      date: '2024-01-08',
-      description: 'Bank Loan Disbursement',
-      type: 'liability',
-      category: 'Financing',
-      amount: 2000000,
-      paymentMethod: 'bank',
-      reference: 'LOAN-001',
-      account: 'Business Account'
-    },
-    {
-      id: 'TXN009',
-      date: '2024-01-07',
-      description: 'Marketing Campaign Payment',
-      type: 'expense',
-      category: 'Marketing',
-      amount: 85000,
-      paymentMethod: 'cash',
-      reference: 'MKT-001',
-      account: 'Business Account'
-    },
-    {
-      id: 'TXN010',
-      date: '2024-01-06',
-      description: 'Interest Earned on Savings',
-      type: 'revenue',
-      category: 'Investment',
-      amount: 15000,
-      paymentMethod: 'bank',
-      reference: 'INT-001',
-      account: 'Savings Account'
+  // Fetch transactions from API
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const url = buildApiUrl('/transactions/');
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch transactions: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setTransactions(data);
+    } catch (err) {
+      console.error('Error fetching transactions:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch transactions');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  // Delete transaction
+  const deleteTransaction = async (transactionId: string) => {
+    try {
+      const url = buildApiUrl(`/transactions/${transactionId}`);
+      const response = await fetch(url, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to delete transaction: ${response.status}`);
+      }
+      
+      // Refresh the transactions list
+      await fetchTransactions();
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      console.error('Error deleting transaction:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete transaction');
+    }
+  };
+
+  // Load transactions on component mount
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
 
 
   const getPaymentMethodColor = (method: string) => {
-    switch (method) {
+    switch (method?.toLowerCase()) {
       case 'cash': return { bg: '#fef3c7', color: '#f59e0b' };
       case 'bank': return { bg: '#dbeafe', color: '#3b82f6' };
+      case 'card': return { bg: '#e0e7ff', color: '#6366f1' };
+      case 'mobile_money': return { bg: '#f0fdf4', color: '#22c55e' };
       default: return { bg: '#f3f4f6', color: '#6b7280' };
     }
   };
 
   const getTypeColor = (type: string) => {
-    switch (type) {
+    switch (type?.toLowerCase()) {
       case 'revenue': return '#10b981';      // Green - Income/Revenue
       case 'expense': return '#ef4444';      // Red - Expenses
       case 'asset': return '#3b82f6';        // Blue - Assets
@@ -194,11 +141,11 @@ function Transactions({}: TransactionsProps) {
 
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         transaction.reference.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === 'all' || transaction.type === typeFilter;
+                         (transaction.reference && transaction.reference.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesType = typeFilter === 'all' || transaction.type.toLowerCase() === typeFilter.toLowerCase();
     
     // Time period filtering
-    const transactionDate = new Date(transaction.date);
+    const transactionDate = new Date(transaction.transaction_date);
     const now = new Date();
     const matchesTimePeriod = (() => {
       switch (timePeriod) {
@@ -239,12 +186,31 @@ function Transactions({}: TransactionsProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Error Message */}
+      {error && (
+        <div style={{
+          backgroundColor: '#fee2e2',
+          border: '1px solid #fecaca',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          color: '#dc2626',
+          fontSize: '14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <AlertCircle size={16} />
+          {error}
+        </div>
+      )}
+
       {/* Search and Filters */}
       <div style={{
         position: 'relative',
         height: '40px',
         marginBottom: '24px'
       }}>
+
         {/* Search Bar - positioned from right */}
         <div style={{ 
           position: 'absolute',
@@ -406,37 +372,50 @@ function Transactions({}: TransactionsProps) {
               </tr>
             </thead>
             <tbody>
-              {filteredTransactions.map((transaction) => (
-                <tr key={transaction.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                      <RefreshCw size={16} className="animate-spin" />
+                      Loading transactions...
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                    No transactions found
+                  </td>
+                </tr>
+              ) : (
+                filteredTransactions.map((transaction) => (
+                  <tr key={transaction.transaction_id} style={{ borderBottom: '1px solid #f3f4f6' }}>
                   <td style={{ padding: '16px' }}>
                     <div>
                       <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', marginBottom: '4px' }}>
                         {transaction.description}
                       </div>
                       <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                        {transaction.reference} • {transaction.account}
+                          {transaction.reference || 'No reference'} • {transaction.account || 'No account'}
                       </div>
                     </div>
                   </td>
                   <td style={{ padding: '16px' }}>
                     <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '20px',
-                      fontSize: '12px',
+                        fontSize: '14px',
                       fontWeight: '500',
-                      backgroundColor: getTypeColor(transaction.type) + '20',
-                      color: getTypeColor(transaction.type)
+                        color: '#374151'
                     }}>
-                      {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                        {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1).toLowerCase()}
                     </span>
                   </td>
                   <td style={{ padding: '16px' }}>
                     <div style={{
                       fontSize: '14px',
                       fontWeight: '600',
-                      color: transaction.type === 'expense' ? '#ef4444' : '#6b7280'
+                        color: transaction.type.toLowerCase() === 'expense' ? '#ef4444' : '#6b7280'
                     }}>
-                      {transaction.type === 'expense' ? '-' : ''}
+                        {transaction.type.toLowerCase() === 'expense' ? '-' : ''}
                       {formatPrice(transaction.amount)}
                     </div>
                   </td>
@@ -446,40 +425,50 @@ function Transactions({}: TransactionsProps) {
                       fontWeight: '500',
                       color: '#6b7280'
                     }}>
-                      {transaction.paymentMethod.charAt(0).toUpperCase() + transaction.paymentMethod.slice(1)}
+                        {transaction.payment_method.charAt(0).toUpperCase() + transaction.payment_method.slice(1).toLowerCase().replace('_', ' ')}
                     </span>
                   </td>
                   <td style={{ padding: '16px' }}>
                     <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                      {formatDate(transaction.date)}
+                        {formatDate(transaction.transaction_date)}
                     </div>
                   </td>
                   <td style={{ padding: '16px' }}>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <button style={{
-                        padding: '6px',
-                        border: 'none',
-                        borderRadius: '20px',
-                        backgroundColor: '#f3f4f6',
-                        color: '#6b7280',
-                        cursor: 'pointer'
-                      }}>
+                      <button 
+                        onClick={() => onEditTransaction && onEditTransaction(transaction)}
+                        style={{
+                          padding: '6px',
+                          border: 'none',
+                          borderRadius: '20px',
+                          backgroundColor: '#f3f4f6',
+                          color: '#6b7280',
+                          cursor: 'pointer'
+                        }}
+                      >
                         <Edit size={16} />
                       </button>
-                      <button style={{
+                        <button 
+                          onClick={() => {
+                            if (confirm('Are you sure you want to delete this transaction?')) {
+                              deleteTransaction(transaction.transaction_id);
+                            }
+                          }}
+                          style={{
                         padding: '6px',
                         border: 'none',
-                        borderRadius: '20px',
-                        backgroundColor: '#fee2e2',
+                            backgroundColor: 'transparent',
                         color: '#ef4444',
                         cursor: 'pointer'
-                      }}>
+                          }}
+                        >
                         <Trash2 size={16} />
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Plus,
   Search,
@@ -18,16 +18,18 @@ import {
   FileText,
   BarChart3,
   TrendingUp,
+  TrendingDown,
   Receipt,
   DollarSign,
   Building,
   AlertCircle,
   PieChart
 } from 'lucide-react';
-import { Dashboard, Transactions, Accounting, CashFlow, Revenue, Reports } from './components';
+import { Dashboard, Transactions, Accounting, CashFlow, Revenue, Reports, CategoryInput } from './components';
+import { buildApiUrl } from '../../../config/api';
 
 export default function TransactionsPage() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'accounting' | 'cashflow' | 'revenue' | 'reports'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'transactions' | 'accounting'>('transactions');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newTransaction, setNewTransaction] = useState({
     description: '',
@@ -35,21 +37,159 @@ export default function TransactionsPage() {
     category: '',
     amount: 0,
     reference: '',
-    paymentMethod: 'cash'
+    paymentMethod: 'cash',
+    account: 'Business Account'
   });
+  const [editingTransaction, setEditingTransaction] = useState<any>(null);
+  const [kpiData, setKpiData] = useState({
+    totalRevenue: 0,
+    totalExpenses: 0,
+    netIncome: 0,
+    cashBalance: 0,
+    revenueChange: 0,
+    expensesChange: 0,
+    profitChange: 0,
+    cashChange: 0
+  });
+  const [kpiLoading, setKpiLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const formatPrice = (v: number) => new Intl.NumberFormat('en-TZ', {
     style: 'currency', currency: 'TZS', minimumFractionDigits: 0
   }).format(v);
 
+  // Fetch KPI data
+  const fetchKpiData = async () => {
+    try {
+      setKpiLoading(true);
+      
+      // Get current month data
+      const currentDate = new Date();
+      const currentMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const currentMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      
+      // Get previous month data
+      const prevMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+      const prevMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+      
+      const [currentResponse, prevResponse] = await Promise.all([
+        fetch(buildApiUrl(`/transactions/stats/summary?start_date=${currentMonthStart.toISOString()}&end_date=${currentMonthEnd.toISOString()}`)),
+        fetch(buildApiUrl(`/transactions/stats/summary?start_date=${prevMonthStart.toISOString()}&end_date=${prevMonthEnd.toISOString()}`))
+      ]);
+      
+      if (!currentResponse.ok || !prevResponse.ok) {
+        throw new Error(`Failed to fetch KPI data: ${currentResponse.status}`);
+      }
+      
+      const currentData = await currentResponse.json();
+      const prevData = await prevResponse.json();
+      
+      // Calculate percentage changes
+      const calculateChange = (current: number, previous: number) => {
+        if (previous === 0) return current > 0 ? 100 : 0;
+        return ((current - previous) / previous) * 100;
+      };
+      
+      setKpiData({
+        totalRevenue: currentData.total_revenue || 0,
+        totalExpenses: currentData.total_expenses || 0,
+        netIncome: currentData.net_income || 0,
+        cashBalance: currentData.total_assets || 0,
+        revenueChange: calculateChange(currentData.total_revenue || 0, prevData.total_revenue || 0),
+        expensesChange: calculateChange(currentData.total_expenses || 0, prevData.total_expenses || 0),
+        profitChange: calculateChange(currentData.net_income || 0, prevData.net_income || 0),
+        cashChange: calculateChange(currentData.total_assets || 0, prevData.total_assets || 0)
+      });
+    } catch (err) {
+      console.error('Error fetching KPI data:', err);
+      // Keep default values on error
+    } finally {
+      setKpiLoading(false);
+    }
+  };
+
+  // Handle refresh from Transactions component
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+    fetchKpiData();
+  };
+
+  // Handle edit transaction
+  const handleEditTransaction = (transaction: any) => {
+    setEditingTransaction(transaction);
+    setNewTransaction({
+      description: transaction.description,
+      type: transaction.type.toLowerCase(),
+      category: transaction.category || '',
+      amount: transaction.amount,
+      reference: transaction.reference || '',
+      paymentMethod: transaction.payment_method.toLowerCase(),
+      account: transaction.account || 'Business Account'
+    });
+    setShowAddModal(true);
+  };
+
+
+  // Load KPI data on component mount
+  useEffect(() => {
+    fetchKpiData();
+  }, []);
+
+  // Handle transaction creation/update
+  const handleCreateTransaction = async () => {
+    try {
+      const isEditing = editingTransaction !== null;
+      const url = isEditing 
+        ? buildApiUrl(`/transactions/${editingTransaction.transaction_id}`)
+        : buildApiUrl('/transactions/');
+      
+      const response = await fetch(url, {
+        method: isEditing ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...newTransaction,
+          createdBy: 'frontend-user'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to ${isEditing ? 'update' : 'create'} transaction: ${response.status} ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log(`Transaction ${isEditing ? 'updated' : 'created'}:`, result);
+      
+      // Reset form and close modal
+      setNewTransaction({
+        description: '',
+        type: 'revenue',
+        category: '',
+        amount: 0,
+        reference: '',
+        paymentMethod: 'cash',
+        account: 'Business Account'
+      });
+      setEditingTransaction(null);
+      setShowAddModal(false);
+      
+      // Refresh the transactions list and KPI data
+      handleRefresh();
+      
+      // Show success message
+      alert(`Transaction ${isEditing ? 'updated' : 'created'} successfully!`);
+    } catch (err) {
+      console.error(`Error ${editingTransaction ? 'updating' : 'creating'} transaction:`, err);
+      alert(`Failed to ${editingTransaction ? 'update' : 'create'} transaction: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  };
+
   return (
     <div style={{ padding: '24px', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
       {/* Header with actions */}
-      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1f2937', margin: 0 }}>Transactions</h1>
-          <p style={{ fontSize: '16px', color: '#6b7280', margin: '8px 0 0 0' }}>Combined Payments & Collections management</p>
-        </div>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
             onClick={() => setShowAddModal(true)}
@@ -70,48 +210,48 @@ export default function TransactionsPage() {
         {[
           { 
             label: 'Total Revenue', 
-            value: 2850000,
+            value: kpiData.totalRevenue,
             color: '#10b981', 
             bg: '#ecfdf5', 
             icon: TrendingUp,
-            change: '+12.5%',
-            changeType: 'positive'
+            change: `${kpiData.revenueChange >= 0 ? '+' : ''}${kpiData.revenueChange.toFixed(1)}%`,
+            changeType: kpiData.revenueChange >= 0 ? 'positive' : 'negative'
           },
           { 
             label: 'Total Expenses', 
-            value: 1200000,
+            value: kpiData.totalExpenses,
             color: '#ef4444', 
             bg: '#fee2e2', 
-            icon: TrendingUp,
-            change: '+8.2%',
-            changeType: 'negative'
+            icon: TrendingDown,
+            change: `${kpiData.expensesChange >= 0 ? '+' : ''}${kpiData.expensesChange.toFixed(1)}%`,
+            changeType: kpiData.expensesChange >= 0 ? 'negative' : 'positive'
           },
           { 
             label: 'Net Profit', 
-            value: 1650000,
+            value: kpiData.netIncome,
             color: '#3b82f6', 
             bg: '#dbeafe', 
             icon: BarChart3,
-            change: '+15.3%',
-            changeType: 'positive'
+            change: `${kpiData.profitChange >= 0 ? '+' : ''}${kpiData.profitChange.toFixed(1)}%`,
+            changeType: kpiData.profitChange >= 0 ? 'positive' : 'negative'
           },
           { 
             label: 'Cash Balance', 
-            value: 450000,
+            value: kpiData.cashBalance,
             color: '#f59e0b', 
             bg: '#fef3c7', 
             icon: DollarSign,
-            change: '+3.7%',
-            changeType: 'positive'
+            change: `${kpiData.cashChange >= 0 ? '+' : ''}${kpiData.cashChange.toFixed(1)}%`,
+            changeType: kpiData.cashChange >= 0 ? 'positive' : 'negative'
           }
         ].map(k => (
           <div key={k.label} style={{
             backgroundColor: 'white', 
             borderRadius: '16px', 
-            padding: '24px',
+            padding: '16px',
             border: '1px solid #f3f4f6', 
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-            minHeight: '160px',
+            minHeight: '120px',
             transition: 'all 0.2s ease',
             cursor: 'pointer'
           }}
@@ -124,13 +264,10 @@ export default function TransactionsPage() {
             e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
           }}>
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              {/* Header with icon and change indicator */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+              {/* Header with icon and percentage */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <div style={{ 
-                  backgroundColor: k.bg, 
                   color: k.color, 
-                  borderRadius: '20px', 
-                  padding: '12px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -140,10 +277,7 @@ export default function TransactionsPage() {
                 <div style={{ 
                   fontSize: '12px', 
                   fontWeight: '600',
-                  color: k.changeType === 'positive' ? '#10b981' : '#ef4444',
-                  backgroundColor: k.changeType === 'positive' ? '#ecfdf5' : '#fee2e2',
-                  padding: '4px 8px',
-                  borderRadius: '20px'
+                  color: k.changeType === 'positive' ? '#10b981' : '#ef4444'
                 }}>
                   {k.change}
                 </div>
@@ -161,7 +295,14 @@ export default function TransactionsPage() {
                   lineHeight: '1.2',
                   marginBottom: '8px'
                 }}>
-                  {formatPrice(k.value)}
+                  {kpiLoading ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <RefreshCw size={16} className="animate-spin" />
+                      Loading...
+                    </div>
+                  ) : (
+                    formatPrice(k.value)
+                  )}
                 </div>
                 <div style={{ 
                   fontSize: '12px', 
@@ -178,39 +319,49 @@ export default function TransactionsPage() {
         ))}
       </div>
 
-      {/* Tabs (Dashboard, Transactions, Accounting, Cash Flow, Revenue, Reports) */}
-      <div style={{ backgroundColor: 'white', borderRadius: '20px', border: '1px solid #e5e7eb', overflow: 'hidden', marginBottom: '60px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)' }}>
-          {[
-            { id: 'dashboard', label: 'Dashboard' },
-            { id: 'transactions', label: 'Transactions' },
-            { id: 'accounting', label: 'Accounting' },
-            { id: 'cashflow', label: 'Cash Flow' },
-            { id: 'revenue', label: 'Revenue' },
-            { id: 'reports', label: 'Reports' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              style={{
-                padding: '14px 12px', backgroundColor: activeTab === (tab.id as any) ? 'var(--mc-sidebar-bg)' : 'transparent',
-                color: activeTab === (tab.id as any) ? 'white' : '#6b7280', border: 'none', fontSize: '14px', fontWeight: 600,
-                cursor: 'pointer', transition: 'all 0.2s'
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      {/* Compact Tab Navigation */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '8px', 
+        marginBottom: '24px',
+        backgroundColor: '#f3f4f6',
+        padding: '6px',
+        borderRadius: '12px',
+        width: 'fit-content'
+      }}>
+        {[
+          { id: 'transactions', label: 'Transactions', icon: Receipt },
+          { id: 'accounting', label: 'Accounting', icon: FileText }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            style={{
+              padding: '12px 20px',
+              backgroundColor: activeTab === (tab.id as any) ? '#1f2937' : 'transparent',
+              color: activeTab === (tab.id as any) ? 'white' : '#6b7280',
+              border: 'none',
+              fontSize: '14px',
+              fontWeight: activeTab === (tab.id as any) ? '600' : '500',
+              cursor: 'pointer',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: activeTab === (tab.id as any) ? '0 4px 8px rgba(31, 41, 55, 0.2)' : 'none',
+              transform: activeTab === (tab.id as any) ? 'translateY(-1px)' : 'translateY(0)'
+            }}
+          >
+            <tab.icon size={16} />
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* Tab content */}
-      {activeTab === 'dashboard' && <Dashboard />}
-      {activeTab === 'transactions' && <Transactions />}
+      {activeTab === 'transactions' && <Transactions key={refreshKey} onRefresh={handleRefresh} onEditTransaction={handleEditTransaction} />}
       {activeTab === 'accounting' && <Accounting />}
-      {activeTab === 'cashflow' && <CashFlow />}
-      {activeTab === 'revenue' && <Revenue />}
-      {activeTab === 'reports' && <Reports />}
 
       {/* Add Transaction Modal */}
       {showAddModal && (
@@ -237,12 +388,13 @@ export default function TransactionsPage() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-                Add New Transaction
+                {editingTransaction ? 'Edit Transaction' : 'Add New Transaction'}
               </h2>
               <button
                 onClick={() => {
                   setShowAddModal(false);
-                  setNewTransaction({ description: '', type: 'revenue', category: '', amount: 0, reference: '', paymentMethod: 'cash' });
+                  setEditingTransaction(null);
+                  setNewTransaction({ description: '', type: 'revenue', category: '', amount: 0, reference: '', paymentMethod: 'cash', account: 'Business Account' });
                 }}
                 style={{
                   background: 'none',
@@ -284,7 +436,7 @@ export default function TransactionsPage() {
                   </label>
                   <select
                     value={newTransaction.type}
-                    onChange={(e) => setNewTransaction({...newTransaction, type: e.target.value})}
+                    onChange={(e) => setNewTransaction({...newTransaction, type: e.target.value, category: ''})}
                     style={{
                       width: '100%',
                       padding: '12px',
@@ -308,21 +460,13 @@ export default function TransactionsPage() {
 
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                    Category
+                    Category (Optional)
                   </label>
-                  <input
-                    type="text"
+                  <CategoryInput
                     value={newTransaction.category}
-                    onChange={(e) => setNewTransaction({...newTransaction, category: e.target.value})}
-                    placeholder="e.g., Services, Rent"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '20px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box'
-                    }}
+                    onChange={(value) => setNewTransaction({...newTransaction, category: value})}
+                    placeholder="Select or type category (optional)..."
+                    transactionType={newTransaction.type}
                   />
                 </div>
               </div>
@@ -333,10 +477,14 @@ export default function TransactionsPage() {
                     Amount *
                   </label>
                   <input
-                    type="number"
-                    value={newTransaction.amount}
-                    onChange={(e) => setNewTransaction({...newTransaction, amount: parseFloat(e.target.value) || 0})}
-                    placeholder="0"
+                    type="text"
+                    value={newTransaction.amount === 0 ? '' : newTransaction.amount.toString()}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Simple: just update the state with whatever they type
+                      setNewTransaction({...newTransaction, amount: Number(value) || 0});
+                    }}
+                    placeholder="0.00"
                     style={{
                       width: '100%',
                       padding: '12px',
@@ -388,14 +536,38 @@ export default function TransactionsPage() {
                 >
                   <option value="cash">Cash</option>
                   <option value="bank">Bank Transfer</option>
+                  <option value="card">Card</option>
+                  <option value="mobile_money">Mobile Money</option>
+                  <option value="other">Other</option>
                 </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                  Account
+                </label>
+                <input
+                  type="text"
+                  value={newTransaction.account}
+                  onChange={(e) => setNewTransaction({...newTransaction, account: e.target.value})}
+                  placeholder="e.g., Business Account"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
               </div>
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
                 <button
                   onClick={() => {
                     setShowAddModal(false);
-                    setNewTransaction({ description: '', type: 'revenue', category: '', amount: 0, reference: '', paymentMethod: 'cash' });
+                    setEditingTransaction(null);
+                    setNewTransaction({ description: '', type: 'revenue', category: '', amount: 0, reference: '', paymentMethod: 'cash', account: 'Business Account' });
                   }}
                   style={{
                     padding: '10px 20px',
@@ -411,13 +583,7 @@ export default function TransactionsPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    // Here you would typically save the transaction to your database
-                    console.log('New transaction:', newTransaction);
-                    setShowAddModal(false);
-                    setNewTransaction({ description: '', type: 'revenue', category: '', amount: 0, reference: '', paymentMethod: 'cash' });
-                    // You might want to show a success message or refresh the transactions list
-                  }}
+                  onClick={handleCreateTransaction}
                   style={{
                     padding: '10px 20px',
                     border: 'none',
@@ -429,7 +595,7 @@ export default function TransactionsPage() {
                     cursor: 'pointer'
                   }}
                 >
-                  Add Transaction
+                  {editingTransaction ? 'Update Transaction' : 'Add Transaction'}
                 </button>
         </div>
         </div>

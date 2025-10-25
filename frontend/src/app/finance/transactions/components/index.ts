@@ -4,3 +4,4 @@ export { default as Accounting } from './Accounting';
 export { default as CashFlow } from './CashFlow';
 export { default as Revenue } from './Revenue';
 export { default as Reports } from './Reports';
+export { default as CategoryInput } from './CategoryInput';
