@@ -332,11 +332,11 @@ export default function TransactionsPage() {
         {[
           { id: 'transactions', label: 'Transactions', icon: Receipt },
           { id: 'accounting', label: 'Accounting', icon: FileText }
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            style={{
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              style={{
               padding: '12px 20px',
               backgroundColor: activeTab === (tab.id as any) ? '#1f2937' : 'transparent',
               color: activeTab === (tab.id as any) ? 'white' : '#6b7280',
@@ -354,9 +354,9 @@ export default function TransactionsPage() {
             }}
           >
             <tab.icon size={16} />
-            {tab.label}
-          </button>
-        ))}
+              {tab.label}
+            </button>
+          ))}
       </div>
 
       {/* Tab content */}

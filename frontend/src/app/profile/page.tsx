@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, 
   Store, 
@@ -10,41 +10,307 @@ import {
   MapPin,
   Globe,
   FileText,
-  CheckCircle
+  CheckCircle,
+  Upload,
+  RefreshCw
 } from 'lucide-react';
+import { buildApiUrl } from '../../config/api';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('personal');
   const [showPersonalEditModal, setShowPersonalEditModal] = useState(false);
   const [showBusinessEditModal, setShowBusinessEditModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
-  // Mock data for display
-  const personalInfo = {
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@company.com',
-    phone: '+255 123 456 789',
-    nationality: 'Tanzanian',
-    address: 'Masaki, Dar es Salaam',
-    nationalIdNumber: '1234567890123456',
-    nationalId: 'national-id.pdf'
+  // Profile data state
+  const [personalInfo, setPersonalInfo] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    nationality: '',
+    address: '',
+    nationalIdNumber: '',
+    nationalId: ''
+  });
+
+  const [businessInfo, setBusinessInfo] = useState({
+    businessName: '',
+    businessType: '',
+    businessEmail: '',
+    businessPhone: '',
+    country: '',
+    city: '',
+    businessAddress: '',
+    website: '',
+    registrationNumber: '',
+    taxId: '',
+    businessLicense: '',
+    registrationCertificate: '',
+    taxCertificate: ''
+  });
+
+  const [profileStats, setProfileStats] = useState({
+    personal_info: { completed: 0, total: 7, percentage: 0 },
+    business_info: { completed: 0, total: 10, percentage: 0 },
+    documents: { completed: 0, total: 4, percentage: 0 },
+    overall: { completed: 0, total: 21, percentage: 0 },
+    profile_completed: false
+  });
+
+  // Form state for editing
+  const [personalForm, setPersonalForm] = useState({ ...personalInfo });
+  const [businessForm, setBusinessForm] = useState({ ...businessInfo });
+
+  // API functions
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        // No token found, redirect to login
+        router.push('/authentication/login');
+        return;
+      }
+      
+      const response = await fetch(buildApiUrl('/profile'), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Token is invalid, redirect to login
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user_data');
+          router.push('/authentication/login');
+          return;
+        }
+        throw new Error(`Failed to fetch profile: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Update personal info
+      setPersonalInfo({
+        firstName: data.personal_info.first_name || '',
+        lastName: data.personal_info.last_name || '',
+        email: data.personal_info.email || '',
+        phone: data.personal_info.phone || '',
+        nationality: data.personal_info.nationality || '',
+        address: data.personal_info.address || '',
+        nationalIdNumber: data.personal_info.national_id_number || '',
+        nationalId: data.personal_info.national_id_document || ''
+      });
+      
+      // Update business info
+      setBusinessInfo({
+        businessName: data.business_info.business_name || '',
+        businessType: data.business_info.business_type || '',
+        businessEmail: data.business_info.business_email || '',
+        businessPhone: data.business_info.business_phone || '',
+        country: data.business_info.country || '',
+        city: data.business_info.city || '',
+        businessAddress: data.business_info.business_address || '',
+        website: data.business_info.website || '',
+        registrationNumber: data.business_info.registration_number || '',
+        taxId: data.business_info.tax_id || '',
+        businessLicense: data.business_info.business_license_document || '',
+        registrationCertificate: data.business_info.registration_certificate_document || '',
+        taxCertificate: data.business_info.tax_certificate_document || ''
+      });
+      
+      // Update form states
+      setPersonalForm({ ...personalInfo });
+      setBusinessForm({ ...businessInfo });
+      
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const businessInfo = {
-    businessName: 'My Company Ltd',
-    businessType: 'Technology',
-    businessEmail: 'info@mycompany.com',
-    businessPhone: '+255 987 654 321',
-    country: 'Tanzania, United Republic of',
-    city: 'Dar es Salaam',
-    businessAddress: 'CBD, Dar es Salaam',
-    website: 'https://mycompany.com',
-    registrationNumber: 'REG123456789',
-    taxId: 'TAX987654321',
-    businessLicense: 'business-license.pdf',
-    registrationCertificate: 'registration-cert.pdf',
-    taxCertificate: 'tax-certificate.pdf'
+  const fetchProfileStats = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        return; // No token, skip stats fetch
+      }
+      
+      const response = await fetch(buildApiUrl('/profile/stats'), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.ok) {
+        const stats = await response.json();
+        setProfileStats(stats);
+      }
+    } catch (err) {
+      console.error('Error fetching profile stats:', err);
+    }
   };
+
+  const updatePersonalInfo = async () => {
+    try {
+      setSaving(true);
+      setError('');
+      
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        router.push('/authentication/login');
+        return;
+      }
+      
+      const response = await fetch(buildApiUrl('/profile/personal'), {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          first_name: personalForm.firstName,
+          last_name: personalForm.lastName,
+          email: personalForm.email,
+          phone: personalForm.phone,
+          nationality: personalForm.nationality,
+          address: personalForm.address,
+          national_id_number: personalForm.nationalIdNumber
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to update personal info: ${response.status}`);
+      }
+      
+      // Update local state
+      setPersonalInfo({ ...personalForm });
+      setShowPersonalEditModal(false);
+      
+      // Refresh stats
+      await fetchProfileStats();
+      
+    } catch (err) {
+      console.error('Error updating personal info:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update personal information');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateBusinessInfo = async () => {
+    try {
+      setSaving(true);
+      setError('');
+      
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        router.push('/authentication/login');
+        return;
+      }
+      
+      const response = await fetch(buildApiUrl('/profile/business'), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          business_name: businessForm.businessName,
+          business_type: businessForm.businessType,
+          business_email: businessForm.businessEmail,
+          business_phone: businessForm.businessPhone,
+          country: businessForm.country,
+          city: businessForm.city,
+          business_address: businessForm.businessAddress,
+          website: businessForm.website,
+          registration_number: businessForm.registrationNumber,
+          tax_id: businessForm.taxId
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to update business info: ${response.status}`);
+      }
+      
+      // Update local state
+      setBusinessInfo({ ...businessForm });
+      setShowBusinessEditModal(false);
+      
+      // Refresh stats
+      await fetchProfileStats();
+      
+    } catch (err) {
+      console.error('Error updating business info:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update business information');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const uploadDocument = async (file: File, documentType: string) => {
+    try {
+      setSaving(true);
+      setError('');
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch(buildApiUrl(`/profile/upload/${documentType}`), {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to upload ${documentType}: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      // Update local state based on document type
+      if (documentType === 'national-id') {
+        setPersonalInfo(prev => ({ ...prev, nationalId: result.filename }));
+      } else if (documentType === 'business-license') {
+        setBusinessInfo(prev => ({ ...prev, businessLicense: result.filename }));
+      } else if (documentType === 'registration-certificate') {
+        setBusinessInfo(prev => ({ ...prev, registrationCertificate: result.filename }));
+      } else if (documentType === 'tax-certificate') {
+        setBusinessInfo(prev => ({ ...prev, taxCertificate: result.filename }));
+      }
+      
+      // Refresh stats
+      await fetchProfileStats();
+      
+    } catch (err) {
+      console.error(`Error uploading ${documentType}:`, err);
+      setError(err instanceof Error ? err.message : `Failed to upload ${documentType}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Load profile data on component mount
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      fetchProfile();
+      fetchProfileStats();
+    } else {
+      // No token, redirect to login immediately
+      router.push('/authentication/login');
+    }
+  }, [router]);
 
   const tabs = [
     { id: 'personal', label: 'Personal Info', icon: <User size={20} /> },
@@ -55,12 +321,36 @@ export default function ProfilePage() {
     <div style={{ padding: '24px', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', margin: '0 0 8px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', margin: 0 }}>
           Profile
         </h1>
-        <p style={{ fontSize: '16px', color: '#6b7280', margin: 0 }}>
+          {loading && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6b7280' }}>
+              <RefreshCw size={16} className="animate-spin" />
+              <span style={{ fontSize: '14px' }}>Loading...</span>
+            </div>
+          )}
+        </div>
+        <p style={{ fontSize: '16px', color: '#6b7280', margin: '0 0 16px 0' }}>
           View your personal and business information
         </p>
+        
+        {/* Error Display */}
+        {error && (
+          <div style={{
+            backgroundColor: '#fee2e2',
+            border: '1px solid #fecaca',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            marginBottom: '16px',
+            color: '#dc2626',
+            fontSize: '14px'
+          }}>
+            {error}
+          </div>
+        )}
+        
       </div>
 
       {/* Profile Container */}
@@ -131,7 +421,10 @@ export default function ProfilePage() {
                     {personalInfo.email}
                   </p>
                   <button
-                    onClick={() => setShowPersonalEditModal(true)}
+                    onClick={() => {
+                      setPersonalForm({ ...personalInfo });
+                      setShowPersonalEditModal(true);
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -226,7 +519,10 @@ export default function ProfilePage() {
                     {businessInfo.businessType}
                   </p>
                   <button
-                    onClick={() => setShowBusinessEditModal(true)}
+                    onClick={() => {
+                      setBusinessForm({ ...businessInfo });
+                      setShowBusinessEditModal(true);
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -385,7 +681,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue={personalInfo.firstName}
+                    value={personalForm.firstName}
+                    onChange={(e) => setPersonalForm(prev => ({ ...prev, firstName: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -402,7 +699,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue={personalInfo.lastName}
+                    value={personalForm.lastName}
+                    onChange={(e) => setPersonalForm(prev => ({ ...prev, lastName: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -422,7 +720,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="email"
-                    defaultValue={personalInfo.email}
+                    value={personalForm.email}
+                    onChange={(e) => setPersonalForm(prev => ({ ...prev, email: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -547,19 +846,24 @@ export default function ProfilePage() {
                 Cancel
               </button>
               <button
-                onClick={() => setShowPersonalEditModal(false)}
+                onClick={updatePersonalInfo}
+                disabled={saving}
                 style={{
                   padding: '12px 24px',
                   border: 'none',
                   borderRadius: '20px',
-                  backgroundColor: 'var(--mc-sidebar-bg)',
+                  backgroundColor: saving ? '#9ca3af' : 'var(--mc-sidebar-bg)',
                   color: 'white',
                   fontSize: '14px',
                   fontWeight: '500',
-                  cursor: 'pointer'
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
                 }}
               >
-                Save Changes
+                {saving && <RefreshCw size={16} className="animate-spin" />}
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>
@@ -615,7 +919,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue={businessInfo.businessName}
+                    value={businessForm.businessName}
+                    onChange={(e) => setBusinessForm(prev => ({ ...prev, businessName: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -877,19 +1182,24 @@ export default function ProfilePage() {
                 Cancel
               </button>
               <button
-                onClick={() => setShowBusinessEditModal(false)}
+                onClick={updateBusinessInfo}
+                disabled={saving}
                 style={{
                   padding: '12px 24px',
                   border: 'none',
                   borderRadius: '20px',
-                  backgroundColor: 'var(--mc-sidebar-bg)',
+                  backgroundColor: saving ? '#9ca3af' : 'var(--mc-sidebar-bg)',
                   color: 'white',
                   fontSize: '14px',
                   fontWeight: '500',
-                  cursor: 'pointer'
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
                 }}
               >
-                Save Changes
+                {saving && <RefreshCw size={16} className="animate-spin" />}
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>

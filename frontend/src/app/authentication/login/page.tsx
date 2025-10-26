@@ -9,8 +9,11 @@ import {
   ArrowRight,
   Building2
 } from 'lucide-react';
+import { buildApiUrl } from '../../../config/api';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -19,6 +22,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [loginError, setLoginError] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -56,15 +60,55 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Login form submitted');
     
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      console.log('Form validation failed');
+      return;
+    }
     
     setIsLoading(true);
+    setLoginError('');
     
-    setTimeout(() => {
+    try {
+      console.log('Attempting login...', buildApiUrl('/auth/login'));
+      const response = await fetch(buildApiUrl('/auth/login'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        }),
+      });
+      
+      console.log('Response status:', response.status);
+      const data = await response.json();
+      console.log('Response data:', data);
+      
+      if (response.ok) {
+        console.log('Login successful, storing token and redirecting...');
+        // Store token in cookie (more secure than localStorage)
+        document.cookie = `auth_token=${data.access_token}; path=/; max-age=1800; SameSite=Strict; Secure`;
+        
+        // Store user data in localStorage for client-side use
+        if (data.user) {
+          localStorage.setItem('user_data', JSON.stringify(data.user));
+        }
+        
+        // Redirect to home page
+        router.push('/');
+      } else {
+        console.log('Login failed:', data.detail);
+        setLoginError(data.detail || 'Login failed. Please check your credentials.');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setLoginError('An error occurred. Please try again.');
+    } finally {
       setIsLoading(false);
-      window.location.href = '/';
-    }, 2000);
+    }
   };
 
   return (
@@ -105,6 +149,21 @@ export default function LoginPage() {
             Enter your credentials to access your account
           </p>
         </div>
+
+        {/* Login Error */}
+        {loginError && (
+          <div style={{
+            backgroundColor: '#fee2e2',
+            border: '1px solid #fecaca',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            marginBottom: '20px',
+            color: '#dc2626',
+            fontSize: '14px'
+          }}>
+            {loginError}
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

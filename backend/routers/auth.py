@@ -116,8 +116,8 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
             id=user.id,
             email=user.email,
             full_name=user.full_name,
-            role=user.role,
-            is_active=user.is_active,
+            role="user",
+            is_active=True,
             created_at=user.created_at
         )
         
@@ -140,7 +140,7 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
                 detail="Invalid credentials"
             )
         
-        if not user.is_active:
+        if user.status and user.status.value != 'active':
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Account is deactivated"
@@ -148,7 +148,7 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
         
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
-            data={"sub": str(user.id), "role": user.role}, 
+            data={"sub": str(user.id), "role": "user"}, 
             expires_delta=access_token_expires
         )
         
@@ -176,8 +176,8 @@ async def get_current_user(current_user_id: str = Depends(verify_token), db: Ses
             id=user.id,
             email=user.email,
             full_name=user.full_name,
-            role=user.role,
-            is_active=user.is_active,
+            role="user",
+            is_active=True,
             created_at=user.created_at
         )
         
@@ -223,8 +223,8 @@ async def update_profile(
             id=user.id,
             email=user.email,
             full_name=user.full_name,
-            role=user.role,
-            is_active=user.is_active,
+            role="user",
+            is_active=True,
             created_at=user.created_at
         )
         
@@ -239,3 +239,4 @@ async def update_profile(
 async def logout():
     """Logout user (client should remove token)"""
     return {"message": "Logout successful"}
+

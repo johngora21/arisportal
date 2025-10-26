@@ -1,6 +1,7 @@
 import '../styles/sidebar.css';
 import type { Metadata } from 'next';
 import { AppShell } from '@/components/AppShell';
+import { AuthProvider } from '../contexts/AuthContext';
 
 export const metadata: Metadata = {
   title: 'Aris Portal',
@@ -18,9 +19,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
       </head>
       <body style={{ margin: 0 }}>
-        <AppShell>
-          {children}
-        </AppShell>
+        <AuthProvider>
+          <AppShell>
+            {children}
+          </AppShell>
+        </AuthProvider>
       </body>
     </html>
   );
