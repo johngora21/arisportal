@@ -23,6 +23,7 @@ interface EscrowAccount {
   created_at: string;
   updated_at: string;
   milestones?: any[];
+  documents?: any[];
   created_by: string;
   completed_at?: string;
   cancelled_at?: string;
@@ -54,6 +55,43 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
       case 'CANCELLED': return '#ef4444';
       case 'DISPUTED': return '#8b5cf6';
       default: return '#6b7280';
+    }
+  };
+
+  const handleDownload = async (doc: any, event: React.MouseEvent) => {
+    event.preventDefault();
+    try {
+      const url = `http://localhost:8000${doc.url}`;
+      const filename = doc.name || doc.filename || `document-${Date.now()}`;
+      
+      // Fetch the file
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to download file');
+      }
+      
+      // Create a blob from the response
+      const blob = await response.blob();
+      
+      // Create a temporary URL for the blob
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      link.style.display = 'none';
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('Failed to download file. Please try again.');
     }
   };
 
@@ -140,67 +178,6 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
           </span>
         </div>
 
-        {/* Transaction Details */}
-        <div style={{ marginBottom: '32px' }}>
-          <h3 style={{ 
-            fontSize: '18px', 
-            fontWeight: '600', 
-            color: '#1f2937', 
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <FileText size={20} />
-            Transaction Details
-          </h3>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-            <div>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '6px', 
-                fontSize: '12px', 
-                fontWeight: '500', 
-                color: '#6b7280' 
-              }}>
-                Title
-              </label>
-              <div style={{ 
-                padding: '12px 16px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
-                fontSize: '14px',
-                color: '#1f2937'
-              }}>
-                {escrow.title}
-              </div>
-            </div>
-
-            <div>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '6px', 
-                fontSize: '12px', 
-                fontWeight: '500', 
-                color: '#6b7280' 
-              }}>
-                Description
-              </label>
-              <div style={{ 
-                padding: '12px 16px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
-                fontSize: '14px',
-                color: '#1f2937',
-                minHeight: '60px'
-              }}>
-                {escrow.description || 'No description provided'}
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Payer Information */}
         <div style={{ marginBottom: '32px' }}>
           <h3 style={{ 
@@ -228,9 +205,6 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
                 Name
               </label>
               <div style={{ 
-                padding: '12px 16px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
                 fontSize: '14px',
                 color: '#1f2937'
               }}>
@@ -249,9 +223,6 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
                 Email
               </label>
               <div style={{ 
-                padding: '12px 16px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
                 fontSize: '14px',
                 color: '#1f2937'
               }}>
@@ -270,9 +241,6 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
                 Phone
               </label>
               <div style={{ 
-                padding: '12px 16px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
                 fontSize: '14px',
                 color: '#1f2937'
               }}>
@@ -309,9 +277,6 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
                 Name
               </label>
               <div style={{ 
-                padding: '12px 16px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
                 fontSize: '14px',
                 color: '#1f2937'
               }}>
@@ -330,9 +295,6 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
                 Email
               </label>
               <div style={{ 
-                padding: '12px 16px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
                 fontSize: '14px',
                 color: '#1f2937'
               }}>
@@ -351,9 +313,6 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
                 Phone
               </label>
               <div style={{ 
-                padding: '12px 16px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
                 fontSize: '14px',
                 color: '#1f2937'
               }}>
@@ -390,9 +349,6 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
                 Total Amount
               </label>
               <div style={{ 
-                padding: '12px 16px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
                 fontSize: '16px',
                 fontWeight: '600',
                 color: '#1f2937'
@@ -412,9 +368,6 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
                 Payment Type
               </label>
               <div style={{ 
-                padding: '12px 16px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
                 fontSize: '14px',
                 color: '#1f2937'
               }}>
@@ -433,9 +386,6 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
                 Release Date
               </label>
               <div style={{ 
-                padding: '12px 16px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
                 fontSize: '14px',
                 color: '#1f2937'
               }}>
@@ -454,13 +404,65 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
                 Created Date
               </label>
               <div style={{ 
-                padding: '12px 16px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
                 fontSize: '14px',
                 color: '#1f2937'
               }}>
                 {new Date(escrow.created_at).toLocaleDateString()}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Transaction Details */}
+        <div style={{ marginBottom: '32px' }}>
+          <h3 style={{ 
+            fontSize: '18px', 
+            fontWeight: '600', 
+            color: '#1f2937', 
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <FileText size={20} />
+            Transaction Details
+          </h3>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+            <div>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '6px', 
+                fontSize: '12px', 
+                fontWeight: '500', 
+                color: '#6b7280' 
+              }}>
+                Title
+              </label>
+              <div style={{ 
+                fontSize: '14px',
+                color: '#1f2937'
+              }}>
+                {escrow.title}
+              </div>
+            </div>
+
+            <div>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '6px', 
+                fontSize: '12px', 
+                fontWeight: '500', 
+                color: '#6b7280' 
+              }}>
+                Description
+              </label>
+              <div style={{ 
+                fontSize: '14px',
+                color: '#1f2937',
+                whiteSpace: 'pre-wrap'
+              }}>
+                {escrow.description || 'No description provided'}
               </div>
             </div>
           </div>
@@ -495,12 +497,9 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
                     Terms & Conditions
                   </label>
                   <div style={{ 
-                    padding: '12px 16px',
-                    backgroundColor: '#f8fafc',
-                    borderRadius: '8px',
                     fontSize: '14px',
                     color: '#1f2937',
-                    minHeight: '60px'
+                    whiteSpace: 'pre-wrap'
                   }}>
                     {escrow.terms}
                   </div>
@@ -519,12 +518,9 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
                     Additional Notes
                   </label>
                   <div style={{ 
-                    padding: '12px 16px',
-                    backgroundColor: '#f8fafc',
-                    borderRadius: '8px',
                     fontSize: '14px',
                     color: '#1f2937',
-                    minHeight: '60px'
+                    whiteSpace: 'pre-wrap'
                   }}>
                     {escrow.additional_notes}
                   </div>
@@ -586,6 +582,74 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
                     <span>Amount: {formatCurrency(milestone.amount)}</span>
                     <span>Due: {new Date(milestone.completion_date).toLocaleDateString()}</span>
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Supporting Documents */}
+        {escrow.documents && escrow.documents.length > 0 && (
+          <div style={{ marginBottom: '32px' }}>
+            <h3 style={{ 
+              fontSize: '18px', 
+              fontWeight: '600', 
+              color: '#1f2937', 
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <FileText size={20} />
+              Supporting Documents
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {escrow.documents.map((doc: any, index: number) => (
+                <div key={index} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 16px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  backgroundColor: '#f9fafb'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <FileText size={20} color="#6b7280" />
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>
+                        {doc.name || doc.filename || `Document ${index + 1}`}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                        {doc.size ? `${(doc.size / 1024).toFixed(2)} KB` : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => handleDownload(doc, e)}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: 'var(--mc-sidebar-bg)',
+                      color: 'white',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = '#1d4ed8';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    Download
+                  </button>
                 </div>
               ))}
             </div>

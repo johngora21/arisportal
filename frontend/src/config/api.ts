@@ -2,7 +2,7 @@
 export const API_CONFIG = {
   BASE_URL: process.env.NODE_ENV === 'production' 
     ? 'https://your-production-api.com/api/v1'
-    : 'http://localhost:4001/api/v1',
+    : 'http://localhost:8000/api/v1',
   VERSION: '1.0.0', // Cache busting
   
   ENDPOINTS: {

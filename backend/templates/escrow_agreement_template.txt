@@ -1,0 +1,200 @@
+================================================================================
+              ESCROW SERVICES AGREEMENT WITH SMART CONTRACT
+                        ARISPORTAL ESCROW
+                     Blockchain-Secured Escrow
+
+Agreement Date: {AGREEMENT_DATE}
+Escrow ID: {ESCROW_ID}
+Smart Contract: Deployed on Blockchain Network
+================================================================================
+
+PARTIES TO THIS AGREEMENT:
+--------------------------
+
+PAYER (Depositor):
+- Name: {PAYER_NAME}
+- Email: {PAYER_EMAIL}
+- Phone: {PAYER_PHONE}
+
+PAYEE (Recipient):
+- Name: {PAYEE_NAME}
+- Email: {PAYEE_EMAIL}
+- Phone: {PAYEE_PHONE}
+
+ESCROW SERVICE PROVIDER:
+- Name: ArisPortal
+- Service Type: Blockchain-Secured Digital Escrow Services
+- Technology: Smart Contract Escrow System
+
+
+SMART CONTRACT TECHNOLOGY:
+--------------------------
+This escrow agreement is secured and enforced using blockchain smart contract 
+technology. The smart contract is a self-executing program deployed on a 
+blockchain network that holds funds in escrow and automatically releases them 
+when predetermined conditions are met.
+
+Smart Contract Features:
+- Automated fund holding and release mechanisms
+- Immutable transaction records on blockchain
+- Transparent and verifiable escrow operations
+- Cryptographically secured deposits
+- Automatic dispute resolution protocols
+- Programmable payment releases based on milestones or time conditions
+- Complete audit trail of all transactions
+
+
+TRANSACTION DETAILS:
+-------------------
+Title: {TITLE}
+Description: {DESCRIPTION}
+
+Total Escrow Amount: {TOTAL_AMOUNT} TZS
+Payment Type: {PAYMENT_TYPE}
+Release Date: {RELEASE_DATE}
+
+
+TERMS AND CONDITIONS:
+---------------------
+
+1. ESCROW PURPOSE AND SMART CONTRACT SECURITY
+   This escrow agreement is established to hold funds for the following transaction:
+   {DESCRIPTION}
+   
+   All funds will be secured in a blockchain smart contract that enforces the 
+   terms of this agreement automatically. The smart contract provides:
+   - Cryptographic security for all deposited funds
+   - Automatic execution of terms without third-party intervention
+   - Transparent and auditable transaction history
+   - Protection against fraud or unauthorized withdrawals
+
+2. BLOCKCHAIN DEPOSIT OF FUNDS
+   The Payer agrees to deposit the total amount of {TOTAL_AMOUNT} TZS into the 
+   blockchain smart contract escrow account. Funds will be held in a secure, 
+   decentralized smart contract address that is publicly verifiable on the 
+   blockchain. The smart contract ensures that:
+   - Funds cannot be withdrawn without meeting release conditions
+   - Both parties can verify the escrow balance at any time
+   - Transaction history is permanently recorded on blockchain
+   - Funds are protected by cryptographic security mechanisms
+
+3. AUTOMATIC FUNDS RELEASE VIA SMART CONTRACT
+   The blockchain smart contract will automatically release funds to the Payee 
+   upon fulfillment of the following conditions:
+   - Completion of all agreed upon deliverables/services
+   - Verification of successful transaction
+   - Release authorization by Payer or automatic release on {RELEASE_DATE}
+   - For milestone-based payments: Completion of specific milestones as verified
+   
+   The smart contract automatically executes payment releases based on:
+   - Pre-programmed conditions encoded in the contract
+   - Digital signatures from authorized parties
+   - Time-based release triggers (if applicable)
+   - Milestone completion verification (if applicable)
+   
+   Once conditions are met, the smart contract executes the payment transfer 
+   automatically without requiring manual intervention.
+
+4. SMART CONTRACT DISPUTE RESOLUTION
+   The blockchain smart contract includes built-in dispute resolution mechanisms:
+   - Smart contract enters "disputed" state, freezing all automatic releases
+   - Both parties must cooperate in good faith to resolve the matter
+   - ArisPortal may mediate and execute resolution through smart contract
+   - Funds remain locked in smart contract until dispute is resolved
+   - If no resolution within 30 days, smart contract may execute refund to Payer
+   - Dispute resolution is recorded on blockchain for transparency
+   - All parties can verify dispute status by viewing smart contract state
+
+5. AUTOMATIC REFUND POLICY VIA SMART CONTRACT
+   The blockchain smart contract can automatically execute refunds to the Payer if:
+   - The transaction is cancelled by both parties
+   - The Payee fails to meet agreed conditions
+   - A valid dispute is resolved in favor of the Payer
+   - Milestone deadlines are not met (for milestone-based payments)
+   - As otherwise programmed in the smart contract
+   
+   All refunds are executed automatically by the smart contract and recorded 
+   on the blockchain with complete transparency. The smart contract ensures 
+   refunds cannot be reversed and provides immutable proof of the transaction.
+
+6. BLOCKCHAIN NETWORK FEES
+   Escrow service fees will be deducted from the release amount as per ArisPortal's 
+   fee structure. Both parties acknowledge and agree to these fees.
+   
+   Additionally, blockchain network transaction fees may apply for:
+   - Deposit of funds into smart contract
+   - Release of funds from smart contract
+   - Dispute resolution transactions
+   - Network confirmation costs
+   
+   These fees are minimal and ensure the security and immutability of the escrow 
+   transaction on the blockchain.
+
+7. SMART CONTRACT SECURITY AND LIABILITY
+   The smart contract provides cryptographic security for all escrowed funds.
+   ArisPortal acts as the smart contract operator and is not liable for:
+   - The quality, merchantability, or fitness of goods/services
+   - Any disputes between Payer and Payee
+   - Any losses incurred by either party beyond the escrowed amount
+   - Blockchain network failures or congestion (funds remain secure)
+   - Smart contract bugs or vulnerabilities in the underlying blockchain
+   
+   However, the smart contract code has been audited and designed with security 
+   best practices to minimize risks. All escrow operations are transparent and 
+   verifiable on the blockchain.
+
+8. BLOCKCHAIN JURISDICTION AND GOVERNING LAW
+   While the escrow funds are secured on a decentralized blockchain network, 
+   this agreement is governed by the laws of Tanzania. Any disputes arising from 
+   this agreement shall be resolved through arbitration in accordance with 
+   Tanzanian law.
+   
+   The smart contract's execution on the blockchain does not supersede applicable 
+   local laws and regulations. Both parties agree that:
+   - Tanzanian courts have jurisdiction over this agreement
+   - Smart contract addresses and transactions may be provided as evidence
+   - Blockchain records are acceptable as legally binding proof of transactions
+   - Any arbitration awards may be enforced through smart contract execution
+
+9. MODIFICATIONS
+   This agreement may only be modified by written consent of all parties.
+
+10. DIGITAL SIGNATURES AND SMART CONTRACT ACCEPTANCE
+    By using ArisPortal's blockchain-secured escrow service, both parties agree to:
+    - Be bound by the terms of this agreement
+    - Execute transactions through the smart contract
+    - Accept blockchain records as valid proof of transactions
+    - Acknowledge the automated and immutable nature of smart contract execution
+    - Understand that smart contract operations cannot be reversed or modified
+    - Agree that digital signatures constitute legal acceptance of this agreement
+    
+    Both parties verify their understanding of smart contract technology and 
+    acknowledge that funds will be held according to programmatic rules encoded 
+    in the smart contract.
+
+================================================================================
+
+ADDITIONAL TERMS:
+-----------------
+{ADDITIONAL_TERMS}
+
+================================================================================
+
+NOTES:
+------
+{ADDITIONAL_NOTES}
+
+================================================================================
+
+CONFIRMATION:
+-----------
+This escrow agreement has been electronically executed and stored by ArisPortal
+on {CREATED_DATE}.
+
+For inquiries regarding this escrow, contact ArisPortal support.
+
+==========================================================================
+                        END OF AGREEMENT
+==========================================================================
+
+

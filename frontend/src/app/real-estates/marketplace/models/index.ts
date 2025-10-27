@@ -54,17 +54,23 @@ export interface PropertyDetails extends Property {
 export interface InvestmentProject {
   id: string;
   title: string;
+  category: string;
   location: string;
-  totalValue: number;
+  landSize: string;
+  zoning: string;
+  access: string;
+  duration: string;
+  expectedROI: number;
+  developmentStage: string;
+  status: 'active' | 'funded' | 'completed';
+  totalProjectValue: number;
   minimumInvestment: number;
   currentInvestors: number;
   targetInvestors: number;
   fundingProgress: number;
-  expectedROI: number;
-  projectDuration: string;
+  investmentDeadline: string;
+  features: string[];
   image: string;
-  description: string;
-  status: 'active' | 'funded' | 'completed';
   coordinates?: Coordinates;
 }
 
@@ -124,6 +130,8 @@ export interface PropertySearchFilters {
   features?: string[];
   amenities?: string[];
   verificationStatus?: string;
+  limit?: number;
+  offset?: number;
 }
 
 export interface InvestmentProjectSearchFilters {
@@ -134,6 +142,8 @@ export interface InvestmentProjectSearchFilters {
   status?: string;
   minROI?: number;
   maxROI?: number;
+  limit?: number;
+  offset?: number;
 }
 
 // Form interfaces for creating/updating properties

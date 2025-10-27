@@ -11,7 +11,8 @@ import {
   Phone,
   Paperclip,
   Send,
-  X
+  X,
+  Trash2
 } from 'lucide-react';
 
 interface Invoice {
@@ -33,6 +34,10 @@ interface InvoicesTabProps {
   setStatusFilter: (status: string) => void;
   durationFilter: string;
   setDurationFilter: (duration: string) => void;
+  invoices: Invoice[];
+  onEditInvoice: (invoice: Invoice) => void;
+  onDeleteInvoice: (invoiceId: string) => void;
+  onUpdateInvoiceStatus: (invoiceId: string, status: 'paid' | 'pending' | 'overdue') => void;
 }
 
 export const InvoicesTab: React.FC<InvoicesTabProps> = ({
@@ -41,61 +46,17 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
   statusFilter,
   setStatusFilter,
   durationFilter,
-  setDurationFilter
+  setDurationFilter,
+  invoices,
+  onEditInvoice,
+  onDeleteInvoice,
+  onUpdateInvoiceStatus
 }) => {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<'email' | 'sms' | 'whatsapp'>('email');
   const [messageContent, setMessageContent] = useState('');
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
-
-  // Mock invoice data with contact info
-  const invoices: Invoice[] = [
-    {
-      id: '1',
-      number: '#INV-001',
-      client: 'Acme Corporation',
-      amount: '$2,500.00',
-      date: '2024-01-15',
-      status: 'paid',
-      email: 'contact@acme.com',
-      phone: '+1-555-0123',
-      whatsapp: '+1-555-0123'
-    },
-    {
-      id: '2',
-      number: '#INV-002',
-      client: 'Tech Solutions Ltd',
-      amount: '$1,800.00',
-      date: '2024-01-18',
-      status: 'pending',
-      email: 'info@techsolutions.com',
-      phone: '+1-555-0456',
-      whatsapp: '+1-555-0456'
-    },
-    {
-      id: '3',
-      number: '#INV-003',
-      client: 'Global Services Inc',
-      amount: '$3,200.00',
-      date: '2024-01-20',
-      status: 'paid',
-      email: 'billing@globalservices.com',
-      phone: '+1-555-0789',
-      whatsapp: '+1-555-0789'
-    },
-    {
-      id: '4',
-      number: '#INV-004',
-      client: 'Startup Ventures',
-      amount: '$950.00',
-      date: '2024-01-22',
-      status: 'overdue',
-      email: 'finance@startupventures.com',
-      phone: '+1-555-0321',
-      whatsapp: '+1-555-0321'
-    }
-  ];
 
   const handleMessageInvoice = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
@@ -256,20 +217,19 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
                   </td>
                   <td style={{ padding: '16px 0' }}>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <button style={{ padding: '6px', backgroundColor: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-                        <Eye size={16} color="#6b7280" />
-                      </button>
-                      <button style={{ padding: '6px', backgroundColor: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                      <button 
+                        onClick={() => onEditInvoice(invoice)}
+                        style={{ padding: '6px', backgroundColor: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                        title="Edit Invoice"
+                      >
                         <Edit size={16} color="#6b7280" />
                       </button>
-                      <button style={{ padding: '6px', backgroundColor: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-                        <Download size={16} color="#6b7280" />
-                      </button>
                       <button 
-                        onClick={() => handleMessageInvoice(invoice)}
-                        style={{ padding: '6px', backgroundColor: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                        onClick={() => onDeleteInvoice(invoice.id)}
+                        style={{ padding: '6px', backgroundColor: '#fef2f2', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                        title="Delete Invoice"
                       >
-                        <MessageSquare size={16} color="#6b7280" />
+                        <Trash2 size={16} color="#ef4444" />
                       </button>
                     </div>
                   </td>

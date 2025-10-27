@@ -1,27 +1,68 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Building, Plus, Eye, MapPin, Home, List, Warehouse, TrendingUp } from 'lucide-react';
 import { Property, InvestmentProject, UserProperty } from './marketplace/models';
 import LandTab from './marketplace/components/LandTab';
 import HouseTab from './marketplace/components/HouseTab';
 import MyListingsTab from './marketplace/components/MyListingsTab';
 import MyPropertiesTab from './marketplace/components/MyPropertiesTab';
-import RealEstateInvestmentsTab from './marketplace/components/RealEstateInvestmentsTab';
-import ListPropertyModal from './marketplace/components/ListPropertyModal';
+import InvestmentProjectsTab from './marketplace/components/InvestmentProjectsTab';
 import PropertyDetailsModal from './marketplace/components/PropertyDetailsModal';
-import { landProperties, buildingProperties, userProperties } from './marketplace/data/mockData';
+import RealEstateProjectDetailsModal from './marketplace/components/RealEstateProjectDetailsModal';
+import AddLandPropertyModal from './marketplace/components/admin/AddLandPropertyModal';
+import AddBuildingPropertyModal from './marketplace/components/admin/AddBuildingPropertyModal';
+import AddInvestmentProjectModal from './marketplace/components/admin/AddInvestmentProjectModal';
+import { realEstateAPI } from './marketplace/services/realEstateAPI';
 
 export default function RealEstatesPage() {
   const [activeTab, setActiveTab] = useState('land');
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [showListPropertyModal, setShowListPropertyModal] = useState(false);
   const [showPropertyDetailsModal, setShowPropertyDetailsModal] = useState(false);
   const [showInvestmentProjectModal, setShowInvestmentProjectModal] = useState(false);
+  const [showAddLandModal, setShowAddLandModal] = useState(false);
+  const [showAddBuildingModal, setShowAddBuildingModal] = useState(false);
+  const [showAddInvestmentModal, setShowAddInvestmentModal] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isSelfOwnedProperty, setIsSelfOwnedProperty] = useState(false);
+  
+  // API state management
+  const [apiData, setApiData] = useState({
+    properties: [] as Property[],
+    investmentProjects: [] as InvestmentProject[],
+    userProperties: [] as UserProperty[]
+  });
+  const [loading, setLoading] = useState(false);
+
+  // Load data on component mount
+  useEffect(() => {
+    loadDataFromAPI();
+  }, []);
+
+  // Load data from API
+  const loadDataFromAPI = async () => {
+    setLoading(true);
+    try {
+      const [properties, investmentProjects, userProperties] = await Promise.all([
+        realEstateAPI.getProperties({ limit: 100, offset: 0 }),
+        realEstateAPI.getInvestmentProjects({ limit: 100, offset: 0 }),
+        realEstateAPI.getUserProperties(1)
+      ]);
+
+      setApiData({ properties, investmentProjects, userProperties });
+    } catch (error) {
+      console.error('Error loading data from API:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get current data source (API only)
+  const getCurrentData = () => {
+    return apiData;
+  };
 
   const handleProjectClick = (project: any) => {
     setSelectedProject(project);
@@ -29,20 +70,55 @@ export default function RealEstatesPage() {
   };
 
   const handlePropertyClick = (property: any, isSelfOwned = false) => {
-    // Convert Property to PropertyDetails format
+    // Map backend fields to frontend PropertyDetails format
     const propertyDetails = {
       ...property,
-      images: property.images || [property.image],
-      features: property.features || ['Modern Design', 'Prime Location', 'Good Investment'],
-      amenities: property.amenities || ['Parking', 'Security', 'Utilities'],
-      seller: property.seller ? {
-        ...property.seller,
-        role: property.seller.role || 'Property Owner'
-      } : {
-        name: 'Property Owner',
-        phone: 'N/A',
-        email: 'N/A',
-        role: 'Property Owner'
+      // Map backend fields to frontend expected fields
+      contactName: property.contact_name || property.seller?.name || 'N/A',
+      contactRole: property.contact_role || property.seller?.role || 'N/A',
+      contactPhone: property.contact_phone || property.seller?.phone || 'N/A',
+      contactEmail: property.contact_email || property.seller?.email || 'N/A',
+      ownerName: property.contact_name || property.seller?.name || 'N/A',
+      role: property.contact_role || property.seller?.role || 'N/A',
+      phoneNumber: property.contact_phone || property.seller?.phone || 'N/A',
+      email: property.contact_email || property.seller?.email || 'N/A',
+      // Map location fields - use actual backend fields
+      region: property.region || 'N/A',
+      district: property.district || 'N/A',
+      ward: property.ward || 'N/A',
+      street: property.street || 'N/A',
+      council: property.council || 'N/A',
+      locality: property.locality || 'N/A',
+      // Map plot/land specific fields - use actual backend fields
+      block: property.block || 'N/A',
+      lotNumber: property.lot_number || 'N/A',
+      legalArea: property.legal_area || 'N/A',
+      lotUse: property.lot_use || 'N/A',
+      // Map building specific fields - use actual backend fields
+      propertyType: property.type === 'house' ? 'House' : 
+                   property.type === 'apartment' ? 'Apartment' : 
+                   property.type === 'commercial' ? 'Commercial' : 
+                   property.type === 'land' ? 'Land' : 'N/A',
+      yearBuilt: property.year_built || 'N/A',
+      furnishing: property.furnishing || 'N/A',
+      parking: property.parking || 'N/A',
+      utilities: property.utilities || 'N/A',
+      // Map other fields
+      estimatedValue: property.estimated_value || property.price,
+      features: property.features || [],
+      images: property.images || [property.image || '/api/placeholder/600/300'],
+      amenities: property.amenities || [],
+      // Ensure size is properly formatted
+      size: property.size && property.size !== '0 sqm' ? property.size : 'N/A',
+      // Map bedroom/bathroom fields with proper handling
+      bedrooms: property.bedrooms || 0,
+      bathrooms: property.bathrooms || 0,
+      kitchen: property.kitchen || 0,
+      seller: property.seller || {
+        name: property.contact_name || 'Property Owner',
+        phone: property.contact_phone || 'N/A',
+        email: property.contact_email || 'N/A',
+        role: property.contact_role || 'Property Owner'
       },
       verificationStatus: property.verificationStatus || 'verified',
       documents: {
@@ -56,178 +132,60 @@ export default function RealEstatesPage() {
     setShowPropertyDetailsModal(true);
   };
 
-  // Mock investment projects data
-  const investmentProjects = [
-    {
-      id: '1',
-      title: 'Masaki Commercial Complex',
-      category: 'commercial',
-      description: 'Modern commercial complex with retail spaces, offices, and parking facilities in prime Masaki location.',
-      location: 'Masaki, Dar es Salaam',
-      landSize: '2.5 acres',
-      zoning: 'Commercial',
-      access: 'Main Road',
-      duration: '24 months',
-      expectedROI: 15,
-      developmentStage: 'planning',
-      status: 'active',
-      totalProjectValue: 500000000,
-      minimumInvestment: 5000000,
-      currentInvestors: 12,
-      targetInvestors: 50,
-      fundingProgress: 24,
-      investmentDeadline: 'Dec 2024',
-      features: ['Modern Office Spaces', 'Retail Shops', 'Underground Parking', 'Green Building Design'],
-      image: '/api/placeholder/400/300',
-      coordinates: {
-        lat: -6.7789,
-        lng: 39.2567
+  const handleSaveLandProperty = async (property: any) => {
+    try {
+      const savedProperty = await realEstateAPI.createProperty({
+        ...property,
+        type: 'land'
+      });
+      
+      if (savedProperty) {
+        // Reload data to show the new property
+        await loadDataFromAPI();
+        setShowAddLandModal(false);
       }
-    },
-    {
-      id: '2',
-      title: 'Kinondoni Residential Development',
-      category: 'residential',
-      description: 'Affordable housing development with 50 units targeting middle-income families.',
-      location: 'Kinondoni, Dar es Salaam',
-      landSize: '3.0 acres',
-      zoning: 'Residential',
-      access: 'Main Road',
-      duration: '18 months',
-      expectedROI: 12,
-      developmentStage: 'construction',
-      status: 'active',
-      totalProjectValue: 300000000,
-      minimumInvestment: 2000000,
-      currentInvestors: 8,
-      targetInvestors: 30,
-      fundingProgress: 27,
-      investmentDeadline: 'Mar 2025',
-      features: ['Affordable Housing', 'Community Center', 'Playground', 'Parking'],
-      image: '/api/placeholder/400/300',
-      coordinates: {
-        lat: -6.7924,
-        lng: 39.2083
-      }
-    },
-    {
-      id: '3',
-      title: 'CBD Office Tower',
-      category: 'commercial',
-      description: 'Premium office tower with modern amenities and prime CBD location.',
-      location: 'CBD, Dar es Salaam',
-      landSize: '1.8 acres',
-      zoning: 'Commercial',
-      access: 'Main Road',
-      duration: '36 months',
-      expectedROI: 18,
-      developmentStage: 'construction',
-      status: 'active',
-      totalProjectValue: 800000000,
-      minimumInvestment: 10000000,
-      currentInvestors: 25,
-      targetInvestors: 40,
-      fundingProgress: 63,
-      investmentDeadline: 'Jun 2025',
-      features: ['Premium Office Spaces', 'Conference Facilities', 'Underground Parking', 'Smart Building Technology'],
-      image: '/api/placeholder/400/300',
-      coordinates: {
-        lat: -6.7924,
-        lng: 39.2083
-      }
-    },
-    {
-      id: '4',
-      title: 'Kigamboni Mixed-Use Project',
-      category: 'mixed-use',
-      description: 'Mixed-use development with residential and commercial components.',
-      location: 'Kigamboni, Dar es Salaam',
-      landSize: '4.0 acres',
-      zoning: 'Mixed Use',
-      access: 'Main Road',
-      duration: '20 months',
-      expectedROI: 14,
-      developmentStage: 'planning',
-      status: 'funded',
-      totalProjectValue: 200000000,
-      minimumInvestment: 3000000,
-      currentInvestors: 15,
-      targetInvestors: 20,
-      fundingProgress: 75,
-      investmentDeadline: 'Apr 2025',
-      features: ['Residential Units', 'Commercial Spaces', 'Recreation Area', 'Parking'],
-      image: '/api/placeholder/400/300',
-      coordinates: {
-        lat: -6.8234,
-        lng: 39.3456
-      }
+    } catch (error) {
+      console.error('Error saving land property:', error);
     }
-  ];
+  };
 
-  // Mock user properties data (not for sale, for loan valuation)
-  const userProperties = [
-    {
-      id: '1',
-      title: 'My Family Home',
-      type: 'house' as const,
-      location: 'Mikocheni, Dar es Salaam',
-      price: 120000000,
-      size: '150 sqm',
-      bedrooms: 4,
-      bathrooms: 3,
-      kitchen: 1,
-      image: '/api/placeholder/400/300',
-      description: 'Family home with garden and parking space.',
-      acquisitionDate: '2020-03-15',
-      currentValue: 180000000,
-      verificationStatus: 'approved' as const
-    },
-    {
-      id: '2',
-      title: 'Investment Land',
-      type: 'land' as const,
-      location: 'Ubungo, Dar es Salaam',
-      price: 45000000,
-      size: '800 sqm',
-      image: '/api/placeholder/400/300',
-      description: 'Prime land for future development.',
-      acquisitionDate: '2021-08-20',
-      currentValue: 72000000,
-      verificationStatus: 'pending' as const
-    },
-    {
-      id: '3',
-      title: 'Rental Apartment',
-      type: 'apartment' as const,
-      location: 'Kariakoo, Dar es Salaam',
-      price: 75000000,
-      size: '90 sqm',
-      bedrooms: 2,
-      bathrooms: 2,
-      kitchen: 1,
-      image: '/api/placeholder/400/300',
-      description: 'Two-bedroom apartment currently rented out.',
-      acquisitionDate: '2019-11-10',
-      currentValue: 105000000,
-      verificationStatus: 'approved' as const
-    },
-    {
-      id: '4',
-      title: 'Commercial Office',
-      type: 'commercial' as const,
-      location: 'CBD, Dar es Salaam',
-      price: 200000000,
-      size: '200 sqm',
-      image: '/api/placeholder/400/300',
-      description: 'Office space in prime CBD location.',
-      acquisitionDate: '2022-01-05',
-      currentValue: 250000000,
-      verificationStatus: 'rejected' as const
+  const handleSaveBuildingProperty = async (property: any) => {
+    try {
+      const savedProperty = await realEstateAPI.createProperty({
+        ...property,
+        type: property.type || 'house'
+      });
+      
+      if (savedProperty) {
+        // Reload data to show the new property
+        await loadDataFromAPI();
+        setShowAddBuildingModal(false);
+      }
+    } catch (error) {
+      console.error('Error saving building property:', error);
     }
-  ];
+  };
 
-  // Use mock data for properties
-  const properties: Property[] = [...landProperties, ...buildingProperties];
+  const handleSaveInvestmentProject = async (project: any) => {
+    try {
+      const savedProject = await realEstateAPI.createInvestmentProject(project);
+      
+      if (savedProject) {
+        // Reload data to show the new project
+        await loadDataFromAPI();
+        setShowAddInvestmentModal(false);
+      }
+    } catch (error) {
+      console.error('Error saving investment project:', error);
+    }
+  };
+
+
+  // Get current data (API or mock)
+  const currentData = getCurrentData();
+  const properties: Property[] = currentData.properties;
+  const investmentProjects: InvestmentProject[] = currentData.investmentProjects;
+  const userProperties: UserProperty[] = currentData.userProperties;
 
   const filteredProperties = useMemo(() => {
     return properties.filter(property => {
@@ -247,7 +205,7 @@ export default function RealEstatesPage() {
       
       return matchesSearch && matchesTab;
     });
-  }, [searchTerm, activeTab]);
+  }, [properties, searchTerm, activeTab]);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -275,12 +233,8 @@ export default function RealEstatesPage() {
         );
       case 'investments':
         return (
-          <RealEstateInvestmentsTab
+          <InvestmentProjectsTab
             projects={investmentProjects}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            typeFilter={typeFilter}
-            setTypeFilter={setTypeFilter}
             onProjectClick={handleProjectClick}
           />
         );
@@ -321,35 +275,98 @@ export default function RealEstatesPage() {
           Real Estates
         </h1>
         <p style={{ fontSize: '16px', color: '#6b7280', margin: 0 }}>
-            Browse and list properties for sale
+            Browse and list properties for sale with blockchain tokenization
           </p>
         </div>
-        <button
-          onClick={() => setShowListPropertyModal(true)}
-          style={{
-            backgroundColor: 'var(--mc-sidebar-bg-hover)',
-            color: 'white',
-            border: 'none',
-              borderRadius: '20px',
-            padding: '12px 20px',
-            fontSize: '14px',
-            fontWeight: '500',
-            cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-            gap: '8px',
-            transition: 'background-color 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor; 'var(--mc-sidebar-bg-hover)';
-          }}
-        >
-          <Plus size={16} />
-          Add Property
-        </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          
+          {activeTab === 'land' && (
+            <button
+              onClick={() => setShowAddLandModal(true)}
+              style={{
+                backgroundColor: 'var(--mc-sidebar-bg)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '20px',
+                padding: '12px 20px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+              }}
+            >
+              <Plus size={16} />
+              Add Plot
+            </button>
+          )}
+          
+          {activeTab === 'buildings' && (
+            <button
+              onClick={() => setShowAddBuildingModal(true)}
+              style={{
+                backgroundColor: 'var(--mc-sidebar-bg)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '20px',
+                padding: '12px 20px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+              }}
+            >
+              <Plus size={16} />
+              Add Building
+            </button>
+          )}
+          
+          {activeTab === 'investments' && (
+            <button
+              onClick={() => setShowAddInvestmentModal(true)}
+              style={{
+                backgroundColor: 'var(--mc-sidebar-bg)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '20px',
+                padding: '12px 20px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+              }}
+            >
+              <Plus size={16} />
+              Add Project
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tab Navigation */}
@@ -403,12 +420,6 @@ export default function RealEstatesPage() {
       {/* Tab Content */}
       {renderTabContent()}
 
-      {/* List Property Modal */}
-      <ListPropertyModal
-        isOpen={showListPropertyModal}
-        onClose={() => setShowListPropertyModal(false)}
-      />
-
       {/* Property Details Modal */}
       <PropertyDetailsModal
         isOpen={showPropertyDetailsModal}
@@ -417,6 +428,35 @@ export default function RealEstatesPage() {
         isSelfOwned={isSelfOwnedProperty}
       />
 
+      {/* Investment Project Details Modal */}
+      {showInvestmentProjectModal && (
+        <RealEstateProjectDetailsModal
+          project={selectedProject}
+          onClose={() => {
+            setShowInvestmentProjectModal(false);
+            setSelectedProject(null);
+          }}
+        />
+      )}
+
+      {/* Admin Modals */}
+      <AddLandPropertyModal
+        isOpen={showAddLandModal}
+        onClose={() => setShowAddLandModal(false)}
+        onSave={handleSaveLandProperty}
+      />
+
+      <AddBuildingPropertyModal
+        isOpen={showAddBuildingModal}
+        onClose={() => setShowAddBuildingModal(false)}
+        onSave={handleSaveBuildingProperty}
+      />
+
+      <AddInvestmentProjectModal
+        isOpen={showAddInvestmentModal}
+        onClose={() => setShowAddInvestmentModal(false)}
+        onSave={handleSaveInvestmentProject}
+      />
     
     </div>
   );

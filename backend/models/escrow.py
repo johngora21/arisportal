@@ -54,14 +54,39 @@ class Escrow(Base):
     # Milestone Information (if payment_type is milestone)
     milestones = Column(Text)  # JSON string of milestone data
     
+    # Supporting Documents
+    documents = Column(Text)  # JSON string of uploaded documents
+    
     # Additional tracking fields
     created_by = Column(String(255))  # User who created the escrow
+    created_by_role = Column(String(50))  # Role of creator: PAYER, PAYEE, BUYER, SELLER, etc.
+    release_authority = Column(String(50))  # Who can release: 'CREATOR', 'PAYER', 'PAYEE'
     completed_at = Column(DateTime)
     cancelled_at = Column(DateTime)
     cancelled_reason = Column(Text)
 
     def to_dict(self):
         """Convert the escrow object to a dictionary"""
+        import json
+        
+        # Serialize milestones properly
+        milestones_list = []
+        if self.milestones:
+            for milestone in self.milestones:
+                milestones_list.append({
+                    "description": milestone.description,
+                    "amount": milestone.amount,
+                    "completion_date": milestone.completion_date.isoformat() if milestone.completion_date else None
+                })
+        
+        # Parse documents if it's a JSON string
+        documents_list = []
+        if self.documents:
+            try:
+                documents_list = json.loads(self.documents)
+            except:
+                pass
+        
         return {
             "id": self.id,
             "escrow_id": self.escrow_id,
@@ -81,11 +106,14 @@ class Escrow(Base):
             "status": self.status.value if self.status else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-            "milestones": self.milestones,
+            "milestones": milestones_list,
+            "documents": documents_list,
             "created_by": self.created_by,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
             "cancelled_at": self.cancelled_at.isoformat() if self.cancelled_at else None,
-            "cancelled_reason": self.cancelled_reason
+            "cancelled_reason": self.cancelled_reason,
+            "created_by_role": self.created_by_role,
+            "release_authority": self.release_authority
         }
 
 class EscrowMilestone(Base):

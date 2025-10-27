@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import WalletsTab from './wallets/page';
+
 import CardsTab from './cards/page';
 import TransferTab from './transfer/page';
 import HistoryTab from './history/page';
@@ -27,7 +27,7 @@ import {
 
 export default function WalletsPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'wallets' | 'cards' | 'transfer' | 'history'>('wallets');
+  const [activeTab, setActiveTab] = useState<'cards' | 'cards' | 'transfer' | 'history'>('cards');
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -168,9 +168,6 @@ export default function WalletsPage() {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'wallets':
-        return <WalletsTab />;
-
       case 'cards':
         return <CardsTab />;
 
@@ -227,7 +224,7 @@ export default function WalletsPage() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
         {[
-            { id: 'wallets', label: 'Wallets', icon: <Wallet size={16} /> },
+
           { id: 'cards', label: 'Cards', icon: <CreditCard size={16} /> },
           { id: 'transfer', label: 'Transfer', icon: <ArrowRightLeft size={16} /> },
           { id: 'history', label: 'History', icon: <History size={16} /> }

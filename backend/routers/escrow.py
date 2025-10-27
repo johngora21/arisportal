@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from database import get_db
 from models.escrow import Escrow, EscrowMilestone, EscrowStatus, PaymentType
+from services.escrow_smart_contract import escrow_smart_contract
+from services.document_generator import document_generator
 from typing import List, Optional
 from datetime import datetime
 import json
@@ -67,6 +69,23 @@ async def create_escrow(
                     detail="Invalid release date format"
                 )
         
+        # Determine release authority based on creator role
+        user_role = escrow_data.get("userRole", "")
+        release_authority = "PAYER"  # Default to payer controls release
+        
+        # If creator is PAYER, they control release
+        if user_role == "PAYER":
+            release_authority = "PAYER"
+        # If creator is PAYEE, they need payer approval
+        elif user_role == "PAYEE":
+            release_authority = "PAYEE_REQUIRES_APPROVAL"
+        
+        # Handle documents - convert to JSON string
+        documents_json = '[]'
+        if escrow_data.get("documents"):
+            import json
+            documents_json = json.dumps(escrow_data.get("documents", []))
+        
         # Create escrow record
         escrow = Escrow(
             escrow_id=escrow_id,
@@ -83,8 +102,11 @@ async def create_escrow(
             release_date=release_date,
             terms=escrow_data.get("terms"),
             additional_notes=escrow_data.get("additionalNotes"),
+            documents=documents_json,
             status=EscrowStatus.PENDING,
-            created_by=escrow_data.get("createdBy", "system")
+            created_by=escrow_data.get("createdBy", "system"),
+            created_by_role=user_role,
+            release_authority=release_authority
         )
         
         db.add(escrow)
@@ -105,6 +127,15 @@ async def create_escrow(
                 db.add(milestone_record)
             
             db.commit()
+        
+        # Deploy blockchain smart contract for escrow
+        smart_contract = escrow_smart_contract.deploy_escrow_contract(
+            escrow_id=escrow_id,
+            total_amount=total_amount
+        )
+        
+        if smart_contract.get("success"):
+            print(f"✅ Escrow smart contract deployed: {smart_contract.get('contract_address')}")
         
         return {
             "message": "Escrow created successfully",
@@ -226,6 +257,17 @@ async def update_escrow_status(
             )
         
         new_status = EscrowStatus(status_data.get("status"))
+        
+        # Check release authority
+        if new_status == EscrowStatus.COMPLETED:
+            if escrow.release_authority == "PAYEE_REQUIRES_APPROVAL":
+                # Payee created, they can only request release
+                # TODO: Send email notification to payer for approval
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Payee cannot release funds directly. Payment release request has been sent to the payer for approval."
+                )
+        
         escrow.status = new_status
         
         # Update timestamps based on status
@@ -388,6 +430,93 @@ async def get_escrow_stats(db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch escrow statistics: {str(e)}"
+        )
+
+# Document Endpoints
+@router.get("/contract/document")
+async def get_escrow_document(
+    escrow_id: Optional[str] = Query(None),
+    document_type: str = Query("legal", regex="^(legal|smart_contract)$"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get escrow document - either legal agreement or smart contract code
+    
+    Args:
+        escrow_id: Optional escrow ID to get specific agreement
+        document_type: 'legal' for legal document or 'smart_contract' for code
+    """
+    try:
+        if document_type == "smart_contract":
+            # Return smart contract code
+            import os
+            current_dir = os.path.dirname(__file__)
+            contract_path = os.path.join(current_dir, '..', 'smart_contracts', 'EscrowContract.sol')
+            
+            with open(contract_path, 'r') as f:
+                contract_code = f.read()
+            
+            return {
+                "contract_name": "EscrowContract.sol",
+                "solidity_version": "^0.8.0",
+                "license": "MIT",
+                "code": contract_code,
+                "description": "Blockchain smart contract code for escrow management",
+                "features": [
+                    "Full payment escrow",
+                    "Milestone-based payments",
+                    "Dispute resolution",
+                    "Automatic refunds",
+                    "Role-based access control",
+                    "Event logging"
+                ]
+            }
+        
+        else:
+            # Return legal agreement
+            if escrow_id:
+                # Get specific escrow data with milestones loaded
+                escrow = db.query(Escrow).options(joinedload(Escrow.milestones)).filter(Escrow.escrow_id == escrow_id).first()
+                if not escrow:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Escrow not found"
+                    )
+                escrow_data = escrow.to_dict()
+            else:
+                # Return template with placeholder data
+                escrow_data = {
+                    'escrow_id': 'TEMPLATE',
+                    'title': 'Sample Escrow Transaction',
+                    'description': 'Template document - replace with actual transaction details',
+                    'payer_name': '[PAYER NAME]',
+                    'payer_email': '[PAYER EMAIL]',
+                    'payer_phone': '[PAYER PHONE]',
+                    'payee_name': '[PAYEE NAME]',
+                    'payee_email': '[PAYEE EMAIL]',
+                    'payee_phone': '[PAYEE PHONE]',
+                    'total_amount': 0,
+                    'payment_type': 'Full Payment',
+                    'release_date': None,
+                    'terms': 'No additional terms',
+                    'additional_notes': 'No additional notes'
+                }
+            
+            # Use the PDF generator response
+            return document_generator.generate_contract_response(escrow_data, "agreement")
+            
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Smart contract file not found"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating document: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate document: {str(e)}"
         )
 
 # Milestone Management Endpoints

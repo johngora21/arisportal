@@ -12,12 +12,123 @@ import {
 } from 'lucide-react';
 import { InvoicesTab, TemplatesTab, CreateInvoiceModal } from './components';
 
+interface Invoice {
+  id: string;
+  number: string;
+  client: string;
+  amount: string;
+  date: string;
+  status: 'paid' | 'pending' | 'overdue';
+  email?: string;
+  phone?: string;
+  whatsapp?: string;
+  invoiceData?: any; // Store the full invoice data for editing/viewing
+}
+
 export default function InvoicingPage() {
   const [activeTab, setActiveTab] = useState<'invoices' | 'templates'>('invoices');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [durationFilter, setDurationFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [openOnInvoiceTab, setOpenOnInvoiceTab] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+
+  const handleUseTemplate = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    setOpenOnInvoiceTab(true);
+    setShowCreateModal(true);
+  };
+
+  const handleSaveInvoice = (invoiceData: any) => {
+    // Check if this invoice already exists (for downloaded invoices)
+    const existingInvoice = invoices.find(inv => 
+      inv.invoiceData?.invoiceNumber === invoiceData.invoiceNumber
+    );
+
+    if (existingInvoice) {
+      // Update existing invoice instead of creating new one
+      setInvoices(prev => prev.map(inv => 
+        inv.id === existingInvoice.id 
+          ? {
+              ...inv,
+              client: invoiceData.clientName || inv.client,
+              amount: `$${invoiceData.total?.toFixed(2) || inv.amount}`,
+              invoiceData: invoiceData
+            }
+          : inv
+      ));
+    } else {
+      // Create new invoice
+      const newInvoice: Invoice = {
+        id: Date.now().toString(),
+        number: invoiceData.invoiceNumber || `INV-${Date.now()}`,
+        client: invoiceData.clientName || 'Unknown Client',
+        amount: `$${invoiceData.total?.toFixed(2) || '0.00'}`,
+        date: new Date().toISOString().split('T')[0],
+        status: 'pending',
+        email: invoiceData.clientEmail,
+        phone: invoiceData.clientPhone,
+        invoiceData: invoiceData
+      };
+      
+      setInvoices(prev => [newInvoice, ...prev]);
+    }
+
+    setShowCreateModal(false);
+    setOpenOnInvoiceTab(false);
+    setSelectedTemplateId(null);
+  };
+
+  const handleEditInvoice = (invoice: Invoice) => {
+    setEditingInvoice(invoice);
+    setSelectedTemplateId(invoice.invoiceData?.templateId || 'minimal');
+    setOpenOnInvoiceTab(true);
+    setShowCreateModal(true);
+  };
+
+  const handleUpdateInvoice = (updatedData: any) => {
+    if (editingInvoice) {
+      setInvoices(prev => prev.map(inv => 
+        inv.id === editingInvoice.id 
+          ? {
+              ...inv,
+              client: updatedData.clientName || inv.client,
+              amount: `$${updatedData.total?.toFixed(2) || inv.amount}`,
+              invoiceData: updatedData
+            }
+          : inv
+      ));
+    }
+    setEditingInvoice(null);
+    setShowCreateModal(false);
+    setOpenOnInvoiceTab(false);
+    setSelectedTemplateId(null);
+  };
+
+  const handleDeleteInvoice = (invoiceId: string) => {
+    setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+  };
+
+  const handleUpdateInvoiceStatus = (invoiceId: string, status: 'paid' | 'pending' | 'overdue') => {
+    setInvoices(prev => prev.map(inv => 
+      inv.id === invoiceId ? { ...inv, status } : inv
+    ));
+  };
+
+  // Calculate invoice statistics
+  const getInvoiceStats = () => {
+    const total = invoices.length;
+    const paid = invoices.filter(inv => inv.status === 'paid').length;
+    const pending = invoices.filter(inv => inv.status === 'pending').length;
+    const overdue = invoices.filter(inv => inv.status === 'overdue').length;
+    
+    return { total, paid, pending, overdue };
+  };
+
+  const stats = getInvoiceStats();
 
   const renderTabContent = () => {
     if (activeTab === 'invoices') {
@@ -29,12 +140,16 @@ export default function InvoicingPage() {
           setStatusFilter={setStatusFilter}
           durationFilter={durationFilter}
           setDurationFilter={setDurationFilter}
+          invoices={invoices}
+          onEditInvoice={handleEditInvoice}
+          onDeleteInvoice={handleDeleteInvoice}
+          onUpdateInvoiceStatus={handleUpdateInvoiceStatus}
         />
       );
     }
 
     if (activeTab === 'templates') {
-      return <TemplatesTab />;
+      return <TemplatesTab onUseTemplate={handleUseTemplate} />;
     }
 
     return null;
@@ -94,7 +209,7 @@ export default function InvoicingPage() {
           <div style={{ fontSize: '24px', marginBottom: '8px' }}>
             <FileText size={24} color="var(--mc-sidebar-bg)" />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>23</div>
+          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>{stats.total}</div>
           <div style={{ fontSize: '14px', color: '#6b7280' }}>Total Invoices</div>
         </div>
         <div style={{ 
@@ -108,7 +223,7 @@ export default function InvoicingPage() {
           <div style={{ fontSize: '24px', marginBottom: '8px' }}>
             <Download size={24} color="#10b981" />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>18</div>
+          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>{stats.paid}</div>
           <div style={{ fontSize: '14px', color: '#6b7280' }}>Paid</div>
         </div>
         <div style={{ 
@@ -122,7 +237,7 @@ export default function InvoicingPage() {
           <div style={{ fontSize: '24px', marginBottom: '8px' }}>
             <Clock size={24} color="#f59e0b" />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>5</div>
+          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>{stats.pending}</div>
           <div style={{ fontSize: '14px', color: '#6b7280' }}>Pending</div>
         </div>
         <div style={{ 
@@ -136,7 +251,7 @@ export default function InvoicingPage() {
           <div style={{ fontSize: '24px', marginBottom: '8px' }}>
             <RefreshCw size={24} color="#ef4444" />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>0</div>
+          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>{stats.overdue}</div>
           <div style={{ fontSize: '14px', color: '#6b7280' }}>Overdue</div>
         </div>
       </div>
@@ -177,15 +292,17 @@ export default function InvoicingPage() {
       {/* Create Invoice Modal */}
       <CreateInvoiceModal
         isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSave={(invoiceData) => {
-          console.log('Invoice saved:', invoiceData);
-          // Handle save logic
+        onClose={() => {
+          setShowCreateModal(false);
+          setOpenOnInvoiceTab(false);
+          setSelectedTemplateId(null);
+          setEditingInvoice(null);
         }}
-        onSend={(invoiceData) => {
-          console.log('Invoice sent:', invoiceData);
-          // Handle send logic
-        }}
+        onSave={editingInvoice ? handleUpdateInvoice : handleSaveInvoice}
+        onSend={() => {}}
+        initialTab={openOnInvoiceTab ? 'invoice' : 'details'}
+        selectedTemplateId={selectedTemplateId}
+        editingInvoice={editingInvoice}
       />
     </div>
   );

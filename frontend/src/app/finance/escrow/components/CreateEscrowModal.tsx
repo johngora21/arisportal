@@ -21,6 +21,7 @@ interface CreateEscrowModalProps {
 
 const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, onCreate }) => {
   const [formData, setFormData] = useState({
+    userRole: '', // 'PAYER', 'PAYEE', 'BUYER', 'SELLER', 'SERVICE_PROVIDER', 'CLIENT'
     title: '',
     description: '',
     payerName: '',
@@ -40,16 +41,18 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
     { id: 1, description: '', amount: '', completionDate: '' }
   ]);
 
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
   const inputStyle = (hasError: boolean = false) => ({
     width: '100%',
     maxWidth: '100%',
     boxSizing: 'border-box' as const,
-    paddingTop: '12px',
-    paddingBottom: '12px',
-    paddingLeft: '16px',
-    paddingRight: '16px',
+    paddingTop: '8px',
+    paddingBottom: '8px',
+    paddingLeft: '14px',
+    paddingRight: '14px',
     border: `1px solid ${hasError ? '#ef4444' : '#d1d5db'}`,
-    borderRadius: '20px',
+    borderRadius: '12px',
     fontSize: '14px',
     fontFamily: 'inherit',
     backgroundColor: '#ffffff',
@@ -90,11 +93,23 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
     return milestones.reduce((total, milestone) => total + (parseFloat(milestone.amount) || 0), 0);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validation
     const requiredFields = [
+      { field: 'userRole', label: 'Your Role' },
       { field: 'title', label: 'Transaction Title' },
       { field: 'payerName', label: 'Payer Name' },
       { field: 'payerEmail', label: 'Payer Email' },
@@ -106,7 +121,8 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
     ];
 
     for (const { field, label } of requiredFields) {
-      if (!formData[field] || formData[field].trim() === '') {
+      const value = formData[field as keyof typeof formData];
+      if (!value || String(value).trim() === '') {
         alert(`Please fill in ${label}.`);
         return;
       }
@@ -150,14 +166,38 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
       }
     }
 
-    const escrowData = {
-      ...formData,
-      milestones: formData.paymentType === 'MILESTONE' ? milestones : null,
-      createdBy: 'frontend-user'
-    };
-    
-    onCreate?.(escrowData);
-    onClose();
+    try {
+      // Upload files first if any
+      let documents = [];
+      if (uploadedFiles.length > 0) {
+        const formDataToSend = new FormData();
+        uploadedFiles.forEach((file, index) => {
+          formDataToSend.append(`files`, file);
+        });
+        
+        const uploadResponse = await fetch('http://localhost:8000/api/v1/escrow-documents', {
+          method: 'POST',
+          body: formDataToSend
+        });
+        
+        if (uploadResponse.ok) {
+          documents = await uploadResponse.json();
+        }
+      }
+
+      const escrowData = {
+        ...formData,
+        milestones: formData.paymentType === 'MILESTONE' ? milestones : null,
+        documents: documents,
+        createdBy: 'frontend-user'
+      };
+      
+      onCreate?.(escrowData);
+      onClose();
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      alert('Failed to upload documents. Please try again.');
+    }
   };
 
   const handleCancel = () => {
@@ -235,7 +275,7 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Transaction Details */}
+          {/* User Role Selection */}
           <div style={{ marginBottom: '32px' }}>
             <h3 style={{ 
               fontSize: '18px', 
@@ -246,60 +286,20 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
               alignItems: 'center',
               gap: '8px'
             }}>
-              <FileText size={20} />
-              Transaction Details
+              <User size={20} />
+              Your Role *
             </h3>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '6px', 
-                  fontSize: '12px', 
-                  fontWeight: '500', 
-                  color: '#6b7280' 
-                }}>
-                  Transaction Title *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
+              <select
+                name="userRole"
+                value={formData.userRole}
                   onChange={handleInputChange}
-                  placeholder="e.g., Property Purchase - Dar es Salaam"
                   required
-                  style={inputStyle()}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = 'var(--mc-sidebar-bg)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#d1d5db';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '6px', 
-                  fontSize: '12px', 
-                  fontWeight: '500', 
-                  color: '#6b7280' 
-                }}>
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Brief description of the transaction..."
-                  rows={3}
                   style={{
                     ...inputStyle(),
-                    resize: 'vertical',
-                    fontFamily: 'inherit'
+                  fontSize: '15px',
+                  width: '60%'
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = 'var(--mc-sidebar-bg)';
@@ -309,9 +309,34 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
                     e.target.style.borderColor = '#d1d5db';
                     e.target.style.boxShadow = 'none';
                   }}
-                />
+              >
+                <option value="">Select your role</option>
+                <option value="PAYER">I am making the payment (Payer/Buyer/Client)</option>
+                <option value="PAYEE">I will receive the payment (Payee/Seller/Service Provider)</option>
+              </select>
+              {formData.userRole && (
+                <div style={{
+                  marginTop: '12px',
+                  padding: '12px',
+                  backgroundColor: formData.userRole === 'PAYER'
+                    ? '#dbeafe'
+                    : '#d1fae5',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  color: formData.userRole === 'PAYER'
+                    ? '#1e40af'
+                    : '#065f46',
+                  border: `1px solid ${formData.userRole === 'PAYER'
+                    ? '#93c5fd'
+                    : '#86efac'}`
+                }}>
+                  <strong>Note:</strong> {
+                    formData.userRole === 'PAYER'
+                      ? 'You will control the release of funds. You can release payments directly.'
+                      : 'You can request fund release. The payer will need to approve your request to release the funds.'
+                  }
               </div>
-
+              )}
             </div>
           </div>
 
@@ -525,6 +550,86 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
             </div>
           </div>
 
+          {/* Transaction Details */}
+          <div style={{ marginBottom: '32px' }}>
+            <h3 style={{ 
+              fontSize: '18px', 
+              fontWeight: '600', 
+              color: '#1f2937', 
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <FileText size={20} />
+              Transaction Details
+            </h3>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '6px', 
+                  fontSize: '12px', 
+                  fontWeight: '500', 
+                  color: '#6b7280' 
+                }}>
+                  Transaction Title *
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Property Purchase - Dar es Salaam"
+                  required
+                  style={inputStyle()}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'var(--mc-sidebar-bg)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#d1d5db';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '6px', 
+                  fontSize: '12px', 
+                  fontWeight: '500', 
+                  color: '#6b7280' 
+                }}>
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Brief description of the transaction..."
+                  rows={3}
+                  style={{
+                    ...inputStyle(),
+                    resize: 'vertical',
+                    fontFamily: 'inherit'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'var(--mc-sidebar-bg)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#d1d5db';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+              </div>
+
+            </div>
+          </div>
+
           {/* Payment Information */}
           <div style={{ marginBottom: '32px' }}>
             <h3 style={{ 
@@ -620,7 +725,10 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
                   onChange={handleInputChange}
                   required
                   min={new Date().toISOString().split('T')[0]}
-                  style={inputStyle()}
+                  style={{
+                    ...inputStyle(),
+                    width: '50%'
+                  }}
                   onFocus={(e) => {
                     e.target.style.borderColor = 'var(--mc-sidebar-bg)';
                     e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
@@ -903,6 +1011,84 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
             </div>
           </div>
 
+          {/* Document Upload */}
+          <div style={{ marginBottom: '32px' }}>
+            <h3 style={{ 
+              fontSize: '18px', 
+              fontWeight: '600', 
+              color: '#1f2937', 
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <FileText size={20} />
+              Supporting Documents
+            </h3>
+            
+            <div>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '6px', 
+                fontSize: '12px', 
+                fontWeight: '500', 
+                color: '#6b7280' 
+              }}>
+                Upload Contract Agreements (PDF, DOC, DOCX)
+              </label>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx"
+                multiple
+                onChange={handleFileChange}
+                style={{
+                  ...inputStyle(),
+                  padding: '8px',
+                  cursor: 'pointer'
+                }}
+              />
+              {uploadedFiles.length > 0 && (
+                <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {uploadedFiles.map((file, index) => (
+                    <div key={index} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '8px 12px',
+                      backgroundColor: '#f8fafc',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <FileText size={16} color="#6b7280" />
+                        <span style={{ fontSize: '14px', color: '#374151' }}>
+                          {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#ef4444',
+                          fontSize: '14px',
+                          padding: '4px 8px'
+                        }}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '8px' }}>
+                Upload your contract agreements or supporting documents for conflict resolution
+              </p>
+            </div>
+          </div>
+
           {/* Form Actions */}
           <div style={{ 
             display: 'flex', 
@@ -911,36 +1097,6 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
             paddingTop: '24px',
             borderTop: '1px solid #e2e8f0'
           }}>
-            <button
-              type="button"
-              onClick={handleCancel}
-              style={{
-                padding: '12px 24px',
-                backgroundColor: 'white',
-                color: '#6b7280',
-                border: '1px solid #d1d5db',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = '#f9fafb';
-                e.currentTarget.style.borderColor = '#9ca3af';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'white';
-                e.currentTarget.style.borderColor = '#d1d5db';
-              }}
-            >
-              <X size={16} />
-              Cancel
-            </button>
-            
             <button
               type="submit"
               style={{

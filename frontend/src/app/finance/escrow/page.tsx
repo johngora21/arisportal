@@ -12,10 +12,13 @@ import {
   LockOpen,
   ArrowRight,
   Building,
-  User
+  User,
+  Code
 } from 'lucide-react';
+import { API_CONFIG } from '../../../config/api';
 import CreateEscrowModal from './components/CreateEscrowModal';
 import ViewEscrowModal from './components/ViewEscrowModal';
+import ContractSignatureModal from './components/ContractSignatureModal';
 
 interface EscrowAccount {
   id: number;
@@ -44,9 +47,12 @@ interface EscrowAccount {
 }
 
 export default function EscrowPage() {
-  const [activeTab, setActiveTab] = useState('active');
+  const [activeTab, setActiveTab] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showContractModal, setShowContractModal] = useState(false);
+  const [contractData, setContractData] = useState<any>(null);
+  const [loadingContract, setLoadingContract] = useState(false);
   const [selectedEscrow, setSelectedEscrow] = useState<EscrowAccount | null>(null);
   const [escrowAccounts, setEscrowAccounts] = useState<EscrowAccount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +62,7 @@ export default function EscrowPage() {
   const fetchEscrows = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:4001/api/v1/escrow/');
+      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/`);
       if (!response.ok) {
         throw new Error('Failed to fetch escrows');
       }
@@ -78,7 +84,7 @@ export default function EscrowPage() {
   // Fetch escrow statistics
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:4001/api/v1/escrow/stats/summary');
+      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/stats/summary`);
       if (!response.ok) {
         throw new Error('Failed to fetch stats');
       }
@@ -105,7 +111,7 @@ export default function EscrowPage() {
   // Create new escrow
   const handleCreateEscrow = async (escrowData: any) => {
     try {
-      const response = await fetch('http://localhost:4001/api/v1/escrow/', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +139,7 @@ export default function EscrowPage() {
   // Update escrow status
   const handleUpdateStatus = async (escrowId: string, newStatus: string) => {
     try {
-      const response = await fetch(`http://localhost:4001/api/v1/escrow/${escrowId}/status`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/${escrowId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -162,6 +168,28 @@ export default function EscrowPage() {
     }
   };
 
+  // View smart contract
+  const handleViewContract = async () => {
+    if (contractData) {
+      setShowContractModal(true);
+      return;
+    }
+    
+    setLoadingContract(true);
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/contract/document`);
+      if (!response.ok) throw new Error('Failed to fetch contract');
+      const data = await response.json();
+      setContractData(data);
+      setShowContractModal(true);
+    } catch (err) {
+      console.error('Error fetching contract:', err);
+      alert('Failed to load smart contract');
+    } finally {
+      setLoadingContract(false);
+    }
+  };
+
   // Release escrow funds
   const handleReleaseEscrow = async (escrowId: string) => {
     if (!confirm(`Are you sure you want to release funds for escrow ${escrowId}?`)) {
@@ -169,7 +197,7 @@ export default function EscrowPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:4001/api/v1/escrow/${escrowId}/status`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/${escrowId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -459,12 +487,46 @@ export default function EscrowPage() {
                         <Eye size={12} />
                         View
                       </button>
+                      <button 
+                        onClick={handleViewContract}
+                        disabled={loadingContract}
+                        style={{
+                          padding: '8px 12px',
+                          backgroundColor: '#374151',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          color: 'white',
+                          cursor: loadingContract ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          transition: 'all 0.2s ease',
+                          opacity: loadingContract ? 0.5 : 1
+                        }}
+                        onMouseOver={(e) => {
+                          if (!loadingContract) {
+                            e.currentTarget.style.backgroundColor = '#1f2937';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                          }
+                        }}
+                        onMouseOut={(e) => {
+                          if (!loadingContract) {
+                            e.currentTarget.style.backgroundColor = '#374151';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }
+                        }}
+                      >
+                        <Code size={12} />
+                        Contract
+                      </button>
                       {account.status === 'PENDING' && (
                         <button 
                           onClick={() => handleReleaseEscrow(account.escrow_id)}
                           style={{
                           padding: '8px 12px',
-                          backgroundColor: "var(--mc-sidebar-bg)",
+                          backgroundColor: '#10b981',
                           border: 'none',
                           borderRadius: '8px',
                           fontSize: '12px',
@@ -477,11 +539,11 @@ export default function EscrowPage() {
                             transition: 'all 0.2s ease'
                           }}
                           onMouseOver={(e) => {
-                            e.currentTarget.style.backgroundColor = '#1d4ed8';
+                            e.currentTarget.style.backgroundColor = '#059669';
                             e.currentTarget.style.transform = 'translateY(-1px)';
                           }}
                           onMouseOut={(e) => {
-                            e.currentTarget.style.backgroundColor = "var(--mc-sidebar-bg)";
+                            e.currentTarget.style.backgroundColor = '#10b981';
                             e.currentTarget.style.transform = 'translateY(0)';
                           }}
                         >
@@ -543,6 +605,261 @@ export default function EscrowPage() {
         }}
         escrow={selectedEscrow}
       />
+
+      {/* Contract Signature Modal */}
+      {showContractModal && contractData && (
+        <ContractSignatureModal
+          isOpen={showContractModal}
+          onClose={() => {
+            setShowContractModal(false);
+            setContractData(null);
+          }}
+          escrow={selectedEscrow}
+          contractData={contractData}
+        />
+      )}
+
+      {/* Old Modal - Keep for backwards compatibility if needed */}
+      {false && showContractModal && contractData && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000,
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            width: '95%',
+            maxWidth: '800px',
+            maxHeight: '95vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+          }}>
+            {/* Header */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              padding: '24px',
+              borderBottom: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  backgroundColor: 'var(--mc-sidebar-bg)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '24px'
+                }}>
+                  ⚖️
+                </div>
+              <div>
+                  <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#111827', margin: 0 }}>
+                    Escrow Agreement
+                </h2>
+                  <p style={{ fontSize: '13px', color: '#6b7280', margin: '4px 0 0 0' }}>
+                    {contractData.contract_name}
+                </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowContractModal(false)}
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <XCircle size={24} color="#6b7280" />
+              </button>
+            </div>
+
+            {/* Document Preview */}
+            <div style={{
+              flex: 1,
+              overflow: 'auto',
+              padding: '40px',
+              backgroundColor: '#ffffff'
+            }}>
+              {contractData.format === 'pdf' ? (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '24px',
+                  maxWidth: '500px',
+                  margin: '0 auto'
+                }}>
+                  {/* Document Preview */}
+                  <div style={{
+                    width: '100%',
+                    backgroundColor: '#f3f4f6',
+                    borderRadius: '12px',
+                    border: '2px dashed #d1d5db',
+                    padding: '48px 32px',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{
+                      fontSize: '64px',
+                      marginBottom: '16px'
+                    }}>📋</div>
+                    <h3 style={{
+                      fontSize: '22px',
+                      fontWeight: '700',
+                      color: '#111827',
+                      margin: '0 0 8px 0'
+                    }}>
+                      Legal Agreement Ready
+                    </h3>
+                    <p style={{
+                      fontSize: '15px',
+                      color: '#6b7280',
+                      margin: '0 0 24px 0',
+                      lineHeight: '1.6'
+                    }}>
+                      This contract document includes all terms, conditions, and signature sections for both parties to execute.
+                    </p>
+                    
+                    <div style={{
+                      backgroundColor: 'white',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      textAlign: 'left',
+                      border: '1px solid #e5e7eb'
+                    }}>
+                      <div style={{ 
+                        fontSize: '13px', 
+                        fontWeight: '600', 
+                        color: '#6b7280',
+                        marginBottom: '12px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}>
+                        Document Details
+                      </div>
+                      <div style={{ 
+                        fontSize: '14px', 
+                        color: '#111827',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px'
+                      }}>
+                        <div><strong>Type:</strong> Legal Escrow Agreement</div>
+                        <div><strong>Format:</strong> PDF Document</div>
+                        <div><strong>Status:</strong> Ready for Download & Signature</div>
+                      </div>
+                    </div>
+            </div>
+
+              <button
+                onClick={() => {
+                      const byteCharacters = atob(contractData.code);
+                      const byteNumbers = new Array(byteCharacters.length);
+                      for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                      }
+                      const byteArray = new Uint8Array(byteNumbers);
+                      const blob = new Blob([byteArray], { type: 'application/pdf' });
+                      
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = contractData.contract_name;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                      setShowContractModal(false);
+                }}
+                style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '14px 32px',
+                      backgroundColor: 'var(--mc-sidebar-bg)',
+                  color: 'white',
+                  border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px -2px rgba(59, 130, 246, 0.4)',
+                      transition: 'all 0.2s ease',
+                      width: '100%',
+                      justifyContent: 'center'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = '#2563eb';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 8px 16px -4px rgba(59, 130, 246, 0.5)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px -2px rgba(59, 130, 246, 0.4)';
+                    }}
+                  >
+                    <Eye size={20} />
+                    Download & Sign Contract
+              </button>
+                  
+                  <p style={{
+                    fontSize: '13px',
+                    color: '#9ca3af',
+                    margin: '8px 0 0 0',
+                    textAlign: 'center'
+                  }}>
+                    Download to print, sign, and share with both parties
+                  </p>
+                </div>
+              ) : (
+                <div style={{
+                  backgroundColor: '#1e293b',
+                  borderRadius: '12px',
+                  padding: '24px',
+                  fontFamily: 'Monaco, Menlo, monospace'
+                }}>
+                  <pre style={{
+                    margin: 0,
+                    color: '#e2e8f0',
+                    fontSize: '12px',
+                    lineHeight: '1.8',
+                    whiteSpace: 'pre-wrap',
+                    wordWrap: 'break-word'
+                  }}>
+                    {contractData.code}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Error Display */}
       {error && (
