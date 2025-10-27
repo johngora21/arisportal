@@ -46,12 +46,14 @@ import { Database } from 'lucide-react';
 import { FaUserTie, FaSignOutAlt } from 'react-icons/fa';
 import { useRouter, usePathname } from 'next/navigation';
 import InvestmentIcon from './icons/InvestmentIcon';
+import { useAuth } from '../contexts/AuthContext';
 
-type CurrentUser = { id: number; email: string; full_name: string; role: 'admin'|'mentor'|'investor'|'entrepreneur' } | null;
+type CurrentUser = { id: number; email: string; full_name: string; role?: string } | null;
 
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
+  const { user: authUser, isAuthenticated, logout } = useAuth();
   const [selectedCurrency, setSelectedCurrency] = useState('TZS');
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
   const currencyDropdownRef = useRef<HTMLDivElement>(null);
@@ -90,32 +92,19 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
     };
   }, [showCurrencyDropdown]);
 
-  const [user, setUser] = React.useState<CurrentUser>(null);
   const [isMobile, setIsMobile] = React.useState<boolean>(false);
-  const API_BASE = '';
-  const AUTH_DISABLED = true; // temporarily disable auth enforcement
   const isAuthPage = pathname === '/authentication/login' || pathname?.startsWith('/authentication');
 
-  React.useEffect(() => {
-    if (AUTH_DISABLED) return; // skip auth check entirely
-    if (isAuthPage) return; // avoid fetching when on auth pages
-    const load = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/v1/auth/me`, { credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data?.data || null);
-        } else {
-          setUser(null);
-          if (pathname && pathname !== '/authentication/login') router.replace('/');
-        }
-      } catch {
-        setUser(null);
-        if (pathname && pathname !== '/authentication/login') router.replace('/');
-      }
+  // Use user from auth context
+  const user = React.useMemo<CurrentUser>(() => {
+    if (!authUser) return null;
+    return {
+      id: authUser.id,
+      email: authUser.email,
+      full_name: authUser.full_name,
+      role: 'User'
     };
-    load();
-  }, [pathname, router, isAuthPage, API_BASE, AUTH_DISABLED]);
+  }, [authUser]);
 
   React.useEffect(() => {
     const update = () => setIsMobile(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
@@ -205,7 +194,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       initialCollapsed={false}
       onNavigate={(href) => { if (href !== pathname) router.push(href); }}
       currentPath={pathname || ''}
-      footerCta={{ label: 'Logout', icon: <FaSignOutAlt size={18} />, onClick: async () => { try { await fetch(`${API_BASE}/api/v1/auth/logout`, { method: 'POST', credentials: 'include' }); } catch {} finally { router.replace('/authentication/login'); } } }}
+      footerCta={{ label: 'Logout', icon: <FaSignOutAlt size={18} />, onClick: () => { logout(); router.replace('/authentication/login'); } }}
       header={{
         actions: (
           <>
@@ -312,10 +301,12 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
             </button>
             <div className="mc-userchip" onClick={() => router.push('/profile')} style={{ cursor: 'pointer' }}>
               <div className="mc-userinfo">
-                <span className="mc-username">{user?.full_name || 'Guest'}</span>
-                <span className="mc-role">{user?.business_name || 'Business Name'}</span>
+                <span className="mc-username">{user?.full_name || authUser?.full_name || 'Guest'}</span>
+                <span className="mc-role">{authUser?.business_name || 'User'}</span>
               </div>
-              <span className="mc-avatar">EC</span>
+              <span className="mc-avatar">
+                {user?.full_name ? user.full_name.charAt(0) : authUser?.full_name?.charAt(0) || 'G'}
+              </span>
             </div>
           </>
         )

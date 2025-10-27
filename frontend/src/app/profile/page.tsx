@@ -12,13 +12,18 @@ import {
   FileText,
   CheckCircle,
   Upload,
-  RefreshCw
+  RefreshCw,
+  Receipt,
+  Download,
+  Eye
 } from 'lucide-react';
 import { buildApiUrl } from '../../config/api';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { user: authUser, token, isAuthenticated, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('personal');
   const [showPersonalEditModal, setShowPersonalEditModal] = useState(false);
   const [showBusinessEditModal, setShowBusinessEditModal] = useState(false);
@@ -100,7 +105,7 @@ export default function ProfilePage() {
       const data = await response.json();
       
       // Update personal info
-      setPersonalInfo({
+      const updatedPersonalInfo = {
         firstName: data.personal_info.first_name || '',
         lastName: data.personal_info.last_name || '',
         email: data.personal_info.email || '',
@@ -109,10 +114,11 @@ export default function ProfilePage() {
         address: data.personal_info.address || '',
         nationalIdNumber: data.personal_info.national_id_number || '',
         nationalId: data.personal_info.national_id_document || ''
-      });
+      };
+      setPersonalInfo(updatedPersonalInfo);
       
       // Update business info
-      setBusinessInfo({
+      const updatedBusinessInfo = {
         businessName: data.business_info.business_name || '',
         businessType: data.business_info.business_type || '',
         businessEmail: data.business_info.business_email || '',
@@ -126,11 +132,12 @@ export default function ProfilePage() {
         businessLicense: data.business_info.business_license_document || '',
         registrationCertificate: data.business_info.registration_certificate_document || '',
         taxCertificate: data.business_info.tax_certificate_document || ''
-      });
+      };
+      setBusinessInfo(updatedBusinessInfo);
       
-      // Update form states
-      setPersonalForm({ ...personalInfo });
-      setBusinessForm({ ...businessInfo });
+      // Update form states with the newly fetched data
+      setPersonalForm({ ...updatedPersonalInfo });
+      setBusinessForm({ ...updatedBusinessInfo });
       
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -173,6 +180,9 @@ export default function ProfilePage() {
         return;
       }
       
+      // Helper to convert empty strings to null
+      const cleanValue = (val: string) => val && val.trim() ? val.trim() : null;
+      
       const response = await fetch(buildApiUrl('/profile/personal'), {
         method: 'PUT',
         headers: {
@@ -180,13 +190,13 @@ export default function ProfilePage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          first_name: personalForm.firstName,
-          last_name: personalForm.lastName,
-          email: personalForm.email,
-          phone: personalForm.phone,
-          nationality: personalForm.nationality,
-          address: personalForm.address,
-          national_id_number: personalForm.nationalIdNumber
+          first_name: cleanValue(personalForm.firstName),
+          last_name: cleanValue(personalForm.lastName),
+          email: cleanValue(personalForm.email),
+          phone: cleanValue(personalForm.phone),
+          nationality: cleanValue(personalForm.nationality),
+          address: cleanValue(personalForm.address),
+          national_id_number: cleanValue(personalForm.nationalIdNumber)
         }),
       });
       
@@ -220,6 +230,9 @@ export default function ProfilePage() {
         return;
       }
       
+      // Helper to convert empty strings to null
+      const cleanValue = (val: string) => val && val.trim() ? val.trim() : null;
+      
       const response = await fetch(buildApiUrl('/profile/business'), {
         method: 'PUT',
         headers: {
@@ -227,16 +240,16 @@ export default function ProfilePage() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          business_name: businessForm.businessName,
-          business_type: businessForm.businessType,
-          business_email: businessForm.businessEmail,
-          business_phone: businessForm.businessPhone,
-          country: businessForm.country,
-          city: businessForm.city,
-          business_address: businessForm.businessAddress,
-          website: businessForm.website,
-          registration_number: businessForm.registrationNumber,
-          tax_id: businessForm.taxId
+          business_name: cleanValue(businessForm.businessName),
+          business_type: cleanValue(businessForm.businessType),
+          business_email: cleanValue(businessForm.businessEmail),
+          business_phone: cleanValue(businessForm.businessPhone),
+          country: cleanValue(businessForm.country),
+          city: cleanValue(businessForm.city),
+          business_address: cleanValue(businessForm.businessAddress),
+          website: cleanValue(businessForm.website),
+          registration_number: cleanValue(businessForm.registrationNumber),
+          tax_id: cleanValue(businessForm.taxId)
         }),
       });
       
@@ -264,30 +277,42 @@ export default function ProfilePage() {
       setSaving(true);
       setError('');
       
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        console.error('No auth token found');
+        router.push('/authentication/login');
+        return;
+      }
+      
+      console.log('Uploading document:', documentType, 'File:', file.name);
+      
       const formData = new FormData();
       formData.append('file', file);
       
-      const response = await fetch(buildApiUrl(`/profile/upload/${documentType}`), {
+      const uploadUrl = buildApiUrl(`/profile/upload/${documentType}`);
+      console.log('Upload URL:', uploadUrl);
+      
+      const response = await fetch(uploadUrl, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
         body: formData,
       });
       
+      console.log('Upload response status:', response.status);
+      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload error response:', errorText);
         throw new Error(`Failed to upload ${documentType}: ${response.status}`);
       }
       
       const result = await response.json();
+      console.log('Upload successful:', result);
       
-      // Update local state based on document type
-      if (documentType === 'national-id') {
-        setPersonalInfo(prev => ({ ...prev, nationalId: result.filename }));
-      } else if (documentType === 'business-license') {
-        setBusinessInfo(prev => ({ ...prev, businessLicense: result.filename }));
-      } else if (documentType === 'registration-certificate') {
-        setBusinessInfo(prev => ({ ...prev, registrationCertificate: result.filename }));
-      } else if (documentType === 'tax-certificate') {
-        setBusinessInfo(prev => ({ ...prev, taxCertificate: result.filename }));
-      }
+      // Refetch profile data to get updated document paths from database
+      await fetchProfile();
       
       // Refresh stats
       await fetchProfileStats();
@@ -300,17 +325,61 @@ export default function ProfilePage() {
     }
   };
 
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>, documentType: string) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadDocument(file, documentType);
+    }
+  };
+
+  // Helper function to get document URL
+  const getDocumentUrl = (filePath: string) => {
+    if (!filePath) return null;
+    // The file path from backend is: profile_documents/user_id/filename
+    // Backend serves uploads at /uploads
+    return `http://localhost:4001/uploads/${filePath}`;
+  };
+
+  // View document in new tab
+  const viewDocument = (filePath: string) => {
+    const url = getDocumentUrl(filePath);
+    if (url) {
+      window.open(url, '_blank');
+    }
+  };
+
+  // Download document
+  const downloadDocument = async (filePath: string, filename: string) => {
+    const url = getDocumentUrl(filePath);
+    if (!url) return;
+    
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = filename || filePath.split('/').pop() || 'document';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      setError('Failed to download document');
+    }
+  };
+
   // Load profile data on component mount
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
+    if (isAuthenticated && token) {
       fetchProfile();
       fetchProfileStats();
-    } else {
-      // No token, redirect to login immediately
+    } else if (!isAuthenticated) {
+      // No auth, redirect to login immediately
       router.push('/authentication/login');
     }
-  }, [router]);
+  }, [isAuthenticated, token, router]);
 
   const tabs = [
     { id: 'personal', label: 'Personal Info', icon: <User size={20} /> },
@@ -477,14 +546,19 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Receipt size={20} color="#6b7280" />
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: '500' }}>National ID Number (NIN)</div>
+                    <div style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>{personalInfo.nationalIdNumber || 'Not provided'}</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <FileText size={20} color="#6b7280" />
                   <div>
-                    <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: '500' }}>National ID</div>
-                    <div style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>
-                      {personalInfo.nationalIdNumber} • {personalInfo.nationalId}
-                    </div>
+                    <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: '500' }}>National ID Document</div>
+                    <div style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>{personalInfo.nationalId ? 'Uploaded' : 'Not uploaded'}</div>
                   </div>
-                  <CheckCircle size={20} color="#10b981" />
+                  {personalInfo.nationalId && <CheckCircle size={20} color="#10b981" />}
                 </div>
               </div>
             </div>
@@ -589,14 +663,14 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <FileText size={20} color="#6b7280" />
+                  <Receipt size={20} color="#6b7280" />
                   <div>
                     <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: '500' }}>Registration Number</div>
                     <div style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>{businessInfo.registrationNumber}</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <FileText size={20} color="#6b7280" />
+                  <Receipt size={20} color="#6b7280" />
                   <div>
                     <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: '500' }}>Tax ID</div>
                     <div style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>{businessInfo.taxId}</div>
@@ -606,25 +680,25 @@ export default function ProfilePage() {
                   <FileText size={20} color="#6b7280" />
                   <div>
                     <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: '500' }}>Business License</div>
-                    <div style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>{businessInfo.businessLicense}</div>
+                    <div style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>{businessInfo.businessLicense ? 'Uploaded' : 'Not uploaded'}</div>
                   </div>
-                  <CheckCircle size={20} color="#10b981" />
+                  {businessInfo.businessLicense && <CheckCircle size={20} color="#10b981" />}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <FileText size={20} color="#6b7280" />
                   <div>
                     <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: '500' }}>Registration Certificate</div>
-                    <div style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>{businessInfo.registrationCertificate}</div>
+                    <div style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>{businessInfo.registrationCertificate ? 'Uploaded' : 'Not uploaded'}</div>
                   </div>
-                  <CheckCircle size={20} color="#10b981" />
+                  {businessInfo.registrationCertificate && <CheckCircle size={20} color="#10b981" />}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <FileText size={20} color="#6b7280" />
                   <div>
                     <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: '500' }}>Tax Certificate</div>
-                    <div style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>{businessInfo.taxCertificate}</div>
+                    <div style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>{businessInfo.taxCertificate ? 'Uploaded' : 'Not uploaded'}</div>
                   </div>
-                  <CheckCircle size={20} color="#10b981" />
+                  {businessInfo.taxCertificate && <CheckCircle size={20} color="#10b981" />}
                 </div>
               </div>
             </div>
@@ -738,7 +812,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="tel"
-                    defaultValue={personalInfo.phone}
+                    value={personalForm.phone}
+                    onChange={(e) => setPersonalForm(prev => ({ ...prev, phone: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -758,7 +833,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue={personalInfo.nationality}
+                    value={personalForm.nationality}
+                    onChange={(e) => setPersonalForm(prev => ({ ...prev, nationality: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -775,7 +851,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue={personalInfo.nationalIdNumber}
+                    value={personalForm.nationalIdNumber}
+                    onChange={(e) => setPersonalForm(prev => ({ ...prev, nationalIdNumber: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -794,7 +871,8 @@ export default function ProfilePage() {
                 </label>
                 <input
                   type="text"
-                  defaultValue={personalInfo.address}
+                  value={personalForm.address}
+                  onChange={(e) => setPersonalForm(prev => ({ ...prev, address: e.target.value }))}
                   style={{
                     width: '300px',
                     padding: '12px 16px',
@@ -810,14 +888,22 @@ export default function ProfilePage() {
                 <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
                   National ID Document
                 </label>
-                <div style={{
+                <label style={{
                   border: '2px dashed #d1d5db',
                   borderRadius: '20px',
                   padding: '20px',
                   textAlign: 'center',
                   backgroundColor: '#f9fafb',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  display: 'block'
                 }}>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => handleFileInput(e, 'national-id')}
+                    style={{ display: 'none' }}
+                    id="national-id-upload"
+                  />
                   <FileText size={24} color="#6b7280" style={{ marginBottom: '8px' }} />
                   <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>
                     Click to upload or drag and drop
@@ -825,7 +911,7 @@ export default function ProfilePage() {
                   <div style={{ fontSize: '12px', color: '#9ca3af' }}>
                     {personalInfo.nationalId || 'No file uploaded'}
                   </div>
-                </div>
+                </label>
               </div>
             </div>
             
@@ -935,18 +1021,35 @@ export default function ProfilePage() {
                   <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
                     Business Type
                   </label>
-                  <input
-                    type="text"
-                    defaultValue={businessInfo.businessType}
+                  <select
+                    value={businessForm.businessType}
+                    onChange={(e) => setBusinessForm(prev => ({ ...prev, businessType: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
                       border: '1px solid #d1d5db',
                       borderRadius: '20px',
                       fontSize: '14px',
-                      outline: 'none'
+                      outline: 'none',
+                      backgroundColor: 'white'
                     }}
-                  />
+                  >
+                    <option value="">Select Business Type</option>
+                    <option value="E-commerce">E-commerce</option>
+                    <option value="Retail">Retail</option>
+                    <option value="Wholesale">Wholesale</option>
+                    <option value="Manufacturing">Manufacturing</option>
+                    <option value="Service Provider">Service Provider</option>
+                    <option value="Consulting">Consulting</option>
+                    <option value="Real Estate">Real Estate</option>
+                    <option value="Construction">Construction</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Education">Education</option>
+                    <option value="Hospitality">Hospitality</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
               </div>
               
@@ -957,7 +1060,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="email"
-                    defaultValue={businessInfo.businessEmail}
+                    value={businessForm.businessEmail}
+                    onChange={(e) => setBusinessForm(prev => ({ ...prev, businessEmail: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -974,7 +1078,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="tel"
-                    defaultValue={businessInfo.businessPhone}
+                    value={businessForm.businessPhone}
+                    onChange={(e) => setBusinessForm(prev => ({ ...prev, businessPhone: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -994,7 +1099,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue={businessInfo.country}
+                    value={businessForm.country}
+                    onChange={(e) => setBusinessForm(prev => ({ ...prev, country: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -1011,7 +1117,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue={businessInfo.city}
+                    value={businessForm.city}
+                    onChange={(e) => setBusinessForm(prev => ({ ...prev, city: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -1031,7 +1138,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue={businessInfo.businessAddress}
+                    value={businessForm.businessAddress}
+                    onChange={(e) => setBusinessForm(prev => ({ ...prev, businessAddress: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -1048,7 +1156,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="url"
-                    defaultValue={businessInfo.website}
+                    value={businessForm.website}
+                    onChange={(e) => setBusinessForm(prev => ({ ...prev, website: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -1068,7 +1177,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue={businessInfo.registrationNumber}
+                    value={businessForm.registrationNumber}
+                    onChange={(e) => setBusinessForm(prev => ({ ...prev, registrationNumber: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -1085,7 +1195,8 @@ export default function ProfilePage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue={businessInfo.taxId}
+                    value={businessForm.taxId}
+                    onChange={(e) => setBusinessForm(prev => ({ ...prev, taxId: e.target.value }))}
                     style={{
                       width: '300px',
                       padding: '12px 16px',
@@ -1103,14 +1214,22 @@ export default function ProfilePage() {
                   <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
                     Business License
                   </label>
-                  <div style={{
+                  <label style={{
                     border: '2px dashed #d1d5db',
                     borderRadius: '20px',
                     padding: '16px',
                     textAlign: 'center',
                     backgroundColor: '#f9fafb',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    display: 'block'
                   }}>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => handleFileInput(e, 'business-license')}
+                      style={{ display: 'none' }}
+                      id="business-license-upload"
+                    />
                     <FileText size={20} color="#6b7280" style={{ marginBottom: '6px' }} />
                     <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
                       Upload
@@ -1118,20 +1237,28 @@ export default function ProfilePage() {
                     <div style={{ fontSize: '10px', color: '#9ca3af' }}>
                       {businessInfo.businessLicense || 'No file'}
                     </div>
-                  </div>
+                  </label>
                 </div>
                 <div>
                   <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
                     Registration Certificate
                   </label>
-                  <div style={{
+                  <label style={{
                     border: '2px dashed #d1d5db',
                     borderRadius: '20px',
                     padding: '16px',
                     textAlign: 'center',
                     backgroundColor: '#f9fafb',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    display: 'block'
                   }}>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => handleFileInput(e, 'registration-certificate')}
+                      style={{ display: 'none' }}
+                      id="registration-certificate-upload"
+                    />
                     <FileText size={20} color="#6b7280" style={{ marginBottom: '6px' }} />
                     <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
                       Upload
@@ -1139,20 +1266,28 @@ export default function ProfilePage() {
                     <div style={{ fontSize: '10px', color: '#9ca3af' }}>
                       {businessInfo.registrationCertificate || 'No file'}
                     </div>
-                  </div>
+                  </label>
                 </div>
                 <div>
                   <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
                     Tax Certificate
                   </label>
-                  <div style={{
+                  <label style={{
                     border: '2px dashed #d1d5db',
                     borderRadius: '20px',
                     padding: '16px',
                     textAlign: 'center',
                     backgroundColor: '#f9fafb',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    display: 'block'
                   }}>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => handleFileInput(e, 'tax-certificate')}
+                      style={{ display: 'none' }}
+                      id="tax-certificate-upload"
+                    />
                     <FileText size={20} color="#6b7280" style={{ marginBottom: '6px' }} />
                     <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
                       Upload
@@ -1160,7 +1295,7 @@ export default function ProfilePage() {
                     <div style={{ fontSize: '10px', color: '#9ca3af' }}>
                       {businessInfo.taxCertificate || 'No file'}
                     </div>
-                  </div>
+                  </label>
                 </div>
               </div>
             </div>

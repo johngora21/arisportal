@@ -6,7 +6,7 @@ from typing import Optional
 import jwt
 from datetime import datetime, timedelta
 from database import get_db
-from models.user import User
+from models.user import UserProfile as UserProfileModel
 import logging
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
-class UserProfile(BaseModel):
+class UserProfileUpdate(BaseModel):
     full_name: Optional[str] = None
     email: Optional[EmailStr] = None
 
@@ -93,18 +93,22 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
     """Register a new user"""
     try:
         # Check if user already exists
-        existing_user = db.query(User).filter(User.email == user_data.email).first()
+        existing_user = db.query(UserProfileModel).filter(UserProfileModel.email == user_data.email).first()
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="User already exists"
             )
         
-        # Create new user
-        user = User(
+        # Create new user - split full_name into first_name and last_name
+        name_parts = user_data.full_name.split(' ', 1)
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else ""
+        
+        user = UserProfileModel(
             email=user_data.email,
-            full_name=user_data.full_name,
-            role=user_data.role,
+            first_name=first_name,
+            last_name=last_name,
             password_hash=hash_password(user_data.password)
         )
         
@@ -132,7 +136,7 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
 async def login(user_data: UserLogin, db: Session = Depends(get_db)):
     """Login user"""
     try:
-        user = db.query(User).filter(User.email == user_data.email).first()
+        user = db.query(UserProfileModel).filter(UserProfileModel.email == user_data.email).first()
         
         if not user or not verify_password(user_data.password, user.password_hash):
             raise HTTPException(
@@ -164,7 +168,7 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
 async def get_current_user(current_user_id: str = Depends(verify_token), db: Session = Depends(get_db)):
     """Get current user information"""
     try:
-        user = db.query(User).filter(User.id == int(current_user_id)).first()
+        user = db.query(UserProfileModel).filter(UserProfileModel.id == int(current_user_id)).first()
         
         if not user:
             raise HTTPException(
@@ -189,13 +193,13 @@ async def get_current_user(current_user_id: str = Depends(verify_token), db: Ses
 
 @router.put("/profile", response_model=UserResponse)
 async def update_profile(
-    profile_data: UserProfile, 
+    profile_data: UserProfileUpdate, 
     current_user_id: str = Depends(verify_token), 
     db: Session = Depends(get_db)
 ):
     """Update user profile"""
     try:
-        user = db.query(User).filter(User.id == int(current_user_id)).first()
+        user = db.query(UserProfileModel).filter(UserProfileModel.id == int(current_user_id)).first()
         
         if not user:
             raise HTTPException(
@@ -204,11 +208,14 @@ async def update_profile(
             )
         
         if profile_data.full_name is not None:
-            user.full_name = profile_data.full_name
+            # Split full_name into first_name and last_name
+            name_parts = profile_data.full_name.split(' ', 1)
+            user.first_name = name_parts[0]
+            user.last_name = name_parts[1] if len(name_parts) > 1 else ""
         
         if profile_data.email is not None and profile_data.email != user.email:
             # Check if new email already exists
-            existing_user = db.query(User).filter(User.email == profile_data.email).first()
+            existing_user = db.query(UserProfileModel).filter(UserProfileModel.email == profile_data.email).first()
             if existing_user:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,

@@ -11,9 +11,11 @@ import {
 } from 'lucide-react';
 import { buildApiUrl } from '../../../config/api';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -88,13 +90,42 @@ export default function LoginPage() {
       console.log('Response data:', data);
       
       if (response.ok) {
-        console.log('Login successful, storing token and redirecting...');
-        // Store token in cookie (more secure than localStorage)
-        document.cookie = `auth_token=${data.access_token}; path=/; max-age=1800; SameSite=Strict; Secure`;
+        console.log('Login successful, fetching user profile...');
         
-        // Store user data in localStorage for client-side use
-        if (data.user) {
-          localStorage.setItem('user_data', JSON.stringify(data.user));
+        // Store token temporarily to fetch user profile
+        login(data.access_token, {
+          id: 0,
+          email: formData.email,
+          first_name: '',
+          last_name: '',
+          full_name: formData.email,
+          profile_completed: false
+        });
+        
+        // Fetch user profile data
+        try {
+          const profileResponse = await fetch(buildApiUrl('/profile'), {
+            headers: {
+              'Authorization': `Bearer ${data.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            const userData = {
+              id: profileData.personal_info?.email ? 0 : 0, // Will be set from JWT
+              email: profileData.personal_info?.email || formData.email,
+              first_name: profileData.personal_info?.first_name || '',
+              last_name: profileData.personal_info?.last_name || '',
+              full_name: `${profileData.personal_info?.first_name || ''} ${profileData.personal_info?.last_name || ''}`.trim() || formData.email,
+              profile_completed: profileData.profile_completed || false,
+              business_name: profileData.business_info?.business_name || ''
+            };
+            login(data.access_token, userData);
+          }
+        } catch (err) {
+          console.error('Error fetching profile:', err);
         }
         
         // Redirect to home page

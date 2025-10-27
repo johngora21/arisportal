@@ -9,6 +9,7 @@ interface User {
   last_name: string;
   full_name: string;
   profile_completed: boolean;
+  business_name?: string;
 }
 
 interface AuthContextType {

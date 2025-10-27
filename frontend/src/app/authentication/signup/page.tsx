@@ -253,6 +253,7 @@ export default function SignupPage() {
     email: '',
     phone: '',
     businessName: '',
+    businessType: '',
     address: '',
     password: '',
     confirmPassword: '',
@@ -311,6 +312,10 @@ export default function SignupPage() {
     
     if (!formData.businessName) {
       newErrors.businessName = 'Business name is required';
+    }
+    
+    if (!formData.businessType) {
+      newErrors.businessType = 'Business type is required';
     }
     
     if (!formData.address) {
@@ -733,7 +738,7 @@ export default function SignupPage() {
             </div>
           </div>
 
-          {/* Business Name and Address Fields (Pair) */}
+          {/* Business Name and Business Type Fields (Pair) */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             {/* Business Name Field */}
             <div>
@@ -792,7 +797,7 @@ export default function SignupPage() {
               )}
             </div>
 
-            {/* Address Field */}
+            {/* Business Type Field */}
             <div>
               <label style={{
                 display: 'block',
@@ -801,53 +806,113 @@ export default function SignupPage() {
                 color: '#374151',
                 marginBottom: '6px'
               }}>
-                Address
+                Business Type
               </label>
-              <div style={{ position: 'relative' }}>
-                <div style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#9ca3af'
-                }}>
-                  <MapPin size={18} />
-                </div>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  placeholder="Enter your address"
-                  style={{
-                    width: '100%',
-                    padding: '10px 10px 10px 38px',
-                    border: `1px solid ${errors.address ? '#ef4444' : '#d1d5db'}`,
-                    borderRadius: '20px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    backgroundColor: 'white',
-                    boxSizing: 'border-box'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = 'var(--mc-sidebar-bg)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = errors.address ? '#ef4444' : '#d1d5db';
-                  }}
-                />
-              </div>
-              {errors.address && (
+              <select
+                name="businessType"
+                value={formData.businessType}
+                onChange={handleInputChange}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: `1px solid ${errors.businessType ? '#ef4444' : '#d1d5db'}`,
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                  backgroundColor: 'white',
+                  boxSizing: 'border-box'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--mc-sidebar-bg)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = errors.businessType ? '#ef4444' : '#d1d5db';
+                }}
+              >
+                <option value="">Select Business Type</option>
+                <option value="E-commerce">E-commerce</option>
+                <option value="Retail">Retail</option>
+                <option value="Wholesale">Wholesale</option>
+                <option value="Manufacturing">Manufacturing</option>
+                <option value="Service Provider">Service Provider</option>
+                <option value="Consulting">Consulting</option>
+                <option value="Real Estate">Real Estate</option>
+                <option value="Construction">Construction</option>
+                <option value="Healthcare">Healthcare</option>
+                <option value="Education">Education</option>
+                <option value="Hospitality">Hospitality</option>
+                <option value="Transportation">Transportation</option>
+                <option value="Technology">Technology</option>
+                <option value="Other">Other</option>
+              </select>
+              {errors.businessType && (
                 <p style={{
                   fontSize: '12px',
                   color: '#ef4444',
                   margin: '4px 0 0 0'
                 }}>
-                  {errors.address}
+                  {errors.businessType}
                 </p>
               )}
             </div>
+          </div>
+
+          {/* Address Field (Full Width) */}
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '6px'
+            }}>
+              Address
+            </label>
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#9ca3af'
+              }}>
+                <MapPin size={18} />
+              </div>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                placeholder="Enter your address"
+                style={{
+                  width: '100%',
+                  padding: '10px 10px 10px 38px',
+                  border: `1px solid ${errors.address ? '#ef4444' : '#d1d5db'}`,
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                  backgroundColor: 'white',
+                  boxSizing: 'border-box'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--mc-sidebar-bg)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = errors.address ? '#ef4444' : '#d1d5db';
+                }}
+              />
+            </div>
+            {errors.address && (
+              <p style={{
+                fontSize: '12px',
+                color: '#ef4444',
+                margin: '4px 0 0 0'
+              }}>
+                {errors.address}
+              </p>
+            )}
           </div>
 
           {/* Password and Confirm Password Fields (Pair) */}
