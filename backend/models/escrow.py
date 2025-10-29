@@ -69,15 +69,13 @@ class Escrow(Base):
         """Convert the escrow object to a dictionary"""
         import json
         
-        # Serialize milestones properly
+        # Parse milestones if it's a JSON string
         milestones_list = []
         if self.milestones:
-            for milestone in self.milestones:
-                milestones_list.append({
-                    "description": milestone.description,
-                    "amount": milestone.amount,
-                    "completion_date": milestone.completion_date.isoformat() if milestone.completion_date else None
-                })
+            try:
+                milestones_list = json.loads(self.milestones)
+            except:
+                pass
         
         # Parse documents if it's a JSON string
         documents_list = []

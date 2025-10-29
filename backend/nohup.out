@@ -1,0 +1,2774 @@
+INFO:     Will watch for changes in these directories: ['/Users/escobar/arisportal/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [45109] using WatchFiles
+INFO:     Started server process [45174]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:61215 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61482 - "GET /api/v1/escrow/contract/document?document_type=legal HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61504 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61929 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61937 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63196 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63978 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63978 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63978 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63978 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63981 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63981 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64158 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64158 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64161 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'models/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [45174]
+WARNING:  WatchFiles detected changes in 'models/escrow.py'. Reloading...
+INFO:     Started server process [96891]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [96891]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [97309]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [97309]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Started server process [98034]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/escrow.py', 'models/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [98034]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [99018]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Error fetching escrows: (pymysql.err.OperationalError) (1054, "Unknown column 'escrows.created_by_role' in 'field list'")
+[SQL: SELECT escrows.id AS escrows_id, escrows.escrow_id AS escrows_escrow_id, escrows.title AS escrows_title, escrows.description AS escrows_description, escrows.payer_name AS escrows_payer_name, escrows.payer_email AS escrows_payer_email, escrows.payer_phone AS escrows_payer_phone, escrows.payee_name AS escrows_payee_name, escrows.payee_email AS escrows_payee_email, escrows.payee_phone AS escrows_payee_phone, escrows.total_amount AS escrows_total_amount, escrows.payment_type AS escrows_payment_type, escrows.release_date AS escrows_release_date, escrows.terms AS escrows_terms, escrows.additional_notes AS escrows_additional_notes, escrows.status AS escrows_status, escrows.created_at AS escrows_created_at, escrows.updated_at AS escrows_updated_at, escrows.milestones AS escrows_milestones, escrows.created_by AS escrows_created_by, escrows.created_by_role AS escrows_created_by_role, escrows.release_authority AS escrows_release_authority, escrows.completed_at AS escrows_completed_at, escrows.cancelled_at AS escrows_cancelled_at, escrows.cancelled_reason AS escrows_cancelled_reason 
+FROM escrows 
+ LIMIT %(param_1)s, %(param_2)s]
+[parameters: {'param_1': 0, 'param_2': 100}]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:55708 - "GET /api/v1/escrow/ HTTP/1.1" 500 Internal Server Error
+Error fetching escrows: (pymysql.err.OperationalError) (1054, "Unknown column 'escrows.created_by_role' in 'field list'")
+[SQL: SELECT escrows.id AS escrows_id, escrows.escrow_id AS escrows_escrow_id, escrows.title AS escrows_title, escrows.description AS escrows_description, escrows.payer_name AS escrows_payer_name, escrows.payer_email AS escrows_payer_email, escrows.payer_phone AS escrows_payer_phone, escrows.payee_name AS escrows_payee_name, escrows.payee_email AS escrows_payee_email, escrows.payee_phone AS escrows_payee_phone, escrows.total_amount AS escrows_total_amount, escrows.payment_type AS escrows_payment_type, escrows.release_date AS escrows_release_date, escrows.terms AS escrows_terms, escrows.additional_notes AS escrows_additional_notes, escrows.status AS escrows_status, escrows.created_at AS escrows_created_at, escrows.updated_at AS escrows_updated_at, escrows.milestones AS escrows_milestones, escrows.created_by AS escrows_created_by, escrows.created_by_role AS escrows_created_by_role, escrows.release_authority AS escrows_release_authority, escrows.completed_at AS escrows_completed_at, escrows.cancelled_at AS escrows_cancelled_at, escrows.cancelled_reason AS escrows_cancelled_reason 
+FROM escrows 
+ LIMIT %(param_1)s, %(param_2)s]
+[parameters: {'param_1': 0, 'param_2': 100}]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+INFO:     127.0.0.1:55708 - "GET /api/v1/escrow/ HTTP/1.1" 500 Internal Server Error
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [99018]
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Started server process [4204]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [4204]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [13873]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'models/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [13873]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [14490]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [14490]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [14833]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [14833]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [15021]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [15021]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [15475]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [15475]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [15756]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Error fetching escrows: (pymysql.err.OperationalError) (1054, "Unknown column 'escrows.created_by_role' in 'field list'")
+[SQL: SELECT escrows.id AS escrows_id, escrows.escrow_id AS escrows_escrow_id, escrows.title AS escrows_title, escrows.description AS escrows_description, escrows.payer_name AS escrows_payer_name, escrows.payer_email AS escrows_payer_email, escrows.payer_phone AS escrows_payer_phone, escrows.payee_name AS escrows_payee_name, escrows.payee_email AS escrows_payee_email, escrows.payee_phone AS escrows_payee_phone, escrows.total_amount AS escrows_total_amount, escrows.payment_type AS escrows_payment_type, escrows.release_date AS escrows_release_date, escrows.terms AS escrows_terms, escrows.additional_notes AS escrows_additional_notes, escrows.status AS escrows_status, escrows.created_at AS escrows_created_at, escrows.updated_at AS escrows_updated_at, escrows.milestones AS escrows_milestones, escrows.created_by AS escrows_created_by, escrows.created_by_role AS escrows_created_by_role, escrows.release_authority AS escrows_release_authority, escrows.completed_at AS escrows_completed_at, escrows.cancelled_at AS escrows_cancelled_at, escrows.cancelled_reason AS escrows_cancelled_reason 
+FROM escrows 
+ LIMIT %(param_1)s, %(param_2)s]
+[parameters: {'param_1': 0, 'param_2': 100}]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:60706 - "GET /api/v1/escrow/ HTTP/1.1" 500 Internal Server Error
+Error fetching escrows: (pymysql.err.OperationalError) (1054, "Unknown column 'escrows.created_by_role' in 'field list'")
+[SQL: SELECT escrows.id AS escrows_id, escrows.escrow_id AS escrows_escrow_id, escrows.title AS escrows_title, escrows.description AS escrows_description, escrows.payer_name AS escrows_payer_name, escrows.payer_email AS escrows_payer_email, escrows.payer_phone AS escrows_payer_phone, escrows.payee_name AS escrows_payee_name, escrows.payee_email AS escrows_payee_email, escrows.payee_phone AS escrows_payee_phone, escrows.total_amount AS escrows_total_amount, escrows.payment_type AS escrows_payment_type, escrows.release_date AS escrows_release_date, escrows.terms AS escrows_terms, escrows.additional_notes AS escrows_additional_notes, escrows.status AS escrows_status, escrows.created_at AS escrows_created_at, escrows.updated_at AS escrows_updated_at, escrows.milestones AS escrows_milestones, escrows.created_by AS escrows_created_by, escrows.created_by_role AS escrows_created_by_role, escrows.release_authority AS escrows_release_authority, escrows.completed_at AS escrows_completed_at, escrows.cancelled_at AS escrows_cancelled_at, escrows.cancelled_reason AS escrows_cancelled_reason 
+FROM escrows 
+ LIMIT %(param_1)s, %(param_2)s]
+[parameters: {'param_1': 0, 'param_2': 100}]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+INFO:     127.0.0.1:60706 - "GET /api/v1/escrow/ HTTP/1.1" 500 Internal Server Error
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [15756]
+INFO:     Started server process [26561]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:65401 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65403 - "GET /api/v1/payroll/departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65405 - "GET /api/v1/payroll/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65407 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65401 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65403 - "GET /api/v1/payroll/departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65405 - "GET /api/v1/payroll/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65466 - "GET /api/v1/payroll/staff?employment_status=active HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65494 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65401 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65403 - "GET /api/v1/payroll/departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65407 - "GET /api/v1/payroll/staff?employment_status=active HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65405 - "GET /api/v1/payroll/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65401 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65403 - "GET /api/v1/payroll/departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65466 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65405 - "GET /api/v1/payroll/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65403 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49247 - "GET /api/v1/payroll/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49247 - "GET /api/v1/payroll/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49247 - "GET /api/v1/payroll/staff?employment_status=active HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49266 - "GET /api/v1/payroll/staff?employment_status=active HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49308 - "GET /api/v1/payroll/departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49308 - "GET /api/v1/payroll/departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49308 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49308 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49308 - "GET /api/v1/payroll/staff?employment_status=active HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49350 - "GET /api/v1/payroll/staff?employment_status=active HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49350 - "GET /api/v1/payroll/staff/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49350 - "GET /api/v1/payroll/staff/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49421 - "GET /api/v1/payroll/staff/8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49421 - "GET /api/v1/payroll/staff/9 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49491 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49493 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49500 - "GET /api/v1/payroll/staff?employment_status=active HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49502 - "GET /api/v1/payroll/staff?employment_status=active HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49502 - "GET /api/v1/payroll/staff/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49504 - "OPTIONS /api/v1/payroll/payroll/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49506 - "POST /api/v1/payroll/payroll/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49506 - "POST /api/v1/payroll/payroll/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50360 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50363 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50416 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51359 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52491 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'models/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [26561]
+INFO:     Started server process [88950]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'models/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [88950]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [89520]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'models/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [89520]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [97420]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:55049 - "OPTIONS /api/v1/escrow/ HTTP/1.1" 200 OK
+📝 Mock deploying escrow contract for ESC-012 with amount 1800000.0
+✅ Escrow smart contract deployed: 0x0000000000000000000000000000000000000000
+INFO:     127.0.0.1:55051 - "POST /api/v1/escrow/ HTTP/1.1" 201 Created
+INFO:     127.0.0.1:55051 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [97420]
+INFO:     Started server process [8836]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [8836]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [14907]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:57087 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57090 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [14907]
+INFO:     Started server process [20096]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [20096]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [46579]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [46579]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [46871]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [46871]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [47185]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [47185]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [47467]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:63178 - "OPTIONS /api/v1/escrow/ HTTP/1.1" 200 OK
+📝 Mock deploying escrow contract for ESC-013 with amount 123000000.0
+✅ Escrow smart contract deployed: 0x0000000000000000000000000000000000000000
+INFO:     127.0.0.1:63178 - "POST /api/v1/escrow/ HTTP/1.1" 201 Created
+INFO:     127.0.0.1:63178 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'routers/upload.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [47467]
+INFO:     Started server process [54938]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/upload.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [54938]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [55359]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:63379 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63382 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'routers/upload.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [55359]
+INFO:     Started server process [64333]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:63421 - "POST /api/v1/upload/escrow-documents HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:63421 - "OPTIONS /api/v1/escrow/ HTTP/1.1" 200 OK
+📝 Mock deploying escrow contract for ESC-014 with amount 20000.0
+✅ Escrow smart contract deployed: 0x0000000000000000000000000000000000000000
+INFO:     127.0.0.1:63423 - "POST /api/v1/escrow/ HTTP/1.1" 201 Created
+INFO:     127.0.0.1:63423 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63432 - "POST /api/v1/upload/escrow-documents HTTP/1.1" 404 Not Found
+📝 Mock deploying escrow contract for ESC-015 with amount 20000.0
+✅ Escrow smart contract deployed: 0x0000000000000000000000000000000000000000
+INFO:     127.0.0.1:63432 - "POST /api/v1/escrow/ HTTP/1.1" 201 Created
+INFO:     127.0.0.1:63432 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63526 - "POST /api/v1/escrow-documents HTTP/1.1" 200 OK
+📝 Mock deploying escrow contract for ESC-016 with amount 20000.0
+✅ Escrow smart contract deployed: 0x0000000000000000000000000000000000000000
+INFO:     127.0.0.1:63526 - "POST /api/v1/escrow/ HTTP/1.1" 201 Created
+INFO:     127.0.0.1:63526 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63534 - "GET /escrow/documents/95941b6216c8444eb9389a6b7b7199c8.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63534 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:63546 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63549 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63536 - "GET /escrow/documents/ac2ab09e470f4cf6b5ab928cd10bca8f.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64027 - "GET /escrow/documents/ac2ab09e470f4cf6b5ab928cd10bca8f.pdf HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:64123 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64133 - "OPTIONS /api/v1/escrow/ESC-016/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64135 - "PATCH /api/v1/escrow/ESC-016/status HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:64164 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64166 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64196 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64199 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [64333]
+INFO:     Started server process [93524]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:64506 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64509 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64509 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64817 - "OPTIONS /api/v1/real-estate/properties?limit=100&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64818 - "OPTIONS /api/v1/real-estate/investment-projects?limit=100&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64821 - "OPTIONS /api/v1/real-estate/users/1/properties HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64823 - "OPTIONS /api/v1/real-estate/properties?limit=100&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64825 - "OPTIONS /api/v1/real-estate/investment-projects?limit=100&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64826 - "OPTIONS /api/v1/real-estate/users/1/properties HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64817 - "GET /api/v1/real-estate/properties?limit=100&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64821 - "GET /api/v1/real-estate/users/1/properties HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64818 - "GET /api/v1/real-estate/investment-projects?limit=100&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64817 - "GET /api/v1/real-estate/users/1/properties HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64821 - "GET /api/v1/real-estate/properties?limit=100&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64818 - "GET /api/v1/real-estate/investment-projects?limit=100&offset=0 HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'models/escrow.py', 'create_tables.py', 'create_comprehensive_transactions.py', 'routers/clickpesa.py', 'insert_sample_suppliers_data.py', 'routers/payroll.py', 'database.py', 'insert_sample_real_estate_data.py', 'models/card.py', 'routers/transaction.py', 'services/blockchain.py', 'main.py', 'models/real_estate.py', 'models/user.py', 'routers/profile.py', 'routers/real_estate.py', 'create_real_estate_tables.py', 'schemas/real_estate.py', 'create_users_table.py', 'models/transaction.py', 'routers/escrow.py', 'models/blockchain.py', 'routers/upload.py', 'schemas/profile.py', 'create_sample_transactions.py', 'routers/cards.py', 'services/document_generator.py', 'routers/auth.py', 'services/escrow_smart_contract.py', 'models/__init__.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [93524]
+INFO:     Started server process [21312]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'models/escrow.py', 'create_tables.py', 'create_comprehensive_transactions.py', 'routers/clickpesa.py', 'insert_sample_suppliers_data.py', 'routers/payroll.py', 'database.py', 'insert_sample_real_estate_data.py', 'models/card.py', 'routers/transaction.py', 'services/blockchain.py', 'main.py', 'models/real_estate.py', 'models/user.py', 'routers/profile.py', 'routers/real_estate.py', 'create_real_estate_tables.py', 'schemas/real_estate.py', 'create_users_table.py', 'models/transaction.py', 'routers/escrow.py', 'models/blockchain.py', 'routers/upload.py', 'schemas/profile.py', 'create_sample_transactions.py', 'routers/cards.py', 'services/document_generator.py', 'routers/auth.py', 'services/escrow_smart_contract.py', 'models/__init__.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [21312]
+INFO:     Started server process [62701]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:49477 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49479 - "GET /api/v1/payroll/departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49482 - "GET /api/v1/payroll/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49483 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49477 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49479 - "GET /api/v1/payroll/departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49482 - "GET /api/v1/payroll/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49491 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49477 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49477 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49477 - "GET /api/v1/payroll/staff?employment_status=active HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49491 - "GET /api/v1/payroll/staff?employment_status=active HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49498 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49498 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49500 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49519 - "GET /api/v1/payroll/departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49500 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49522 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49521 - "GET /api/v1/payroll/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49519 - "GET /api/v1/payroll/departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49500 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49521 - "GET /api/v1/payroll/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49524 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49500 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49500 - "GET /api/v1/payroll/staff?employment_status=active HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49524 - "GET /api/v1/payroll/staff?employment_status=active HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49524 - "GET /api/v1/payroll/staff/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49570 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49572 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'models/escrow.py', 'create_tables.py', 'create_comprehensive_transactions.py', 'routers/clickpesa.py', 'insert_sample_suppliers_data.py', 'routers/payroll.py', 'database.py', 'insert_sample_real_estate_data.py', 'models/card.py', 'routers/transaction.py', 'services/blockchain.py', 'main.py', 'models/real_estate.py', 'models/user.py', 'routers/profile.py', 'routers/real_estate.py', 'create_real_estate_tables.py', 'schemas/real_estate.py', 'create_users_table.py', 'models/transaction.py', 'routers/escrow.py', 'models/blockchain.py', 'routers/upload.py', 'schemas/profile.py', 'create_sample_transactions.py', 'routers/cards.py', 'services/document_generator.py', 'routers/auth.py', 'services/escrow_smart_contract.py', 'models/__init__.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [62701]
+INFO:     Started server process [75034]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'models/escrow.py', 'create_tables.py', 'create_comprehensive_transactions.py', 'routers/clickpesa.py', 'insert_sample_suppliers_data.py', 'routers/payroll.py', 'database.py', 'insert_sample_real_estate_data.py', 'models/card.py', 'routers/transaction.py', 'services/blockchain.py', 'main.py', 'models/real_estate.py', 'models/user.py', 'routers/profile.py', 'routers/real_estate.py', 'create_real_estate_tables.py', 'schemas/real_estate.py', 'create_users_table.py', 'models/transaction.py', 'routers/escrow.py', 'models/blockchain.py', 'routers/upload.py', 'schemas/profile.py', 'create_sample_transactions.py', 'routers/cards.py', 'services/document_generator.py', 'routers/auth.py', 'services/escrow_smart_contract.py', 'models/__init__.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [75034]
+INFO:     Started server process [93843]
+INFO:     Waiting for application startup.
+WARNING:  WatchFiles detected changes in 'models/user.py', 'models/transaction.py', 'routers/payroll.py', 'models/escrow.py'. Reloading...
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [93843]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+Process SpawnProcess-35:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, real_estate
+  File "/Users/escobar/arisportal/backend/routers/real_estate.py", line 11, in <module>
+    from models.user import User  # Import User first to ensure it's available for relationships
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ImportError: cannot import name 'User' from 'models.user' (/Users/escobar/arisportal/backend/models/user.py). Did you mean: 'user'?
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'routers/auth.py'. Reloading...
+Process SpawnProcess-36:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, real_estate
+  File "/Users/escobar/arisportal/backend/routers/real_estate.py", line 11, in <module>
+    from models.user import User  # Import User first to ensure it's available for relationships
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ImportError: cannot import name 'User' from 'models.user' (/Users/escobar/arisportal/backend/models/user.py). Did you mean: 'user'?
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'routers/auth.py'. Reloading...
+Process SpawnProcess-37:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, real_estate
+  File "/Users/escobar/arisportal/backend/routers/real_estate.py", line 11, in <module>
+    from models.user import User  # Import User first to ensure it's available for relationships
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ImportError: cannot import name 'User' from 'models.user' (/Users/escobar/arisportal/backend/models/user.py). Did you mean: 'user'?
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'routers/auth.py'. Reloading...
+Process SpawnProcess-38:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, real_estate
+  File "/Users/escobar/arisportal/backend/routers/real_estate.py", line 11, in <module>
+    from models.user import User  # Import User first to ensure it's available for relationships
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ImportError: cannot import name 'User' from 'models.user' (/Users/escobar/arisportal/backend/models/user.py). Did you mean: 'user'?
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'routers/auth.py'. Reloading...
+Process SpawnProcess-39:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, real_estate
+  File "/Users/escobar/arisportal/backend/routers/real_estate.py", line 11, in <module>
+    from models.user import User  # Import User first to ensure it's available for relationships
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ImportError: cannot import name 'User' from 'models.user' (/Users/escobar/arisportal/backend/models/user.py). Did you mean: 'user'?
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'main.py'. Reloading...
+WARNING:  WatchFiles detected changes in 'main.py'. Reloading...
+Process SpawnProcess-41:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, real_estate, auth
+  File "/Users/escobar/arisportal/backend/routers/real_estate.py", line 11, in <module>
+    from models.user import User  # Import User first to ensure it's available for relationships
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ImportError: cannot import name 'User' from 'models.user' (/Users/escobar/arisportal/backend/models/user.py). Did you mean: 'user'?
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'routers/auth.py'. Reloading...
+Process SpawnProcess-42:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, real_estate, auth
+  File "/Users/escobar/arisportal/backend/routers/real_estate.py", line 11, in <module>
+    from models.user import User  # Import User first to ensure it's available for relationships
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ImportError: cannot import name 'User' from 'models.user' (/Users/escobar/arisportal/backend/models/user.py). Did you mean: 'user'?
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'routers/auth.py', 'main.py'. Reloading...
+Process SpawnProcess-43:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, real_estate, auth
+  File "/Users/escobar/arisportal/backend/routers/real_estate.py", line 11, in <module>
+    from models.user import User  # Import User first to ensure it's available for relationships
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ImportError: cannot import name 'User' from 'models.user' (/Users/escobar/arisportal/backend/models/user.py). Did you mean: 'user'?
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'create_tables.py', 'schemas/profile.py', 'create_comprehensive_transactions.py', 'create_sample_transactions.py', 'create_users_table.py', 'database.py', 'routers/upload.py', 'routers/escrow.py', 'routers/profile.py', 'routers/transaction.py', 'routers/auth.py', 'models/__init__.py', 'main.py'. Reloading...
+INFO:     Started server process [84216]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:56068 - "OPTIONS /api/v1/auth/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56070 - "OPTIONS /api/v1/auth/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57420 - "OPTIONS /api/v1/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57422 - "OPTIONS /api/v1/profile/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57426 - "OPTIONS /api/v1/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57427 - "OPTIONS /api/v1/profile/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56068 - "OPTIONS /api/v1/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56070 - "OPTIONS /api/v1/profile/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57420 - "OPTIONS /api/v1/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57422 - "OPTIONS /api/v1/profile/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62713 - "GET /api/v1/escrow/contract/document HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:62748 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62751 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62751 - "GET /api/v1/escrow/contract/document HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:63503 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63505 - "GET /api/v1/payroll/departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63508 - "GET /api/v1/payroll/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63509 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63503 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63505 - "GET /api/v1/payroll/departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63508 - "GET /api/v1/payroll/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63517 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63503 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63503 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'routers/escrow.py', 'models/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [84216]
+INFO:     Started server process [28030]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:63990 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63992 - "GET /api/v1/payroll/departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63994 - "GET /api/v1/payroll/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63996 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63990 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63992 - "GET /api/v1/payroll/departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63994 - "GET /api/v1/payroll/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64004 - "GET /api/v1/payroll/staff HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63990 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63990 - "GET /api/v1/payroll/branches HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64013 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64015 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64015 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64027 - "GET /escrow/documents/ac2ab09e470f4cf6b5ab928cd10bca8f.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64135 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64223 - "GET /api/v1/inventory/items HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64223 - "GET /api/v1/inventory/items HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64607 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64609 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64609 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [28030]
+INFO:     Started server process [75249]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [75249]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [75374]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [75374]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [75959]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [75959]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [76331]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [76331]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [76850]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [76850]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [78456]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [78456]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [84048]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:64919 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [84048]
+INFO:     Started server process [85264]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:65175 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [85264]
+INFO:     Started server process [98853]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [98853]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [99434]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [99434]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [99926]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:65352 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [99926]
+INFO:     Started server process [2328]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2328]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [4526]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:65450 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [4526]
+INFO:     Started server process [7991]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:65534 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49203 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49205 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49205 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [7991]
+INFO:     Started server process [23327]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [23327]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [23821]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [23821]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [24685]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [24685]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [25060]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [25060]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [26967]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [26967]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [28020]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [28020]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Started server process [28235]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:52158 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [28235]
+INFO:     Started server process [44422]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [44422]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [45541]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [45541]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [46280]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [46280]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+Process SpawnProcess-71:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-72:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-73:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-74:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-75:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-76:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-77:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-78:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-79:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-80:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-81:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-82:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-83:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-84:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-85:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-89:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 293
+    milestone_date_str = dt.strftime("%B %d, %Y")
+    ^^^^^^^^^^^^^^^^^^
+SyntaxError: expected 'except' or 'finally' block
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-90:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-91:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-92:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-93:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-94:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-95:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-96:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 284
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Started server process [99820]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:56631 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58145 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59210 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59709 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60305 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61893 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63212 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63214 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63212 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63212 - "OPTIONS /api/v1/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63214 - "GET /api/v1/profile HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [99820]
+INFO:     Started server process [1752]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:63477 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63496 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63496 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1752]
+Process SpawnProcess-99:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 285
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-100:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 285
+    for idx, milestone in enumerate(milestones, 1):
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-101:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 294
+    milestone_date_str = dt.strftime("%B %d, %Y")
+    ^^^^^^^^^^^^^^^^^^
+SyntaxError: expected 'except' or 'finally' block
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Started server process [31935]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:60892 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60898 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60898 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61387 - "GET /api/v1/escrow/contract/document HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [31935]
+INFO:     Started server process [81096]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Error generating document: Can't apply "joined loader" strategy to property "Escrow.milestones", which is a "column property"; this loader strategy is intended to be used with a "relationship property".
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:64698 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-015 HTTP/1.1" 500 Internal Server Error
+Error generating document: Can't apply "joined loader" strategy to property "Escrow.milestones", which is a "column property"; this loader strategy is intended to be used with a "relationship property".
+INFO:     127.0.0.1:65061 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-015 HTTP/1.1" 500 Internal Server Error
+Error generating document: Can't apply "joined loader" strategy to property "Escrow.milestones", which is a "column property"; this loader strategy is intended to be used with a "relationship property".
+INFO:     127.0.0.1:65134 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-015 HTTP/1.1" 500 Internal Server Error
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [81096]
+INFO:     Started server process [90767]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [90767]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [91061]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:49396 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-015 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49458 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-014 HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [91061]
+INFO:     Started server process [94188]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:49711 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-012 HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'models/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [94188]
+INFO:     Started server process [96727]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:50790 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-003 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51049 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-012 HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'models/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [96727]
+INFO:     Started server process [4629]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'models/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [4629]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     Started server process [5346]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:51537 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-003 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51966 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-012 HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [5346]
+INFO:     Started server process [13623]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [13623]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+Process SpawnProcess-111:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 309
+    milestones = escrow_data.get('milestones', [])
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-112:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 309
+    milestones = escrow_data.get('milestones', [])
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-113:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 309
+    milestones = escrow_data.get('milestones', [])
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-114:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 309
+    milestones = escrow_data.get('milestones', [])
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+Process SpawnProcess-115:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 309
+    milestones = escrow_data.get('milestones', [])
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Started server process [63455]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Error generating document: name 'document_generator' is not defined
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:59721 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60001 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60044 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60782 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49392 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50614 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65043 - "OPTIONS /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65045 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53230 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-012 HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:65045 - "OPTIONS /api/v1/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65045 - "GET /api/v1/profile HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [63455]
+INFO:     Started server process [64308]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:65110 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65117 - "GET /api/v1/escrow/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65119 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-012 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65129 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-011 HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [64308]
+INFO:     Started server process [65053]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+INFO:     127.0.0.1:65183 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-011 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65216 - "GET /api/v1/escrow/contract/document?escrow_id=ESC-006 HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'services/document_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [65053]
+INFO:     Started server process [68150]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [68150]
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+Process SpawnProcess-120:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 313
+    elements.append(Spacer(1, 0.1*inch))
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+Process SpawnProcess-121:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 313
+    elements.append(Spacer(1, 0.1*inch))
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode
+WARNING:  WatchFiles detected changes in 'routers/escrow.py'. Reloading...
+Process SpawnProcess-122:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/server.py", line 68, in serve
+    config.load()
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/escobar/arisportal/backend/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/escobar/arisportal/backend/main.py", line 33, in <module>
+    from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+  File "/Users/escobar/arisportal/backend/routers/escrow.py", line 6, in <module>
+    from services.document_generator import document_generator
+  File "/Users/escobar/arisportal/backend/services/document_generator.py", line 313
+    elements.append(Spacer(1, 0.1*inch))
+IndentationError: unexpected indent
+⚠️ Warning: Could not connect to blockchain network - running in mock mode

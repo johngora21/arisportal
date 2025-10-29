@@ -10,8 +10,22 @@ from typing import Dict, Tuple
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle, CondPageBreak
 from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.graphics.shapes import Rect, Drawing, String
+from reportlab.graphics import renderPDF
+import os
+
+# Register Kalam handwritten font for signatures
+try:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    font_path = os.path.join(base_dir, 'fonts', 'Kalam-Regular.ttf')
+    if os.path.exists(font_path):
+        pdfmetrics.registerFont(TTFont('Kalam', font_path))
+except Exception as e:
+    pass  # Fallback to default fonts if loading fails
 from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -104,189 +118,202 @@ class EscrowDocumentGenerator:
         # Define custom styles
         styles = getSampleStyleSheet()
         
-        # Title style - Large, bold, professional
+        # STANDARDIZED FONT SYSTEM - Professional Legal Document
+        # Using consistent 10pt base with proper hierarchy
+        
+        # Title style - Main document title
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
-            fontSize=22,
+            fontSize=14,  # Standardized: Large but professional (10pt + 4pt for title)
             fontName='Helvetica-Bold',
             textColor=colors.HexColor('#000000'),
             spaceAfter=12,
             alignment=1,  # Center
-            leading=26
+            leading=18
         )
         
-        # Subtitle style
+        # Subtitle style - Document subtitle
         subtitle_style = ParagraphStyle(
             'CustomSubtitle',
             parent=styles['Normal'],
-            fontSize=14,
+            fontSize=10,  # Standardized: 10pt base
             fontName='Helvetica',
             textColor=colors.HexColor('#374151'),
-            spaceAfter=24,
+            spaceAfter=14,
             alignment=1,
-            leading=18
+            leading=14
         )
         
-        # Heading style - Bold, professional
+        # Heading style - Section headings (SECTION 1, SECTION 2, etc.)
         heading_style = ParagraphStyle(
             'CustomHeading',
             parent=styles['Heading2'],
-            fontSize=13,
+            fontSize=12,  # Increased: 12pt for better section title visibility
             fontName='Helvetica-Bold',
             textColor=colors.HexColor('#000000'),
-            spaceAfter=10,
-            spaceBefore=16,
-            leading=18
-        )
-        
-        # Subheading style
-        subheading_style = ParagraphStyle(
-            'CustomSubheading',
-            parent=styles['Heading3'],
-            fontSize=11,
-            fontName='Helvetica-Bold',
-            textColor=colors.HexColor('#1f2937'),
             spaceAfter=8,
             spaceBefore=12,
-            leading=16
+            leading=16  # Adjusted line height for larger font size
         )
         
-        # Body style - Professional serif-like font size
+        # Body style - All regular text content
         body_style = ParagraphStyle(
             'CustomBody',
             parent=styles['Normal'],
-            fontSize=11,
+            fontSize=10,  # Standardized: Professional 10pt
             fontName='Helvetica',
-            leading=15,
-            spaceAfter=8
+            alignment=4,  # Justified alignment (like Cmd+J in Word)
+            leading=14,
+            spaceAfter=6
         )
         
-        # Signature label style
-        signature_label_style = ParagraphStyle(
-            'SignatureLabel',
+        # Signature style - For signature sections
+        signature_style = ParagraphStyle(
+            'SignatureStyle',
             parent=styles['Normal'],
-            fontSize=10,
-            fontName='Helvetica-Bold',
+            fontSize=10,  # Standardized: 10pt base
+            fontName='Helvetica',
+            leading=14,
             spaceAfter=4
         )
         
-        # Title - Professional centered header
-        elements.append(Spacer(1, 0.2*inch))
-        elements.append(Paragraph("ESCROW SERVICES AGREEMENT", title_style))
-        elements.append(Spacer(1, 0.15*inch))
-        elements.append(Paragraph("ARISPORTAL ESCROW SERVICES", subtitle_style))
-        elements.append(Paragraph("Blockchain-Secured Transaction with Smart Contract", subtitle_style))
-        elements.append(Paragraph("_____________________________", body_style))
-        elements.append(Spacer(1, 0.35*inch))
-        
-        # Agreement Info - Professional info box
-        escrow_id = escrow_data.get('escrow_id', 'N/A')
-        agreement_date = datetime.now().strftime("%B %d, %Y")
-        
-        info_style = TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (1, 0), 10),
-            ('FONTSIZE', (0, 1), (1, 1), 9),
-            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d1d5db')),
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f3f4f6')),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-            ('LEFTPADDING', (0, 0), (-1, -1), 12),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 12),
-        ])
-        
-        info_data = [
-            ['Agreement Date', 'Escrow ID'],
-            [agreement_date, escrow_id]
-        ]
-        
-        info_table = Table(info_data, colWidths=[3*inch, 3*inch])
-        info_table.setStyle(info_style)
-        elements.append(info_table)
+        # Professional header with original content (no horizontal lines)
         elements.append(Spacer(1, 0.3*inch))
         
-        # Parties Section - Professional table
-        elements.append(Paragraph("PARTIES TO THIS AGREEMENT", heading_style))
-        elements.append(Spacer(1, 0.15*inch))
+        # Create a table for top left (Escrow ID) and top right (Logo) alignment
+        from reportlab.platypus import Table, TableStyle
+        from reportlab.lib import colors as rl_colors
+        from reportlab.graphics.shapes import Drawing, Rect, String
+        from reportlab.graphics import renderPDF
         
-        parties_data = [
-            ['Party Role', 'Full Name', 'Email Address', 'Phone Number'],
-            ['PAYER (Depositor)', escrow_data.get('payer_name', 'N/A'), escrow_data.get('payer_email', 'N/A'), escrow_data.get('payer_phone', 'N/A')],
-            ['PAYEE (Recipient)', escrow_data.get('payee_name', 'N/A'), escrow_data.get('payee_email', 'N/A'), escrow_data.get('payee_phone', 'N/A')],
+        escrow_id = escrow_data.get('escrow_id', 'N/A')
+        
+        # Escrow ID style for top left
+        escrow_id_style = ParagraphStyle(
+            'EscrowIdStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            fontName='Helvetica-Bold',
+            alignment=0,  # Left alignment
+            spaceAfter=0,
+            leading=14
+        )
+        
+        # Create a square logo placeholder (big enough to replace with actual logo later)
+        logo_drawing = Drawing(80, 80)  # 80x80 point square
+        
+        # Create a square with border that can be easily replaced with actual logo
+        square = Rect(0, 0, 80, 80)
+        square.fillColor = rl_colors.HexColor('#F0F8FF')  # Light blue fill
+        square.strokeColor = rl_colors.HexColor('#007BFF')  # Blue border
+        square.strokeWidth = 2
+        
+        logo_drawing.add(square)
+        
+        # Add "LOGO" text in center for now (replace this entire Drawing later)
+        logo_text = String(40, 35, "LOGO", textAnchor='middle')
+        logo_text.fontName = 'Helvetica-Bold'
+        logo_text.fontSize = 12
+        logo_text.fillColor = rl_colors.HexColor('#007BFF')
+        
+        logo_drawing.add(logo_text)
+        
+        logo_flowable = logo_drawing
+        
+        # Logo only (no redundant escrow ID)
+        elements.append(logo_flowable)
+        elements.append(Spacer(1, 0.2*inch))
+        
+        elements.append(Paragraph("ESCROW SERVICES AGREEMENT", title_style))
+        elements.append(Paragraph("Arisportal Escrow Services", subtitle_style))
+        elements.append(Paragraph("Blockchain-Secured Transaction with Smart Contract", subtitle_style))
+        
+        # Add more space from top section
+        elements.append(Spacer(1, 0.6*inch))
+        
+        # Escrow ID on left, Date on right in a table
+        agreement_date = datetime.now().strftime("%B %d, %Y")
+        date_style = ParagraphStyle(
+            'DateStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            fontName='Helvetica',
+            alignment=2,  # Right alignment
+            spaceAfter=8,
+            leading=14
+        )
+        
+        escrow_id_left_style = ParagraphStyle(
+            'EscrowIdLeftStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            fontName='Helvetica-Bold',
+            alignment=0,  # Left alignment
+            spaceAfter=8,
+            leading=14
+        )
+        
+        # Create a table with escrow ID on left, date on right
+        date_table_data = [
+            [Paragraph(f"<b>{escrow_id}</b>", escrow_id_left_style), 
+             Paragraph(f"{agreement_date}", date_style)]
         ]
         
-        parties_table = Table(parties_data, colWidths=[1.5*inch, 2.5*inch, 2*inch, 2*inch])
-        parties_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f2937')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('FONTSIZE', (0, 1), (-1, -1), 9),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('TOPPADDING', (0, 0), (-1, 0), 10),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
-            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#374151')),
+        date_table = Table(date_table_data, colWidths=[3*inch, 3*inch])
+        date_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ]))
         
-        elements.append(parties_table)
-        elements.append(Spacer(1, 0.3*inch))
+        elements.append(date_table)
+        elements.append(Spacer(1, 0.4*inch))
+        
+        # SECTION 1: PARTIES TO THIS AGREEMENT - Professional legal format
+        elements.append(CondPageBreak(5*inch))  # Ensure section doesn't split across pages
+        elements.append(Paragraph("SECTION 1: PARTIES TO THIS AGREEMENT", heading_style))
+        elements.append(Spacer(1, 0.15*inch))
+        
+        # Professional legal statement format
+        payer_name = escrow_data.get('payer_name', '[PAYER NAME]')
+        payee_name = escrow_data.get('payee_name', '[PAYEE NAME]')
+        
+        parties_text = f"""This Escrow Services Agreement establishes a fiduciary arrangement between <b>{payer_name}</b>, hereinafter designated as the depositing party, who undertakes to place specified funds under escrow administration, and <b>{payee_name}</b>, hereinafter designated as the beneficiary party, who shall receive disbursement of such funds contingent upon satisfactory completion of all stipulated performance criteria and contractual obligations. Both contracting parties hereby affirm their comprehensive understanding of all terms, conditions, and legal ramifications contained within this Agreement, and voluntarily submit to its binding authority and enforceability under applicable law."""
+        
+        elements.append(Paragraph(parties_text, body_style))
+        elements.append(Spacer(1, 0.2*inch))
         
         # Transaction Details - Professional formatted section
-        elements.append(Paragraph("TRANSACTION DETAILS", heading_style))
+        elements.append(CondPageBreak(3*inch))  # Ensure section doesn't split across pages
+        elements.append(Paragraph("SECTION 2: TRANSACTION SUMMARY", heading_style))
         elements.append(Spacer(1, 0.15*inch))
         
-        # Create a transaction details table
+        # Professional legal statement format for transaction details
         total_amount = escrow_data.get('total_amount', 0)
         payment_type = escrow_data.get('payment_type', 'FULL')
-        
-        transaction_details = []
-        transaction_details.append(['<b>Transaction Title</b>', escrow_data.get('title', 'N/A')])
-        
+        title = escrow_data.get('title', '[TRANSACTION TITLE]')
         description = escrow_data.get('description', 'No description provided')
-        if description and description != 'No description provided':
-            transaction_details.append(['<b>Description</b>', description[:80] + ('...' if len(description) > 80 else '')])
         
-        transaction_details.append(['<b>Total Escrow Amount</b>', f"{total_amount:,.0f} TZS"])
-        
+        # Determine payment type display
         if payment_type == 'FULL':
-            payment_type_display = 'Full Payment - Single Release'
-            release_date = escrow_data.get('release_date', 'TBD')
-            if release_date and release_date != 'TBD':
-                try:
-                    if isinstance(release_date, str) and release_date:
-                        dt = datetime.fromisoformat(release_date)
-                        release_date_str = dt.strftime("%B %d, %Y")
-                    else:
-                        release_date_str = str(release_date)
-                    transaction_details.append(['<b>Scheduled Release Date</b>', release_date_str])
-                except:
-                    pass
+            payment_type_display = 'full payment upon completion'
+        elif hasattr(payment_type, 'value') and payment_type.value == 'MILESTONE':
+            payment_type_display = 'milestone-based payment schedule'
         else:
-            payment_type_display = 'Milestone-Based Payments'
-        transaction_details.append(['<b>Payment Schedule</b>', payment_type_display])
+            payment_type_display = 'milestone-based payment schedule'
         
-        detail_table = Table(transaction_details, colWidths=[2.2*inch, 3.8*inch])
-        detail_table.setStyle(TableStyle([
-            ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#1f2937')),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-            ('LEFTPADDING', (0, 0), (-1, -1), 8),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
-            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f9fafb')),
-            ('BACKGROUND', (1, 0), (1, -1), colors.white),
-        ]))
-        elements.append(detail_table)
+        # Create professional transaction summary paragraph
+        transaction_summary = f"""The underlying commercial transaction secured by this escrow arrangement pertains to <b>{title}</b>. """
+        
+        if description and description != 'No description provided':
+            transaction_summary += f"""{description} """
+        
+        transaction_summary += f"""The aggregate monetary consideration to be held in escrow custody and administered pursuant to the terms of this Agreement amounts to <b>{total_amount:,.0f} Tanzanian Shillings</b>. The systematic disbursement of these escrowed funds shall be executed in accordance with a predetermined {payment_type_display}, with each disbursement contingent upon verification and acceptance of completed deliverables as specified in the comprehensive milestone framework detailed hereinbelow, and subject to strict adherence to all terms, conditions, and performance benchmarks established within this contractual instrument."""
+        
+        elements.append(Paragraph(transaction_summary, body_style))
+        
+        
         elements.append(Spacer(1, 0.25*inch))
         
         # Payment Type and Milestones - Professional section
@@ -294,10 +321,15 @@ class EscrowDocumentGenerator:
             # Add Milestones Section with professional table
             milestones = escrow_data.get('milestones', [])
             if milestones:
+                elements.append(Spacer(1, 0.4*inch))  # Add significant space before milestone section
+                elements.append(CondPageBreak(5*inch))  # Ensure milestone table doesn't split
                 elements.append(Paragraph("MILESTONE PAYMENT SCHEDULE", heading_style))
                 elements.append(Spacer(1, 0.15*inch))
                 
-                milestone_data = [['#', 'Description', 'Amount', 'Date']]
+                milestone_data = [
+                    [Paragraph('#', body_style), Paragraph('Description', body_style), 
+                     Paragraph('Amount', body_style), Paragraph('Date', body_style)]
+                ]
                 for idx, milestone in enumerate(milestones, 1):
                     milestone_desc = milestone.get('description', 'N/A')
                     milestone_amount = milestone.get('amount', 0)
@@ -314,18 +346,18 @@ class EscrowDocumentGenerator:
                         milestone_date_str = milestone_date
                     
                     milestone_data.append([
-                        str(idx),
-                        milestone_desc[:35],
-                        f"{milestone_amount:,.0f}",
-                        milestone_date_str
+                        Paragraph(str(idx), body_style),
+                        Paragraph(milestone_desc, body_style),  # Remove truncation, let it wrap
+                        Paragraph(f"{milestone_amount:,.0f}", body_style),
+                        Paragraph(milestone_date_str, body_style)
                     ])
                 
-                milestone_table = Table(milestone_data, colWidths=[0.4*inch, 2.2*inch, 1.3*inch, 1.5*inch])
+                milestone_table = Table(milestone_data, colWidths=[0.5*inch, 3.5*inch, 1.5*inch, 1.8*inch])
                 milestone_table.setStyle(TableStyle([
                     ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f2937')),
                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, -1), 8),
+                    ('FONTSIZE', (0, 0), (-1, -1), 10),  # Standardized 10pt font size
                     ('ALIGN', (0, 0), (0, -1), 'CENTER'),
                     ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
                     ('ALIGN', (1, 0), (3, -1), 'LEFT'),
@@ -343,25 +375,76 @@ class EscrowDocumentGenerator:
         # Additional Terms
         terms = escrow_data.get('terms', '')
         if terms and terms.strip():
-            elements.append(Paragraph("TERMS AND CONDITIONS", heading_style))
+            elements.append(CondPageBreak(4*inch))  # Ensure section doesn't split across pages
+            elements.append(Paragraph("SECTION 3: TERMS AND CONDITIONS", heading_style))
             elements.append(Spacer(1, 0.1*inch))
-            for line in terms.split('\n'):
-                if line.strip():
-                    elements.append(Paragraph(f"• {line.strip()}", body_style))
+            
+            # Convert number to Roman numeral
+            def to_roman(num):
+                val = [
+                    1000, 900, 500, 400,
+                    100, 90, 50, 40,
+                    10, 9, 5, 4,
+                    1
+                ]
+                syb = [
+                    "M", "CM", "D", "CD",
+                    "C", "XC", "L", "XL",
+                    "X", "IX", "V", "IV",
+                    "I"
+                ]
+                roman_num = ''
+                i = 0
+                while num > 0:
+                    for _ in range(num // val[i]):
+                        roman_num += syb[i]
+                        num -= val[i]
+                    i += 1
+                return roman_num
+            
+            term_lines = [line.strip() for line in terms.split('\n') if line.strip()]
+            for idx, line in enumerate(term_lines, 1):
+                elements.append(Paragraph(f"{to_roman(idx).lower()}. {line}", body_style))
             elements.append(Spacer(1, 0.2*inch))
         
         # Additional Notes
         notes = escrow_data.get('additional_notes', '')
         if notes and notes.strip():
-            elements.append(Paragraph("ADDITIONAL NOTES", heading_style))
+            elements.append(CondPageBreak(4*inch))  # Ensure section doesn't split across pages
+            elements.append(Paragraph("SECTION 4: ADDITIONAL NOTES", heading_style))
             elements.append(Spacer(1, 0.1*inch))
-            for line in notes.split('\n'):
-                if line.strip():
-                    elements.append(Paragraph(line.strip(), body_style))
+            
+            # Convert number to Roman numeral
+            def to_roman(num):
+                val = [
+                    1000, 900, 500, 400,
+                    100, 90, 50, 40,
+                    10, 9, 5, 4,
+                    1
+                ]
+                syb = [
+                    "M", "CM", "D", "CD",
+                    "C", "XC", "L", "XL",
+                    "X", "IX", "V", "IV",
+                    "I"
+                ]
+                roman_num = ''
+                i = 0
+                while num > 0:
+                    for _ in range(num // val[i]):
+                        roman_num += syb[i]
+                        num -= val[i]
+                    i += 1
+                return roman_num
+            
+            note_lines = [line.strip() for line in notes.split('\n') if line.strip()]
+            for idx, line in enumerate(note_lines, 1):
+                elements.append(Paragraph(f"{to_roman(idx).lower()}. {line}", body_style))
             elements.append(Spacer(1, 0.2*inch))
         
         # Smart Contract Section
-        elements.append(Paragraph("SMART CONTRACT SECURITY", heading_style))
+        elements.append(CondPageBreak(6*inch))  # Ensure section doesn't split across pages
+        elements.append(Paragraph("SECTION 5: SMART CONTRACT SECURITY", heading_style))
         elements.append(Spacer(1, 0.1*inch))
         elements.append(Paragraph(
             "This escrow agreement is secured using blockchain smart contract technology. "
@@ -380,91 +463,122 @@ class EscrowDocumentGenerator:
             "Complete audit trail"
         ]
         
-        for feature in features:
-            elements.append(Paragraph(f"✓ {feature}", body_style))
+        for i, feature in enumerate(features, start=1):
+            # Use lowercase Roman numerals for professional contract styling
+            roman_numerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x']
+            if i <= len(roman_numerals):
+                elements.append(Paragraph(f"{roman_numerals[i-1]}. {feature}", body_style))
+            else:
+                elements.append(Paragraph(f"{i}. {feature}", body_style))
         
         elements.append(Spacer(1, 0.2*inch))
         
-        # Governing Law
-        elements.append(Paragraph("GOVERNING LAW", heading_style))
-        elements.append(Spacer(1, 0.1*inch))
-        elements.append(Paragraph(
-            "This escrow agreement is governed by the laws of Tanzania. Funds are secured in a blockchain "
-            "smart contract with automatic execution, dispute resolution, and refund capabilities.",
-            body_style
-        ))
+        # Signature Section - Clean text-based layout (NO TABLES)
         elements.append(Spacer(1, 0.3*inch))
-        elements.append(PageBreak())
-        
-        # Signature Section - Professional layout with boxes
-        elements.append(Spacer(1, 0.4*inch))
-        elements.append(Paragraph("EXECUTION AND SIGNATURES", heading_style))
+        elements.append(CondPageBreak(5*inch))  # Ensure section doesn't split across pages
+        elements.append(Paragraph("SECTION 6: EXECUTION AND SIGNATURES", heading_style))
         elements.append(Spacer(1, 0.3*inch))
         
-        # Payer Signature Block with border
-        signature_box_style = TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        # Generate automatic signature for payer
+        payer_name = escrow_data.get("payer_name", "")
+        payer_signature = ""
+        if payer_name:
+            # Create a realistic signature: first initial + last name
+            name_parts = payer_name.split()
+            if len(name_parts) >= 2:
+                # Use first initial with dot + last name for signature (like real signatures)
+                first_initial = name_parts[0][0].upper()
+                last_name = name_parts[-1]
+                payer_signature = f"{first_initial}.{last_name}"
+            else:
+                # If only one name, use the first letter + rest of name
+                payer_signature = f"{payer_name[0].upper()}{payer_name[1:].lower()}" if len(payer_name) > 1 else payer_name
+        
+        # Get current date for signature
+        signature_date = datetime.now().strftime("%B %d, %Y")
+        
+        # Create signature style for script-like appearance
+        signature_style = ParagraphStyle(
+            'SignatureStyle',
+            parent=styles['Normal'],
+            fontSize=18,
+            fontName='Times-Italic',  # Cursive/script-like font
+            textColor=colors.blue,    # Blue ink color
+            alignment=0,  # Left alignment
+            spaceAfter=6,
+            leading=22
+        )
+        
+        # Create a more stylized signature style
+        handwritten_style = ParagraphStyle(
+            'HandwrittenStyle',  
+            parent=styles['Normal'],
+            fontSize=20,
+            fontName='Times-Italic',
+            textColor=colors.navy,
+            alignment=0,
+            spaceAfter=8,
+            leading=24
+        )
+        
+        # Create simple side-by-side signature blocks using basic table with spacer column
+        signature_data = [
+            # Row 1: Headers
+            [Paragraph('<b>PAYER SIGNATURE BLOCK</b>', body_style), 
+             Paragraph('<b>PAYEE SIGNATURE BLOCK</b>', body_style)],
+            # Row 2: Names
+            [Paragraph(f'<b>Name:</b> {escrow_data.get("payer_name", "___________________________")}', body_style),
+             Paragraph(f'<b>Name:</b> {escrow_data.get("payee_name", "___________________________")}', body_style)],
+            # Row 3: Emails  
+            [Paragraph(f'<b>Email:</b> {escrow_data.get("payer_email", "___________________________")}', body_style),
+             Paragraph(f'<b>Email:</b> {escrow_data.get("payee_email", "___________________________")}', body_style)],
+            # Row 4: Phones
+            [Paragraph(f'<b>Phone:</b> {escrow_data.get("payer_phone", "___________________________")}', body_style),
+             Paragraph(f'<b>Phone:</b> {escrow_data.get("payee_phone", "___________________________")}', body_style)],
+            # Row 5: Empty space for signature area
+            [Paragraph('', body_style), Paragraph('', body_style)],
+            # Row 6: Signatures - Payer gets automatic signature, Payee gets blank line  
+            # Use Kalam handwritten font for authentic signature style
+            [Paragraph(f'<b>Signature:</b><br/><br/><font name="Kalam" size="21" color="#2563eb">{payer_signature}</font>', body_style) if payer_signature else Paragraph('<b>Signature:</b>', body_style),
+             Paragraph('<b>Signature:</b><br/><br/>___________________________', body_style)],
+            # Row 7: Dates - Payer gets current date, Payee gets blank
+            [Paragraph(f'<b>Date:</b> {signature_date}', body_style),
+             Paragraph('<b>Date:</b> ___________________________', body_style)]
+        ]
+        
+        # Create the signature table with proper column widths for text wrapping
+        # Use full page width (8.5" - margins) to span entire usable width
+        page_width = 8.5*inch
+        left_margin = 0.75*inch  # Standard margin
+        right_margin = 0.75*inch  # Standard margin
+        usable_width = page_width - left_margin - right_margin  # ~7 inches
+        
+        # Set column widths to ensure proper text wrapping
+        col_width = (usable_width - 0.2*inch) / 2  # Leave space between columns
+        signature_table = Table(signature_data, colWidths=[col_width, col_width])
+        signature_table.hAlign = 'LEFT'  # Start table at left margin
+        signature_table.setStyle(TableStyle([
+            # Header row styling
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('FONTSIZE', (0, 1), (-1, -1), 9),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),  # Standardized 10pt font size
+            # Body styling
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),  # Standardized 10pt font size
+            # Alignment - Both columns LEFT aligned within their cells
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),    # All text left-aligned within cells
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('TOPPADDING', (0, 0), (-1, -1), 12),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-            ('LEFTPADDING', (0, 0), (-1, -1), 12),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 12),
-        ])
+            # Padding for clean layout
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ]))
         
-        # Payer block
-        payer_signature_data = [
-            ['PAYER SIGNATURE BLOCK'],
-            [f'<b>Name:</b> {escrow_data.get("payer_name", "___________________________")}'],
-            [f'<b>Email:</b> {escrow_data.get("payer_email", "___________________________")}'],
-            [f'<b>Phone:</b> {escrow_data.get("payer_phone", "___________________________")}'],
-            [''],  # Spacer line
-            ['Signature: ________________________________'],
-            ['Date: _________________________']
-        ]
+        # Keep table at normal position (not forced left) - only PAYER column is flush left
         
-        payer_table = Table(payer_signature_data, colWidths=[6*inch])
-        payer_table.setStyle(signature_box_style)
-        elements.append(payer_table)
-        
-        elements.append(Spacer(1, 0.25*inch))
-        
-        # Payee block
-        payee_signature_data = [
-            ['PAYEE SIGNATURE BLOCK'],
-            [f'<b>Name:</b> {escrow_data.get("payee_name", "___________________________")}'],
-            [f'<b>Email:</b> {escrow_data.get("payee_email", "___________________________")}'],
-            [f'<b>Phone:</b> {escrow_data.get("payee_phone", "___________________________")}'],
-            [''],  # Spacer line
-            ['Signature: ________________________________'],
-            ['Date: _________________________']
-        ]
-        
-        payee_table = Table(payee_signature_data, colWidths=[6*inch])
-        payee_table.setStyle(signature_box_style)
-        elements.append(payee_table)
-        
+        elements.append(signature_table)
         elements.append(Spacer(1, 0.3*inch))
         
-        # Witness/Platform block
-        platform_signature_data = [
-            ['ARISPORTAL ESCROW - AUTHORIZED SIGNATURE'],
-            ['This contract is executed and administered by ArisPortal Escrow Services'],
-            ['<b>Platform Representative:</b> ArisPortal Escrow Administrator'],
-            ['<b>Platform Address:</b> ArisPortal, Tanzania'],
-            ['<b>Execution Date:</b> ' + agreement_date],
-            [''],
-            ['Authorized Signature: [DIGITAL SEAL]'],
-            ['Date: ' + agreement_date]
-        ]
-        
-        platform_table = Table(platform_signature_data, colWidths=[6*inch])
-        platform_table.setStyle(signature_box_style)
-        elements.append(platform_table)
         
         # Build PDF
         doc.build(elements)

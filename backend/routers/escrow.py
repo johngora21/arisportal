@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from database import get_db
 from models.escrow import Escrow, EscrowMilestone, EscrowStatus, PaymentType
 from services.escrow_smart_contract import escrow_smart_contract
@@ -475,8 +475,8 @@ async def get_escrow_document(
         else:
             # Return legal agreement
             if escrow_id:
-                # Get specific escrow data with milestones loaded
-                escrow = db.query(Escrow).options(joinedload(Escrow.milestones)).filter(Escrow.escrow_id == escrow_id).first()
+                # Get specific escrow data
+                escrow = db.query(Escrow).filter(Escrow.escrow_id == escrow_id).first()
                 if not escrow:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,

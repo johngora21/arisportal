@@ -169,7 +169,7 @@ export default function EscrowPage() {
   };
 
   // View smart contract
-  const handleViewContract = async () => {
+  const handleViewContract = async (escrowId: string) => {
     if (contractData) {
       setShowContractModal(true);
       return;
@@ -177,7 +177,8 @@ export default function EscrowPage() {
     
     setLoadingContract(true);
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/contract/document`);
+      // Pass the escrow_id to fetch real escrow data
+      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/contract/document?escrow_id=${escrowId}`);
       if (!response.ok) throw new Error('Failed to fetch contract');
       const data = await response.json();
       setContractData(data);
@@ -488,7 +489,7 @@ export default function EscrowPage() {
                         View
                       </button>
                       <button 
-                        onClick={handleViewContract}
+                        onClick={() => handleViewContract(account.escrow_id)}
                         disabled={loadingContract}
                         style={{
                           padding: '8px 12px',
