@@ -367,6 +367,10 @@ export default function SignupPage() {
         website: ''
       };
 
+      // Debug: Log what we're sending
+      console.log('Registration payload being sent:', payload);
+      console.log('Form data state:', formData);
+
       const res = await fetch(buildApiUrl('/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

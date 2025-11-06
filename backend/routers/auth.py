@@ -106,6 +106,11 @@ def verify_password(password: str, hashed_password: str) -> bool:
 async def register(user_data: UserRegister, db: Session = Depends(get_db)):
     """Register a new user"""
     try:
+        # Log received data for debugging
+        logger.info(f"Registration request received for: {user_data.email}")
+        logger.info(f"Received data - phone: {user_data.phone}, country: {user_data.country}, city: {user_data.city}")
+        logger.info(f"Received data - address: {user_data.address}, business_name: {user_data.business_name}, business_type: {user_data.business_type}")
+        
         # Check if user already exists
         existing_user = db.query(UserProfileModel).filter(UserProfileModel.email == user_data.email).first()
         if existing_user:
@@ -119,29 +124,40 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
         first_name = name_parts[0]
         last_name = name_parts[1] if len(name_parts) > 1 else ""
         
+        # Convert empty strings to None to avoid saving empty strings
+        def clean_value(value):
+            return value if value and value.strip() else None
+        
         user = UserProfileModel(
             email=user_data.email,
             first_name=first_name,
             last_name=last_name,
             password_hash=hash_password(user_data.password),
-            phone=user_data.phone,
-            nationality=user_data.nationality,
-            address=user_data.address,
-            country=user_data.country,
-            city=user_data.city,
-            business_name=user_data.business_name,
-            business_type=user_data.business_type,
-            business_email=user_data.business_email,
-            business_phone=user_data.business_phone,
-            business_address=user_data.business_address,
-            website=user_data.website,
-            registration_number=user_data.registration_number,
-            tax_id=user_data.tax_id,
+            phone=clean_value(user_data.phone),
+            nationality=clean_value(user_data.nationality),
+            address=clean_value(user_data.address),
+            country=clean_value(user_data.country),
+            city=clean_value(user_data.city),
+            business_name=clean_value(user_data.business_name),
+            business_type=clean_value(user_data.business_type),
+            business_email=clean_value(user_data.business_email),
+            business_phone=clean_value(user_data.business_phone),
+            business_address=clean_value(user_data.business_address),
+            website=clean_value(user_data.website),
+            registration_number=clean_value(user_data.registration_number),
+            tax_id=clean_value(user_data.tax_id),
         )
+        
+        logger.info(f"Creating user with - phone: {user.phone}, country: {user.country}, city: {user.city}")
+        logger.info(f"Creating user with - address: {user.address}, business_name: {user.business_name}, business_type: {user.business_type}")
         
         db.add(user)
         db.commit()
         db.refresh(user)
+        
+        logger.info(f"User created successfully: ID={user.id}, email={user.email}")
+        logger.info(f"Saved data - phone: {user.phone}, country: {user.country}, city: {user.city}")
+        logger.info(f"Saved data - address: {user.address}, business_name: {user.business_name}, business_type: {user.business_type}")
         
         return UserResponse(
             id=user.id,
