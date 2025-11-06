@@ -26,6 +26,20 @@ class UserRegister(BaseModel):
     password: str
     full_name: str
     role: str
+    # Optional profile fields captured during registration
+    phone: Optional[str] = None
+    nationality: Optional[str] = None
+    address: Optional[str] = None
+    country: Optional[str] = None
+    city: Optional[str] = None
+    business_name: Optional[str] = None
+    business_type: Optional[str] = None
+    business_email: Optional[str] = None
+    business_phone: Optional[str] = None
+    business_address: Optional[str] = None
+    website: Optional[str] = None
+    registration_number: Optional[str] = None
+    tax_id: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -109,7 +123,20 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
             email=user_data.email,
             first_name=first_name,
             last_name=last_name,
-            password_hash=hash_password(user_data.password)
+            password_hash=hash_password(user_data.password),
+            phone=user_data.phone,
+            nationality=user_data.nationality,
+            address=user_data.address,
+            country=user_data.country,
+            city=user_data.city,
+            business_name=user_data.business_name,
+            business_type=user_data.business_type,
+            business_email=user_data.business_email,
+            business_phone=user_data.business_phone,
+            business_address=user_data.business_address,
+            website=user_data.website,
+            registration_number=user_data.registration_number,
+            tax_id=user_data.tax_id,
         )
         
         db.add(user)

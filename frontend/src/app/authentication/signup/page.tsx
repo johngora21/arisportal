@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { buildApiUrl } from '../../../config/api';
 import { 
   Eye, 
   EyeOff, 
@@ -344,15 +345,46 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
-    
     setIsLoading(true);
-    
-    setTimeout(() => {
+
+    try {
+      const payload = {
+        email: formData.email,
+        password: formData.password,
+        full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+        role: 'user',
+        phone: formData.phone,
+        nationality: '',
+        address: formData.address,
+        country: formData.country,
+        city: formData.city,
+        business_name: formData.businessName,
+        business_type: formData.businessType,
+        business_email: '',
+        business_phone: '',
+        business_address: formData.address,
+        website: ''
+      };
+
+      const res = await fetch(buildApiUrl('/auth/register'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Registration failed (${res.status})`);
+      }
+
+      // Success: redirect to login
+      window.location.href = '/authentication/login';
+    } catch (err: any) {
+      alert(err.message || 'Registration failed');
+    } finally {
       setIsLoading(false);
-      window.location.href = '/';
-    }, 2000);
+    }
   };
 
   return (
