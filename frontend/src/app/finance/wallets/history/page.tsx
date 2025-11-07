@@ -92,7 +92,7 @@ export default function HistoryPage() {
     }
   ];
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-TZ', {
       style: 'currency',
       currency: 'TZS',
@@ -100,7 +100,7 @@ export default function HistoryPage() {
     }).format(Math.abs(amount));
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
@@ -111,16 +111,16 @@ export default function HistoryPage() {
     }).format(new Date(dateString));
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return { color: '#059669', backgroundColor: '#dcfce7' };
+        return { color: 'white', backgroundColor: '#10b981' };
       case 'pending':
-        return { color: '#d97706', backgroundColor: '#fef3c7' };
+        return { color: 'white', backgroundColor: '#f59e0b' };
       case 'failed':
-        return { color: '#dc2626', backgroundColor: '#fee2e2' };
+        return { color: 'white', backgroundColor: '#ef4444' };
       default:
-        return { color: '#6b7280', backgroundColor: '#f3f4f6' };
+        return { color: 'white', backgroundColor: '#6b7280' };
     }
   };
 
@@ -183,10 +183,10 @@ export default function HistoryPage() {
                 transition: 'background-color 0.2s ease'
               }}
               onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#f9fafb';
+                (e.currentTarget as HTMLElement).style.backgroundColor = '#f9fafb';
               }}
               onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'transparent';
+                (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
               }}
             >
               {/* Icon */}
@@ -211,18 +211,19 @@ export default function HistoryPage() {
                     <div style={{ 
                       fontSize: '16px', 
                       fontWeight: '600', 
-                      color: transaction.amount > 0 ? '#059669' : '#dc2626',
+                      color: '#1f2937',
                       marginBottom: '4px'
                     }}>
                       {transaction.amount > 0 ? '+' : ''}{formatCurrency(transaction.amount)}
                     </div>
                     <div style={{ 
-                      padding: '2px 8px', 
+                      padding: '4px 10px', 
                       borderRadius: '12px', 
-                      fontSize: '10px', 
-                      fontWeight: '500',
+                      fontSize: '11px', 
+                      fontWeight: '600',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
+                      display: 'inline-block',
                       ...getStatusColor(transaction.status)
                     }}>
                       {transaction.status}

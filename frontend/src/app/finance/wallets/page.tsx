@@ -180,6 +180,7 @@ export default function WalletsPage() {
       default:
   return null;
 }
+
   };
 
   return (
@@ -384,94 +385,57 @@ export default function WalletsPage() {
               </div>
             </div>
 
-            {/* Default Wallet */}
-            <div style={{ marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0 0 12px 0' }}>
-                Default Wallet
-              </h3>
-              <select
-                value={defaultWallet}
-                onChange={(e) => setDefaultWallet(e.target.value)}
-                style={{
-                  width: '350px',
-                  padding: '12px 20px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '20px',
-                  fontSize: '14px',
-                  backgroundColor: 'white'
-                }}
-              >
-                {wallets.map((wallet) => (
-                  <option key={wallet.id} value={wallet.id}>
-                    {wallet.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Currency Preferences */}
-            <div style={{ marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0 0 12px 0' }}>
-                Currency Preferences
-              </h3>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                style={{
-                  width: '350px',
-                  padding: '12px 20px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '20px',
-                  fontSize: '14px',
-                  backgroundColor: 'white'
-                }}
-              >
-                {currencies.map((curr) => (
-                  <option key={curr.id} value={curr.id}>
-                    {curr.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Card Freeze/Unfreeze */}
+            {/* Card Management */}
             <div style={{ marginBottom: '24px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0 0 12px 0' }}>
                 Card Management
               </h3>
-              {cards.map((card) => (
-                <div key={card.id} style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f3f4f6'
-                }}>
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>
-                      {card.name}
+              {cards.map((card) => {
+                const hasBalance = card.balance > 0;
+                return (
+                  <div key={card.id} style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    padding: '12px 0',
+                    borderBottom: '1px solid #f3f4f6'
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>
+                        {card.name}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                        **** **** **** {card.number.slice(-4)}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                        Balance: {formatCurrency(card.balance)}
+                      </div>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                      **** **** **** {card.number.slice(-4)}
-                    </div>
+                    <button
+                      onClick={() => {
+                        if (!hasBalance) {
+                          // Handle delete card
+                          alert(`Delete card ${card.name}`);
+                        }
+                      }}
+                      disabled={hasBalance}
+                      style={{
+                        padding: '6px 16px',
+                        backgroundColor: hasBalance ? '#d1d5db' : '#EF4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '20px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        cursor: hasBalance ? 'not-allowed' : 'pointer',
+                        opacity: hasBalance ? 0.6 : 1
+                      }}
+                    >
+                      Delete
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setCardStatus(prev => ({ ...prev, [card.id]: !prev[card.id] }))}
-                    style={{
-                      padding: '6px 16px',
-                      backgroundColor: cardStatus[card.id] ? '#dc2626' : '#059669',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '20px',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {cardStatus[card.id] ? 'Freeze' : 'Unfreeze'}
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Modal Footer */}
@@ -479,7 +443,7 @@ export default function WalletsPage() {
               <button
                 onClick={() => setShowSettingsModal(false)}
                 style={{
-                  padding: '12px 24px',
+                  padding: '8px 16px',
                   backgroundColor: '#f3f4f6',
                   color: '#374151',
                   border: 'none',
@@ -494,7 +458,7 @@ export default function WalletsPage() {
               <button
                 onClick={() => setShowSettingsModal(false)}
                 style={{
-                  padding: '12px 24px',
+                  padding: '8px 16px',
                   backgroundColor: 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
