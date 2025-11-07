@@ -14,9 +14,6 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, 
 from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.graphics.shapes import Rect, Drawing, String
-from reportlab.graphics import renderPDF
-import os
 
 # Register Kalam handwritten font for signatures
 try:
@@ -178,18 +175,34 @@ class EscrowDocumentGenerator:
             spaceAfter=4
         )
         
-        # Professional header with original content (no horizontal lines)
+        # Professional header with Logo (top right), then title section, then Escrow ID and Date below
         elements.append(Spacer(1, 0.3*inch))
         
-        # Create a table for top left (Escrow ID) and top right (Logo) alignment
-        from reportlab.platypus import Table, TableStyle
-        from reportlab.lib import colors as rl_colors
-        from reportlab.graphics.shapes import Drawing, Rect, String
-        from reportlab.graphics import renderPDF
-        
         escrow_id = escrow_data.get('escrow_id', 'N/A')
+        agreement_date = datetime.now().strftime("%B %d, %Y")
         
-        # Escrow ID style for top left
+        # Logo at top right
+        logo_style = ParagraphStyle(
+            'LogoStyle',
+            parent=styles['Normal'],
+            fontSize=12,
+            fontName='Helvetica-Bold',
+            alignment=2,  # Right alignment
+            spaceAfter=8,
+            leading=14
+        )
+        elements.append(Paragraph('<font color="#007BFF"><b>ARISPORTAL</b></font>', logo_style))
+        elements.append(Spacer(1, 0.2*inch))
+        
+        # Main title and subtitles
+        elements.append(Paragraph("ESCROW SERVICES AGREEMENT", title_style))
+        elements.append(Paragraph("ARISPORTAL ESCROW SERVICES", subtitle_style))
+        elements.append(Paragraph("Blockchain-Secured Transaction with Smart Contract", subtitle_style))
+        
+        # Add space after title section
+        elements.append(Spacer(1, 0.3*inch))
+        
+        # Escrow ID (left) and Date (right) on same horizontal line - BELOW title section
         escrow_id_style = ParagraphStyle(
             'EscrowIdStyle',
             parent=styles['Normal'],
@@ -200,75 +213,34 @@ class EscrowDocumentGenerator:
             leading=14
         )
         
-        # Create a square logo placeholder (big enough to replace with actual logo later)
-        logo_drawing = Drawing(80, 80)  # 80x80 point square
-        
-        # Create a square with border that can be easily replaced with actual logo
-        square = Rect(0, 0, 80, 80)
-        square.fillColor = rl_colors.HexColor('#F0F8FF')  # Light blue fill
-        square.strokeColor = rl_colors.HexColor('#007BFF')  # Blue border
-        square.strokeWidth = 2
-        
-        logo_drawing.add(square)
-        
-        # Add "LOGO" text in center for now (replace this entire Drawing later)
-        logo_text = String(40, 35, "LOGO", textAnchor='middle')
-        logo_text.fontName = 'Helvetica-Bold'
-        logo_text.fontSize = 12
-        logo_text.fillColor = rl_colors.HexColor('#007BFF')
-        
-        logo_drawing.add(logo_text)
-        
-        logo_flowable = logo_drawing
-        
-        # Logo only (no redundant escrow ID)
-        elements.append(logo_flowable)
-        elements.append(Spacer(1, 0.2*inch))
-        
-        elements.append(Paragraph("ESCROW SERVICES AGREEMENT", title_style))
-        elements.append(Paragraph("Arisportal Escrow Services", subtitle_style))
-        elements.append(Paragraph("Blockchain-Secured Transaction with Smart Contract", subtitle_style))
-        
-        # Add more space from top section
-        elements.append(Spacer(1, 0.6*inch))
-        
-        # Escrow ID on left, Date on right in a table
-        agreement_date = datetime.now().strftime("%B %d, %Y")
         date_style = ParagraphStyle(
             'DateStyle',
             parent=styles['Normal'],
             fontSize=10,
             fontName='Helvetica',
             alignment=2,  # Right alignment
-            spaceAfter=8,
+            spaceAfter=0,
             leading=14
         )
         
-        escrow_id_left_style = ParagraphStyle(
-            'EscrowIdLeftStyle',
-            parent=styles['Normal'],
-            fontSize=10,
-            fontName='Helvetica-Bold',
-            alignment=0,  # Left alignment
-            spaceAfter=8,
-            leading=14
-        )
-        
-        # Create a table with escrow ID on left, date on right
-        date_table_data = [
-            [Paragraph(f"<b>{escrow_id}</b>", escrow_id_left_style), 
+        # Create table: Escrow ID (left) and Date (right) on same line
+        id_date_table_data = [
+            [Paragraph(f"<b>{escrow_id}</b>", escrow_id_style),
              Paragraph(f"{agreement_date}", date_style)]
         ]
         
-        date_table = Table(date_table_data, colWidths=[3*inch, 3*inch])
-        date_table.setStyle(TableStyle([
+        id_date_table = Table(id_date_table_data, colWidths=[3.5*inch, 3.5*inch])
+        id_date_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, 0), 'LEFT'),
             ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
         ]))
         
-        elements.append(date_table)
-        elements.append(Spacer(1, 0.4*inch))
+        elements.append(id_date_table)
+        
+        # Add more space from top section (extended lower)
+        elements.append(Spacer(1, 0.6*inch))
         
         # SECTION 1: PARTIES TO THIS AGREEMENT - Professional legal format
         elements.append(CondPageBreak(5*inch))  # Ensure section doesn't split across pages
@@ -645,6 +617,410 @@ class EscrowDocumentGenerator:
                     "Event logging"
                 ]
             }
+    
+    def generate_tanzanian_title_deed(self, property_data: Dict, owner_data: Dict = None) -> Tuple[bytes, str]:
+        """
+        Generate a Tanzanian Title Deed PDF document exactly as per official format
+        
+        Args:
+            property_data: Property information dictionary containing:
+                - id, title, description
+                - region, district, council, locality, ward, street
+                - lot_number, block, legal_area, lot_type, lot_use
+                - size, area
+                - boundary_coordinates (optional)
+                - national_id_number
+                - contact_name, contact_phone, contact_email
+            owner_data: Owner information dictionary (optional):
+                - first_name, last_name
+                - national_id_number
+                - address, phone, email
+                
+        Returns:
+            Tuple of (pdf_bytes, filename)
+        """
+        # Create a BytesIO buffer for the PDF
+        buffer = io.BytesIO()
+        
+        # Use A4 page size
+        doc = SimpleDocTemplate(buffer, pagesize=A4, 
+                                topMargin=0.5*inch, 
+                                bottomMargin=0.5*inch,
+                                leftMargin=0.75*inch,
+                                rightMargin=0.75*inch)
+        
+        # Container for the 'Flowable' objects
+        elements = []
+        
+        # Define custom styles for title deed
+        styles = getSampleStyleSheet()
+        
+        # Official Header Style - Bold and centered
+        header_style = ParagraphStyle(
+            'TitleDeedHeader',
+            parent=styles['Heading1'],
+            fontSize=16,
+            fontName='Helvetica-Bold',
+            textColor=colors.HexColor('#000000'),
+            spaceAfter=6,
+            alignment=1,  # Center
+            leading=20
+        )
+        
+        # Government Agency Header
+        govt_header_style = ParagraphStyle(
+            'GovtHeader',
+            parent=styles['Heading1'],
+            fontSize=18,
+            fontName='Helvetica-Bold',
+            textColor=colors.HexColor('#1a1a1a'),
+            spaceAfter=4,
+            alignment=1,
+            leading=22
+        )
+        
+        # Section Title Style
+        section_style = ParagraphStyle(
+            'TitleDeedSection',
+            parent=styles['Heading2'],
+            fontSize=12,
+            fontName='Helvetica-Bold',
+            textColor=colors.HexColor('#000000'),
+            spaceAfter=8,
+            spaceBefore=12,
+            leading=16,
+            borderWidth=1,
+            borderColor=colors.HexColor('#000000'),
+            borderPadding=4
+        )
+        
+        # Field Label Style
+        label_style = ParagraphStyle(
+            'TitleDeedLabel',
+            parent=styles['Normal'],
+            fontSize=10,
+            fontName='Helvetica-Bold',
+            textColor=colors.HexColor('#000000'),
+            spaceAfter=2,
+            leading=12
+        )
+        
+        # Field Value Style
+        value_style = ParagraphStyle(
+            'TitleDeedValue',
+            parent=styles['Normal'],
+            fontSize=10,
+            fontName='Helvetica',
+            textColor=colors.HexColor('#1a1a1a'),
+            spaceAfter=6,
+            leading=14,
+            leftIndent=12
+        )
+        
+        # Table Cell Styles
+        table_label_style = ParagraphStyle(
+            'TableLabel',
+            parent=styles['Normal'],
+            fontSize=10,
+            fontName='Helvetica-Bold',
+            alignment=0,  # Left
+            leading=12
+        )
+        
+        table_value_style = ParagraphStyle(
+            'TableValue',
+            parent=styles['Normal'],
+            fontSize=10,
+            fontName='Helvetica',
+            alignment=0,
+            leading=12
+        )
+        
+        # === OFFICIAL TITLE DEED HEADER ===
+        elements.append(Spacer(1, 0.2*inch))
+        
+        # Government Seal/Logo area (placeholder)
+        # In production, you would add an actual government logo image here
+        elements.append(Paragraph(
+            "UNITED REPUBLIC OF TANZANIA", 
+            govt_header_style
+        ))
+        elements.append(Paragraph(
+            "MINISTRY OF LANDS, HOUSING AND HUMAN SETTLEMENTS DEVELOPMENT", 
+            header_style
+        ))
+        elements.append(Paragraph(
+            "LAND REGISTRY", 
+            header_style
+        ))
+        elements.append(Spacer(1, 0.1*inch))
+        elements.append(Paragraph(
+            "CERTIFICATE OF TITLE", 
+            govt_header_style
+        ))
+        elements.append(Spacer(1, 0.3*inch))
+        
+        # === DOCUMENT INFORMATION ===
+        doc_info_data = [
+            [Paragraph('<b>Document Number:</b>', table_label_style), 
+             Paragraph(f"TD/{property_data.get('id', 'N/A'):06d}", table_value_style)],
+            [Paragraph('<b>Issue Date:</b>', table_label_style), 
+             Paragraph(datetime.now().strftime("%d %B %Y"), table_value_style)],
+            [Paragraph('<b>Title Deed Number:</b>', table_label_style), 
+             Paragraph(property_data.get('lot_number', 'N/A') or property_data.get('id', 'N/A'), table_value_style)],
+        ]
+        
+        doc_info_table = Table(doc_info_data, colWidths=[2.5*inch, 4*inch])
+        doc_info_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        elements.append(doc_info_table)
+        elements.append(Spacer(1, 0.3*inch))
+        
+        # === SECTION 1: PROPERTY DESCRIPTION ===
+        elements.append(Paragraph("SECTION 1: PROPERTY DESCRIPTION", section_style))
+        elements.append(Spacer(1, 0.15*inch))
+        
+        prop_desc_data = [
+            [Paragraph('<b>Property Type:</b>', table_label_style), 
+             Paragraph(property_data.get('property_type', 'N/A').upper(), table_value_style)],
+            [Paragraph('<b>Plot/Lot Number:</b>', table_label_style), 
+             Paragraph(property_data.get('lot_number', 'N/A') or 'N/A', table_value_style)],
+            [Paragraph('<b>Block Number:</b>', table_label_style), 
+             Paragraph(property_data.get('block', 'N/A') or 'N/A', table_value_style)],
+            [Paragraph('<b>Legal Area:</b>', table_label_style), 
+             Paragraph(
+                 property_data.get('legal_area', 'N/A') or 
+                 (f"{property_data.get('size', 0):.2f} sq. meters" if property_data.get('size') else 'N/A'), 
+                 table_value_style
+             )],
+            [Paragraph('<b>Lot Type:</b>', table_label_style), 
+             Paragraph(property_data.get('lot_type', 'N/A') or 'N/A', table_value_style)],
+            [Paragraph('<b>Land Use:</b>', table_label_style), 
+             Paragraph(property_data.get('lot_use', 'N/A') or 'N/A', table_value_style)],
+        ]
+        
+        prop_desc_table = Table(prop_desc_data, colWidths=[2.5*inch, 4*inch])
+        prop_desc_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cccccc')),
+        ]))
+        elements.append(prop_desc_table)
+        elements.append(Spacer(1, 0.25*inch))
+        
+        # === SECTION 2: LOCATION DETAILS ===
+        elements.append(Paragraph("SECTION 2: LOCATION DETAILS", section_style))
+        elements.append(Spacer(1, 0.15*inch))
+        
+        location_data = [
+            [Paragraph('<b>Region:</b>', table_label_style), 
+             Paragraph(property_data.get('region', 'N/A'), table_value_style)],
+            [Paragraph('<b>District:</b>', table_label_style), 
+             Paragraph(property_data.get('district', 'N/A'), table_value_style)],
+            [Paragraph('<b>Council:</b>', table_label_style), 
+             Paragraph(property_data.get('council', 'N/A'), table_value_style)],
+            [Paragraph('<b>Ward:</b>', table_label_style), 
+             Paragraph(property_data.get('ward', 'N/A') or 'N/A', table_value_style)],
+            [Paragraph('<b>Locality:</b>', table_label_style), 
+             Paragraph(property_data.get('locality', 'N/A'), table_value_style)],
+            [Paragraph('<b>Street:</b>', table_label_style), 
+             Paragraph(property_data.get('street', 'N/A') or 'N/A', table_value_style)],
+            [Paragraph('<b>Postal Code:</b>', table_label_style), 
+             Paragraph(property_data.get('postal_code', 'N/A') or 'N/A', table_value_style)],
+        ]
+        
+        # Add GPS coordinates if available
+        if property_data.get('latitude') and property_data.get('longitude'):
+            location_data.append([
+                Paragraph('<b>GPS Coordinates:</b>', table_label_style), 
+                Paragraph(
+                    f"Lat: {property_data.get('latitude'):.6f}, Long: {property_data.get('longitude'):.6f}", 
+                    table_value_style
+                )
+            ])
+        
+        location_table = Table(location_data, colWidths=[2.5*inch, 4*inch])
+        location_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cccccc')),
+        ]))
+        elements.append(location_table)
+        elements.append(Spacer(1, 0.25*inch))
+        
+        # === SECTION 3: OWNERSHIP INFORMATION ===
+        elements.append(Paragraph("SECTION 3: OWNERSHIP INFORMATION", section_style))
+        elements.append(Spacer(1, 0.15*inch))
+        
+        # Get owner information
+        owner_name = property_data.get('contact_name', 'N/A')
+        if owner_data:
+            owner_name = f"{owner_data.get('first_name', '')} {owner_data.get('last_name', '')}".strip()
+            if not owner_name:
+                owner_name = property_data.get('contact_name', 'N/A')
+        
+        owner_national_id = property_data.get('national_id_number') or (owner_data.get('national_id_number') if owner_data else None) or 'N/A'
+        
+        ownership_data = [
+            [Paragraph('<b>Owner Name:</b>', table_label_style), 
+             Paragraph(owner_name.upper(), table_value_style)],
+            [Paragraph('<b>National ID Number:</b>', table_label_style), 
+             Paragraph(owner_national_id, table_value_style)],
+            [Paragraph('<b>Contact Phone:</b>', table_label_style), 
+             Paragraph(property_data.get('contact_phone', 'N/A'), table_value_style)],
+            [Paragraph('<b>Contact Email:</b>', table_label_style), 
+             Paragraph(property_data.get('contact_email', 'N/A'), table_value_style)],
+        ]
+        
+        if owner_data and owner_data.get('address'):
+            ownership_data.append([
+                Paragraph('<b>Address:</b>', table_label_style), 
+                Paragraph(owner_data.get('address', 'N/A'), table_value_style)
+            ])
+        
+        ownership_table = Table(ownership_data, colWidths=[2.5*inch, 4*inch])
+        ownership_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cccccc')),
+        ]))
+        elements.append(ownership_table)
+        elements.append(Spacer(1, 0.25*inch))
+        
+        # === SECTION 4: BOUNDARY INFORMATION ===
+        if property_data.get('boundary_coordinates') or property_data.get('boundary_points'):
+            elements.append(Paragraph("SECTION 4: BOUNDARY INFORMATION", section_style))
+            elements.append(Spacer(1, 0.15*inch))
+            
+            boundary_data = []
+            if property_data.get('boundary_points'):
+                boundary_data.append([
+                    Paragraph('<b>Number of Boundary Points:</b>', table_label_style), 
+                    Paragraph(str(property_data.get('boundary_points', 0)), table_value_style)
+                ])
+            if property_data.get('boundary_distance'):
+                boundary_data.append([
+                    Paragraph('<b>Boundary Distance:</b>', table_label_style), 
+                    Paragraph(f"{property_data.get('boundary_distance', 0):.2f} meters", table_value_style)
+                ])
+            
+            if boundary_data:
+                boundary_table = Table(boundary_data, colWidths=[2.5*inch, 4*inch])
+                boundary_table.setStyle(TableStyle([
+                    ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                    ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+                    ('FONTSIZE', (0, 0), (-1, -1), 10),
+                    ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+                    ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                    ('TOPPADDING', (0, 0), (-1, -1), 5),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                    ('LEFTPADDING', (0, 0), (-1, -1), 4),
+                    ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cccccc')),
+                ]))
+                elements.append(boundary_table)
+                elements.append(Spacer(1, 0.25*inch))
+        
+        # === SECTION 5: LEGAL DECLARATION ===
+        elements.append(Paragraph("SECTION 5: LEGAL DECLARATION", section_style))
+        elements.append(Spacer(1, 0.15*inch))
+        
+        declaration_text = f"""This Certificate of Title is issued by the United Republic of Tanzania, Ministry of Lands, Housing and Human Settlements Development, Land Registry, certifying that the property described herein is registered in the name of <b>{owner_name.upper()}</b> (National ID: {owner_national_id}), with all rights, title, and interest in the said property vested in the registered owner subject to all existing laws, regulations, and any registered encumbrances."""
+        
+        elements.append(Paragraph(declaration_text, value_style))
+        elements.append(Spacer(1, 0.2*inch))
+        
+        # === SECTION 6: OFFICIAL SIGNATURES AND SEALS ===
+        elements.append(Spacer(1, 0.3*inch))
+        elements.append(Paragraph("SECTION 6: OFFICIAL SIGNATURES AND SEALS", section_style))
+        elements.append(Spacer(1, 0.3*inch))
+        
+        signature_data = [
+            [Paragraph('<b>REGISTRAR OF TITLE</b>', table_label_style), 
+             Paragraph('<b>DATE</b>', table_label_style)],
+            [Paragraph('<br/><br/>___________________________<br/><br/>Signature', value_style), 
+             Paragraph(f'<br/><br/>{datetime.now().strftime("%d %B %Y")}<br/><br/>Date', value_style)],
+            [Paragraph('<b>DEPUTY REGISTRAR</b>', table_label_style), 
+             Paragraph('<b>DATE</b>', table_label_style)],
+            [Paragraph('<br/><br/>___________________________<br/><br/>Signature', value_style), 
+             Paragraph(f'<br/><br/>{datetime.now().strftime("%d %B %Y")}<br/><br/>Date', value_style)],
+        ]
+        
+        signature_table = Table(signature_data, colWidths=[3.5*inch, 3*inch])
+        signature_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        elements.append(signature_table)
+        elements.append(Spacer(1, 0.3*inch))
+        
+        # === FOOTER ===
+        footer_text = """<i>This document is generated in accordance with the Land Act and Land Registration Act of Tanzania. 
+        This certificate serves as official proof of ownership and should be kept in a safe place. 
+        For verification, please contact the Land Registry Office.</i>"""
+        elements.append(Paragraph(footer_text, ParagraphStyle(
+            'Footer',
+            parent=styles['Normal'],
+            fontSize=8,
+            fontName='Helvetica-Oblique',
+            textColor=colors.HexColor('#666666'),
+            alignment=1,  # Center
+            spaceBefore=12
+        )))
+        
+        # Build PDF
+        doc.build(elements)
+        
+        # Get PDF bytes
+        pdf_bytes = buffer.getvalue()
+        buffer.close()
+        
+        # Filename
+        lot_number = property_data.get('lot_number') or property_data.get('id', 'N/A')
+        filename = f"Tanzanian_Title_Deed_{lot_number}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        
+        return pdf_bytes, filename
 
 
 # Create singleton instance

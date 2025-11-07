@@ -483,6 +483,26 @@ async def get_escrow_document(
                         detail="Escrow not found"
                     )
                 escrow_data = escrow.to_dict()
+                
+                # Ensure payment_type is a string (not enum) for document generator
+                if escrow_data.get('payment_type'):
+                    if hasattr(escrow_data['payment_type'], 'value'):
+                        escrow_data['payment_type'] = escrow_data['payment_type'].value
+                
+                # Add milestones if payment type is milestone
+                if escrow.payment_type == PaymentType.MILESTONE:
+                    milestones = db.query(EscrowMilestone).filter(
+                        EscrowMilestone.escrow_id == escrow.id
+                    ).order_by(EscrowMilestone.milestone_number).all()
+                    # Convert milestones to the format expected by document generator
+                    escrow_data["milestones"] = [
+                        {
+                            "description": milestone.description,
+                            "amount": milestone.amount,
+                            "completion_date": milestone.completion_date.isoformat() if milestone.completion_date else None
+                        }
+                        for milestone in milestones
+                    ]
             else:
                 # Return template with placeholder data
                 escrow_data = {
