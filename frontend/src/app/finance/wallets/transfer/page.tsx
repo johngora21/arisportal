@@ -2,20 +2,13 @@
 
 import React, { useState } from 'react';
 import { 
-  ArrowRightLeft,
   User,
   CreditCard,
-  Building,
-  Smartphone,
-  DollarSign,
-  Search,
-  Filter
+  Building
 } from 'lucide-react';
 
 export default function TransferPage() {
-  const [transferType, setTransferType] = useState<'internal' | 'external'>('internal');
-  const [fromWallet, setFromWallet] = useState('main');
-  const [toWallet, setToWallet] = useState('savings');
+  const [transferType, setTransferType] = useState<'card' | 'peer' | 'bulk'>('card');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [recipient, setRecipient] = useState('');
@@ -24,12 +17,19 @@ export default function TransferPage() {
   const [transferMethod, setTransferMethod] = useState<'bank' | 'mno'>('bank');
   const [selectedBank, setSelectedBank] = useState('');
   const [selectedMno, setSelectedMno] = useState('');
-
-  // Mock data
-  const wallets = [
-    { id: 'main', name: 'Main Wallet', balance: 2500000, currency: 'TZS' },
-    { id: 'savings', name: 'Savings Wallet', balance: 1500000, currency: 'TZS' },
-    { id: 'business', name: 'Business Wallet', balance: 5000000, currency: 'TZS' }
+  const [transferMode, setTransferMode] = useState<'card' | 'external'>('card');
+  const [fromCard, setFromCard] = useState('');
+  const [toCard, setToCard] = useState('');
+  const [bulkRecipients, setBulkRecipients] = useState<Array<{ id: string; name: string; amount: string; bank: string }>>([
+    { id: '1', name: '', amount: '', bank: '' }
+  ]);
+  const [importError, setImportError] = useState('');
+  
+  // Mock cards
+  const cards = [
+    { id: 'card1', name: "Emergency Fund", type: 'savings' },
+    { id: 'card2', name: "My Shop", type: 'business' },
+    { id: 'card3', name: "John's Card", type: 'personal' }
   ];
 
   // Tanzanian Banks
@@ -55,36 +55,6 @@ export default function TransferPage() {
     { id: 'ttcl', name: 'TTCL Pesa', code: 'TTCL' }
   ];
 
-  const recentTransfers = [
-    {
-      id: '1',
-      type: 'internal',
-      from: 'Main Wallet',
-      to: 'Savings Wallet',
-      amount: 500000,
-      date: '2024-01-15',
-      status: 'completed'
-    },
-    {
-      id: '2',
-      type: 'external',
-      from: 'Business Wallet',
-      to: 'John Doe',
-      amount: 750000,
-      date: '2024-01-14',
-      status: 'pending'
-    },
-    {
-      id: '3',
-      type: 'internal',
-      from: 'Savings Wallet',
-      to: 'Main Wallet',
-      amount: 200000,
-      date: '2024-01-13',
-      status: 'completed'
-    }
-  ];
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-TZ', {
       style: 'currency',
@@ -93,19 +63,65 @@ export default function TransferPage() {
     }).format(amount);
   };
 
+  const handleExcelImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setImportError('');
+    if (!file.name.endsWith('.csv')) {
+      setImportError('Please use CSV format.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = (e.target?.result as string) || '';
+        const lines = data.split('\n');
+        const headers = lines[0]?.toLowerCase().split(',').map(h => h.trim()) || [];
+        const bankIndex = headers.findIndex(h => h.includes('bank'));
+        const accountIndex = headers.findIndex(h => h.includes('account'));
+        const amountIndex = headers.findIndex(h => h.includes('amount'));
+        if (bankIndex === -1 || accountIndex === -1 || amountIndex === -1) {
+          setImportError('File must contain: Bank Name, Account Number, Amount');
+          return;
+        }
+        const imported: Array<{ id: string; name: string; amount: string; bank: string }> = [];
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(',').map(v => v.trim());
+          if (values.length >= 3 && values[accountIndex] && values[amountIndex]) {
+            const bankName = values[bankIndex];
+            const match = banks.find(b => b.name.toLowerCase().includes(bankName.toLowerCase()) || bankName.toLowerCase().includes(b.name.toLowerCase()));
+            imported.push({ id: String(Date.now() + i), name: values[accountIndex], amount: values[amountIndex], bank: match?.id || '' });
+          }
+        }
+        if (imported.length > 0) {
+          setBulkRecipients(imported);
+          setImportError('');
+        } else {
+          setImportError('No valid rows found');
+        }
+      } catch {
+        setImportError('Error reading file');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  };
+
   const handleTransfer = () => {
-    // Validation
+    if (transferType === 'card') {
+      if (!fromCard || !toCard) {
+        alert('Please select both source and destination cards');
+        return;
+      }
     if (!amount || parseFloat(amount) <= 0) {
       alert('Please enter a valid amount');
       return;
     }
-
-    if (transferType === 'external') {
-      if (!recipient) {
-        alert('Please enter recipient name');
+    } else if (transferType === 'peer') {
+      if (transferMode === 'card' && !fromCard) {
+        alert('Please select a source card');
         return;
       }
-      
       if (transferMethod === 'bank') {
         if (!selectedBank) {
           alert('Please select a bank');
@@ -125,37 +141,77 @@ export default function TransferPage() {
           return;
         }
       }
+      if (!amount || parseFloat(amount) <= 0) {
+        alert('Please enter a valid amount');
+        return;
+      }
+      if (!recipient) {
+        alert('Please enter recipient name');
+        return;
+      }
+    } else if (transferType === 'bulk') {
+      if (transferMode === 'card' && !fromCard) {
+        alert('Please select a source card');
+        return;
+      }
+      if (bulkRecipients.length === 0) {
+        alert('Please add at least one recipient');
+        return;
+      }
+      const invalidRecipient = bulkRecipients.some(r => !r.name || !r.amount || parseFloat(r.amount) <= 0 || (transferMethod === 'bank' && !r.bank));
+      if (invalidRecipient) {
+        alert('Please fill in all recipient details');
+        return;
+      }
     }
 
-    // Handle transfer logic here
-    console.log('Transfer initiated:', {
+    if (transferType === 'bulk') {
+      console.log('Bulk transfer initiated:', {
+        from: fromCard,
+        recipients: bulkRecipients,
+        totalAmount: bulkRecipients.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0),
+        description,
+        transferMode
+      });
+      alert(`Bulk transfer initiated for ${bulkRecipients.length} recipients`);
+    } else {
+      const payload: Record<string, unknown> = {
       type: transferType,
-      from: fromWallet,
-      to: transferType === 'internal' ? toWallet : recipient,
       amount: parseFloat(amount),
-      description,
-      ...(transferType === 'external' && {
+        description
+      };
+
+      if (transferType === 'card') {
+        Object.assign(payload, {
+          from: fromCard,
+          to: toCard
+        });
+      } else {
+        Object.assign(payload, {
+          from: transferMode === 'card' ? fromCard : 'external-control-number',
+          to: transferMethod === 'bank' ? bankAccount : phoneNumber,
+          recipient,
+          transferMode,
         transferMethod,
-        ...(transferMethod === 'bank' ? {
-          bank: selectedBank,
-          accountNumber: bankAccount
-        } : {
-          mno: selectedMno,
-          phoneNumber: phoneNumber
-        })
-      })
-    });
+          ...(transferMethod === 'bank'
+            ? { bank: selectedBank, accountNumber: bankAccount }
+            : { mno: selectedMno, phoneNumber })
+        });
+      }
+
+      console.log('Transfer initiated:', payload);
+      alert('Transfer initiated successfully');
+    }
   };
 
   return (
-    <div>
+    <div style={{ maxWidth: '820px' }}>
       <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937', margin: '0 0 32px 0' }}>
         Transfer Money
       </h2>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-        {/* Transfer Form */}
-        <div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
+        <div style={{ maxWidth: '800px', boxSizing: 'border-box' }}>
           <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0 0 20px 0' }}>
             New Transfer
           </h3>
@@ -165,245 +221,310 @@ export default function TransferPage() {
             <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
               Transfer Type
             </label>
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
               <button
-                onClick={() => setTransferType('internal')}
+                onClick={() => {
+                  setTransferType('card');
+                  setTransferMode('card');
+                }}
                 style={{
-                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                   padding: '12px 20px',
-                  backgroundColor: transferType === 'internal' ? 'var(--mc-sidebar-bg-hover)' : '#f3f4f6',
-                  color: transferType === 'internal' ? 'white' : '#374151',
+                  backgroundColor: transferType === 'card' ? 'var(--mc-sidebar-bg)' : '#f3f4f6',
+                  color: transferType === 'card' ? 'white' : '#374151',
                   border: 'none',
                   borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                   transition: 'all 0.2s ease'
                 }}
               >
-                <ArrowRightLeft size={16} style={{ marginRight: '8px' }} />
-                Internal
+                <CreditCard size={16} />
+                Between Cards
               </button>
               <button
-                onClick={() => setTransferType('external')}
+                onClick={() => {
+                  setTransferType('peer');
+                  setTransferMode('card');
+                }}
                 style={{
-                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                   padding: '12px 20px',
-                  backgroundColor: transferType === 'external' ? 'var(--mc-sidebar-bg)' : '#f3f4f6',
-                  color: transferType === 'external' ? 'white' : '#374151',
+                  backgroundColor: transferType === 'peer' ? 'var(--mc-sidebar-bg)' : '#f3f4f6',
+                  color: transferType === 'peer' ? 'white' : '#374151',
                   border: 'none',
                   borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                   transition: 'all 0.2s ease'
                 }}
               >
-                <User size={16} style={{ marginRight: '8px' }} />
-                External
+                <User size={16} />
+                Peer Transfer
+              </button>
+              <button
+                onClick={() => {
+                  setTransferType('bulk');
+                  setTransferMode('card');
+                  setTransferMethod('bank');
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '12px 20px',
+                  backgroundColor: transferType === 'bulk' ? 'var(--mc-sidebar-bg)' : '#f3f4f6',
+                  color: transferType === 'bulk' ? 'white' : '#374151',
+                  border: 'none',
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <Building size={16} />
+                Bulk Transfer
               </button>
             </div>
           </div>
 
-          {/* From Wallet */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-              From Wallet
-            </label>
-            <select
-              value={fromWallet}
-              onChange={(e) => setFromWallet(e.target.value)}
-              style={{
-                width: '380px',
-                padding: '12px 20px',
-                border: '1px solid #d1d5db',
-                borderRadius: '20px',
-                fontSize: '14px',
-                backgroundColor: 'white'
-              }}
-            >
-              {wallets.map((wallet) => (
-                <option key={wallet.id} value={wallet.id}>
-                  {wallet.name} - {formatCurrency(wallet.balance)}
-                </option>
+          {/* Card Transfer */}
+          {transferType === 'card' && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 360px)', gap: '16px', marginBottom: '20px', justifyContent: 'flex-start' }}>
+                <div style={{ boxSizing: 'border-box' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>From Card</label>
+                  <select value={fromCard} onChange={(e) => setFromCard(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                    <option value="">Choose a card</option>
+                    {cards.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
-
-          {/* To Wallet (Internal) or Recipient (External) */}
-          {transferType === 'internal' ? (
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                To Wallet
-              </label>
-              <select
-                value={toWallet}
-                onChange={(e) => setToWallet(e.target.value)}
-                style={{
-                  width: '380px',
-                  padding: '12px 20px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '20px',
-                  fontSize: '14px',
-                  backgroundColor: 'white'
-                }}
-              >
-                {wallets.filter(w => w.id !== fromWallet).map((wallet) => (
-                  <option key={wallet.id} value={wallet.id}>
-                    {wallet.name} - {formatCurrency(wallet.balance)}
-                  </option>
+                <div style={{ boxSizing: 'border-box' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>To Card</label>
+                  <select value={toCard} onChange={(e) => setToCard(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                    <option value="">Choose a card</option>
+                    {cards.filter(c => c.id !== fromCard).map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
             </div>
-          ) : (
-            <>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                  Transfer Method
-                </label>
-                <select
-                  value={transferMethod}
-                  onChange={(e) => setTransferMethod(e.target.value as 'bank' | 'mno')}
-                  style={{
-                    width: '380px',
-                    padding: '12px 20px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '20px',
-                    fontSize: '14px',
-                    backgroundColor: 'white'
-                  }}
-                >
-                  <option value="bank">Bank Transfer</option>
-                  <option value="mno">Mobile Money</option>
-                </select>
               </div>
-
-              {/* Bank Selection */}
-              {transferMethod === 'bank' && (
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                    Select Bank
-                  </label>
-                  <select
-                    value={selectedBank}
-                    onChange={(e) => setSelectedBank(e.target.value)}
-                    style={{
-                      width: '380px',
-                      padding: '12px 20px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '20px',
-                      fontSize: '14px',
-                      backgroundColor: 'white'
-                    }}
-                  >
-                    <option value="">Choose a bank</option>
-                    {banks.map((bank) => (
-                      <option key={bank.id} value={bank.id}>
-                        {bank.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* MNO Selection */}
-              {transferMethod === 'mno' && (
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                    Select Mobile Network
-                  </label>
-                  <select
-                    value={selectedMno}
-                    onChange={(e) => setSelectedMno(e.target.value)}
-                    style={{
-                      width: '340px',
-                      padding: '12px 20px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '20px',
-                      fontSize: '14px',
-                      backgroundColor: 'white'
-                    }}
-                  >
-                    <option value="">Choose mobile network</option>
-                    {mnos.map((mno) => (
-                      <option key={mno.id} value={mno.id}>
-                        {mno.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Account/Phone Number Input */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                  {transferMethod === 'bank' ? 'Account Number' : 'Phone Number'}
-                </label>
-                <input
-                  type="text"
-                  value={transferMethod === 'bank' ? bankAccount : phoneNumber}
-                  onChange={(e) => {
-                    if (transferMethod === 'bank') {
-                      setBankAccount(e.target.value);
-                    } else {
-                      setPhoneNumber(e.target.value);
-                    }
-                  }}
-                  placeholder={transferMethod === 'bank' ? 'Enter account number' : 'Enter phone number (e.g., 0712345678)'}
-                  style={{
-                    width: '340px',
-                    padding: '12px 20px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '20px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-
-              {/* Recipient Name */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                  Recipient Name
-                </label>
-                <input
-                  type="text"
-                  value={recipient}
-                  onChange={(e) => setRecipient(e.target.value)}
-                  placeholder="Enter recipient name"
-                  style={{
-                    width: '340px',
-                    padding: '12px 20px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '20px',
-                    fontSize: '14px'
-                  }}
-                />
+              <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Amount (TZS)</label>
+                <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount" style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
               </div>
             </>
           )}
 
-          {/* Amount */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-              Amount (TZS)
-            </label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter amount"
-              style={{
-                width: '340px',
-                padding: '12px 20px',
-                border: '1px solid #d1d5db',
-                borderRadius: '20px',
-                fontSize: '14px'
-              }}
-            />
-          </div>
+          {/* Peer Transfer */}
+          {transferType === 'peer' && (
+            <>
+              <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Payment Mode</label>
+                <select
+                  value={transferMode}
+                  onChange={(e) => setTransferMode(e.target.value as 'card' | 'external')}
+                  style={{
+                      width: '100%',
+                    padding: '12px 20px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    backgroundColor: 'white',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="card">Use Card</option>
+                  <option value="external">External Source</option>
+                </select>
+              </div>
+
+              {transferMode === 'card' && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 360px)', gap: '16px', marginBottom: '20px', justifyContent: 'flex-start' }}>
+                <div style={{ boxSizing: 'border-box' }}>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>From Card</label>
+                    <select value={fromCard} onChange={(e) => setFromCard(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                    <option value="">Choose a card</option>
+                      {cards.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                  </select>
+                </div>
+                <div style={{ boxSizing: 'border-box' }}>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Transfer Method</label>
+                    <select value={transferMethod} onChange={(e) => setTransferMethod(e.target.value as 'bank' | 'mno')} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                  <option value="bank">Bank Transfer</option>
+                  <option value="mno">Mobile Money</option>
+                </select>
+                </div>
+              </div>
+              )}
+
+              {transferMode === 'external' && (
+                <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Transfer Method</label>
+                  <select value={transferMethod} onChange={(e) => setTransferMethod(e.target.value as 'bank' | 'mno')} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                    <option value="bank">Bank Transfer</option>
+                    <option value="mno">Mobile Money</option>
+                  </select>
+                </div>
+              )}
+
+              {transferMethod === 'bank' && (
+                <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Select Bank</label>
+                  <select value={selectedBank} onChange={(e) => setSelectedBank(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                    <option value="">Choose a bank</option>
+                    {banks.map((bank) => (<option key={bank.id} value={bank.id}>{bank.name}</option>))}
+                  </select>
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 360px)', gap: '24px', marginBottom: '20px', justifyContent: 'flex-start' }}>
+                <div style={{ boxSizing: 'border-box' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>{transferMethod === 'bank' ? 'Account Number' : 'Phone Number'}</label>
+                  <input type="text" value={transferMethod === 'bank' ? bankAccount : phoneNumber} onChange={(e) => { if (transferMethod === 'bank') { setBankAccount(e.target.value); } else { setPhoneNumber(e.target.value); } }} placeholder={transferMethod === 'bank' ? 'Enter account number' : 'Enter phone number'} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
+                </div>
+                <div style={{ boxSizing: 'border-box' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Amount (TZS)</label>
+                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount" style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Recipient Name</label>
+                <input type="text" value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="Enter recipient name" style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
+              </div>
+            </>
+          )}
+
+          {/* Bulk Transfer Recipients */}
+          {transferType === 'bulk' && (
+            <>
+              <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Payment Mode</label>
+                  <select
+                  value={transferMode}
+                  onChange={(e) => setTransferMode(e.target.value as 'card' | 'external')}
+                    style={{
+                      width: '100%',
+                      padding: '12px 20px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                    backgroundColor: 'white',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="card">Use Card</option>
+                  <option value="external">External Source</option>
+                </select>
+              </div>
+
+              {transferMode === 'card' && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 360px)', gap: '16px', marginBottom: '20px', justifyContent: 'flex-start' }}>
+                  <div style={{ boxSizing: 'border-box' }}>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>From Card</label>
+                    <select value={fromCard} onChange={(e) => setFromCard(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                    <option value="">Choose a card</option>
+                      {cards.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                    </select>
+                  </div>
+                  <div style={{ boxSizing: 'border-box' }}>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Transfer Method</label>
+                    <select value={transferMethod} onChange={(e) => setTransferMethod(e.target.value as 'bank' | 'mno')} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                      <option value="bank">Bank Transfer</option>
+                      <option value="mno">Mobile Money</option>
+                  </select>
+                  </div>
+                </div>
+              )}
+
+              {transferMode === 'external' && (
+                <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Transfer Method</label>
+                  <select value={transferMethod} onChange={(e) => setTransferMethod(e.target.value as 'bank' | 'mno')} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                    <option value="bank">Bank Transfer</option>
+                    <option value="mno">Mobile Money</option>
+                  </select>
+                </div>
+              )}
+
+                <div style={{ marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>
+                    Recipients
+                </label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {transferMethod === 'bank' && (
+                      <>
+                        <input type="file" accept=".csv" onChange={handleExcelImport} style={{ display: 'none' }} id="excel-import" />
+                        <button onClick={() => document.getElementById('excel-import')?.click()} style={{ padding: '8px 12px', backgroundColor: '#1f2937', color: 'white', border: 'none', borderRadius: '20px', fontSize: '12px', fontWeight: '500', cursor: 'pointer' }}>📊 Import Excel</button>
+                      </>
+                    )}
+                    <button onClick={() => setBulkRecipients([...bulkRecipients, { id: String(Date.now()), name: '', amount: '', bank: '' }])} style={{ padding: '8px 12px', backgroundColor: '#10B981', color: 'white', border: 'none', borderRadius: '20px', fontSize: '12px', fontWeight: '500', cursor: 'pointer' }}>+ Add Recipient</button>
+                  </div>
+                </div>
+                {importError && (
+                  <div style={{ padding: '8px 12px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '20px', marginBottom: '12px', fontSize: '12px', color: '#DC2626' }}>
+                    {importError}
+                  </div>
+                )}
+                {bulkRecipients.map((rec, index) => (
+                  <div
+                    key={rec.id}
+                    style={{
+                      marginBottom: '12px',
+                      display: 'grid',
+                      gridTemplateColumns: transferMethod === 'bank'
+                        ? '200px 250px 170px 40px'
+                        : '250px 200px 40px',
+                      gap: '10px',
+                      alignItems: 'center',
+                      justifyContent: 'flex-start',
+                      boxSizing: 'border-box',
+                      maxWidth: '100%'
+                    }}
+                  >
+                    {transferMethod === 'bank' && (
+                      <select value={rec.bank} onChange={(e) => { const updated = [...bulkRecipients]; updated[index].bank = e.target.value; setBulkRecipients(updated); }} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                        <option value="">Select Bank</option>
+                        {banks.map((b) => (
+                          <option key={b.id} value={b.id}>{b.name}</option>
+                        ))}
+                      </select>
+                    )}
+                    <input type="text" value={rec.name} onChange={(e) => { const updated = [...bulkRecipients]; updated[index].name = e.target.value; setBulkRecipients(updated); }} placeholder={transferMethod === 'bank' ? 'Account number' : 'Phone number'} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
+                    <input type="number" value={rec.amount} onChange={(e) => { const updated = [...bulkRecipients]; updated[index].amount = e.target.value; setBulkRecipients(updated); }} placeholder="Amount (TZS)" style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
+                    {bulkRecipients.length > 1 && (
+                      <button onClick={() => setBulkRecipients(bulkRecipients.filter((_, i) => i !== index))} style={{ width: '40px', height: '40px', backgroundColor: '#EF4444', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '16px', fontWeight: '600', boxSizing: 'border-box', flexShrink: 0 }}>×</button>
+                    )}
+                  </div>
+                ))}
+                <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#f3f4f6', borderRadius: '20px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>
+                    Total Amount: {formatCurrency(bulkRecipients.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0))}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                    {bulkRecipients.length} recipient{bulkRecipients.length > 1 ? 's' : ''}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Description */}
-          <div style={{ marginBottom: '24px' }}>
+          <div style={{ marginBottom: '24px', width: '360px', boxSizing: 'border-box' }}>
             <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
               Description (Optional)
             </label>
@@ -413,12 +534,13 @@ export default function TransferPage() {
               placeholder="Add a note about this transfer"
               rows={3}
               style={{
-                width: '350px',
+                width: '100%',
                 padding: '12px 20px',
                 border: '1px solid #d1d5db',
                 borderRadius: '20px',
                 fontSize: '14px',
-                resize: 'vertical'
+                resize: 'vertical',
+                boxSizing: 'border-box'
               }}
             />
           </div>
@@ -427,7 +549,7 @@ export default function TransferPage() {
           <button
             onClick={handleTransfer}
             style={{
-                  width: '380px',
+              width: '360px',
               padding: '12px 20px',
               backgroundColor: 'var(--mc-sidebar-bg)',
               color: 'white',
@@ -436,7 +558,8 @@ export default function TransferPage() {
               fontSize: '16px',
               fontWeight: '600',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              boxSizing: 'border-box'
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
@@ -447,67 +570,6 @@ export default function TransferPage() {
           >
             Initiate Transfer
           </button>
-        </div>
-
-        {/* Recent Transfers */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
-              Recent Transfers
-            </h3>
-            <button
-              style={{
-                padding: '12px 20px',
-                backgroundColor: '#f3f4f6',
-                color: '#374151',
-                border: 'none',
-                borderRadius: '20px',
-                fontSize: '12px',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}
-            >
-              View All
-            </button>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {recentTransfers.map((transfer) => (
-              <div
-                key={transfer.id}
-                style={{
-                  padding: '16px',
-                  backgroundColor: '#f9fafb',
-                  borderRadius: '20px',
-                  border: '1px solid #e5e7eb'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>
-                      {transfer.from} → {transfer.to}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-                      {transfer.date}
-                    </div>
-                  </div>
-                  <span style={{
-                    padding: '4px 8px',
-                    backgroundColor: transfer.status === 'completed' ? '#dcfce7' : '#fef3c7',
-                    color: transfer.status === 'completed' ? '#166534' : '#92400e',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    fontWeight: '500'
-                  }}>
-                    {transfer.status}
-                  </span>
-                </div>
-                <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
-                  {formatCurrency(transfer.amount)}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </div>
