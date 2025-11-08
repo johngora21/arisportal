@@ -2,6 +2,7 @@ import '../styles/sidebar.css';
 import type { Metadata } from 'next';
 import { AppShell } from '@/components/AppShell';
 import { AuthProvider } from '../contexts/AuthContext';
+import { CurrencyProvider } from '../contexts/CurrencyContext';
 
 export const metadata: Metadata = {
   title: 'Aris Portal',
@@ -20,9 +21,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body style={{ margin: 0 }}>
         <AuthProvider>
-          <AppShell>
-            {children}
-          </AppShell>
+          <CurrencyProvider>
+            <AppShell>
+              {children}
+            </AppShell>
+          </CurrencyProvider>
         </AuthProvider>
       </body>
     </html>

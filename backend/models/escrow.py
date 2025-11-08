@@ -69,7 +69,7 @@ class Escrow(Base):
         """Convert the escrow object to a dictionary"""
         import json
         
-        # Parse milestones if it's a JSON string
+        # Parse milestones if it's a JSON string (milestones are stored in separate table, so this is usually empty)
         milestones_list = []
         if self.milestones:
             try:

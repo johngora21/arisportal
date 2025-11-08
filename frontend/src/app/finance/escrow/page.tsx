@@ -19,6 +19,7 @@ import { API_CONFIG } from '../../../config/api';
 import CreateEscrowModal from './components/CreateEscrowModal';
 import ViewEscrowModal from './components/ViewEscrowModal';
 import ContractSignatureModal from './components/ContractSignatureModal';
+import { useCurrency } from '../../../contexts/CurrencyContext';
 
 interface EscrowAccount {
   id: number;
@@ -47,6 +48,7 @@ interface EscrowAccount {
 }
 
 export default function EscrowPage() {
+  const { formatCurrency } = useCurrency();
   const [activeTab, setActiveTab] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -219,13 +221,6 @@ export default function EscrowPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-TZ', {
-      style: 'currency',
-      currency: 'TZS',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {

@@ -6,9 +6,11 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useCurrency } from '../../../../contexts/CurrencyContext';
 
 export default function CardsPage() {
   const router = useRouter();
+  const { formatCurrency } = useCurrency();
   const [cardBalanceVisibility, setCardBalanceVisibility] = useState<Record<string, boolean>>({
     '1': true,
     '2': true,
@@ -52,13 +54,6 @@ export default function CardsPage() {
     }
   ];
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-TZ', {
-      style: 'currency',
-      currency: 'TZS',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
 
   return (
     <div>
