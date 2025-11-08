@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useCurrency } from '../../../../contexts/CurrencyContext';
 import { 
   User,
   CreditCard,
@@ -8,6 +9,7 @@ import {
 } from 'lucide-react';
 
 export default function TransferPage() {
+  const { formatCurrency } = useCurrency();
   const [transferType, setTransferType] = useState<'card' | 'peer' | 'bulk'>('card');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -55,13 +57,6 @@ export default function TransferPage() {
     { id: 'ttcl', name: 'TTCL Pesa', code: 'TTCL' }
   ];
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-TZ', {
-      style: 'currency',
-      currency: 'TZS',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
 
   const handleExcelImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

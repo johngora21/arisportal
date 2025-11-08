@@ -19,6 +19,7 @@ import { API_CONFIG } from '../../../config/api';
 import CreateEscrowModal from './components/CreateEscrowModal';
 import ViewEscrowModal from './components/ViewEscrowModal';
 import ContractSignatureModal from './components/ContractSignatureModal';
+import { useCurrency } from '../../../contexts/CurrencyContext';
 
 interface EscrowAccount {
   id: number;
@@ -47,6 +48,7 @@ interface EscrowAccount {
 }
 
 export default function EscrowPage() {
+  const { formatCurrency } = useCurrency();
   const [activeTab, setActiveTab] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -169,7 +171,7 @@ export default function EscrowPage() {
   };
 
   // View smart contract
-  const handleViewContract = async () => {
+  const handleViewContract = async (escrowId: string) => {
     if (contractData) {
       setShowContractModal(true);
       return;
@@ -177,7 +179,8 @@ export default function EscrowPage() {
     
     setLoadingContract(true);
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/contract/document`);
+      // Pass the escrow_id to fetch real escrow data
+      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/contract/document?escrow_id=${escrowId}`);
       if (!response.ok) throw new Error('Failed to fetch contract');
       const data = await response.json();
       setContractData(data);
@@ -218,13 +221,6 @@ export default function EscrowPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-TZ', {
-      style: 'currency',
-      currency: 'TZS',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -488,7 +484,7 @@ export default function EscrowPage() {
                         View
                       </button>
                       <button 
-                        onClick={handleViewContract}
+                        onClick={() => handleViewContract(account.escrow_id)}
                         disabled={loadingContract}
                         style={{
                           padding: '8px 12px',

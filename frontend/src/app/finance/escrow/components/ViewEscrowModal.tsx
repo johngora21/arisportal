@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { X, User, Building, DollarSign, Calendar, FileText, Shield } from 'lucide-react';
+import { useCurrency } from '../../../../contexts/CurrencyContext';
 
 interface EscrowAccount {
   id: number;
@@ -37,15 +38,9 @@ interface ViewEscrowModalProps {
 }
 
 const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escrow }) => {
+  const { formatCurrency } = useCurrency();
+  
   if (!isOpen || !escrow) return null;
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-TZ', {
-      style: 'currency',
-      currency: 'TZS',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {

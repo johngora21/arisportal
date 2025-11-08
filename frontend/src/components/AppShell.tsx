@@ -47,6 +47,7 @@ import { FaUserTie, FaSignOutAlt } from 'react-icons/fa';
 import { useRouter, usePathname } from 'next/navigation';
 import InvestmentIcon from './icons/InvestmentIcon';
 import { useAuth } from '../contexts/AuthContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 type CurrentUser = { id: number; email: string; full_name: string; role?: string } | null;
 
@@ -54,26 +55,9 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const router = useRouter();
   const pathname = usePathname();
   const { user: authUser, isAuthenticated, logout } = useAuth();
-  const [selectedCurrency, setSelectedCurrency] = useState('TZS');
+  const { selectedCurrency, setSelectedCurrency, currencies } = useCurrency();
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
   const currencyDropdownRef = useRef<HTMLDivElement>(null);
-
-  const currencies = [
-    { code: 'KES', name: 'Kenyan Shilling', flag: '🇰🇪' },
-    { code: 'RWF', name: 'Rwanda Franc', flag: '🇷🇼' },
-    { code: 'TZS', name: 'Tanzania Shilling', flag: '🇹🇿' },
-    { code: 'ZAR', name: 'South African Rand', flag: '🇿🇦' },
-    { code: 'ZMW', name: 'Zambian Kwacha', flag: '🇿🇲' },
-    { code: 'MWK', name: 'Malawian Kwacha', flag: '🇲🇼' },
-    { code: 'NGN', name: 'Nigerian Naira', flag: '🇳🇬' },
-    { code: 'EGP', name: 'Egyptian Pound', flag: '🇪🇬' },
-    { code: 'AED', name: 'UAE Dirham', flag: '🇦🇪' },
-    { code: 'QAR', name: 'Qatari Riyal', flag: '🇶🇦' },
-    { code: 'SAR', name: 'Saudi Riyal', flag: '🇸🇦' },
-    { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
-    { code: 'GBP', name: 'British Pound', flag: '🇬🇧' },
-    { code: 'USD', name: 'US Dollar', flag: '🇺🇸' }
-  ];
 
   // Close dropdown when clicking outside
   useEffect(() => {

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useCurrency } from '../../../contexts/CurrencyContext';
 
 import CardsTab from './cards/page';
 import TransferTab from './transfer/page';
@@ -27,6 +28,7 @@ import {
 
 export default function WalletsPage() {
   const router = useRouter();
+  const { formatCurrency } = useCurrency();
   const [activeTab, setActiveTab] = useState<'cards' | 'cards' | 'transfer' | 'history'>('cards');
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,7 +37,6 @@ export default function WalletsPage() {
   const [walletPin, setWalletPin] = useState('');
   const [biometricAuth, setBiometricAuth] = useState(true);
   const [defaultWallet, setDefaultWallet] = useState('main');
-  const [currency, setCurrency] = useState('TZS');
   const [cardStatus, setCardStatus] = useState<Record<string, boolean>>({
     '1': true,
     '2': true,
@@ -135,13 +136,6 @@ export default function WalletsPage() {
     { id: '3', type: 'cashout', amount: -100000, description: 'Cashout to Bank Account', date: '2025-01-13', status: 'pending', method: 'bank' }
   ];
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-TZ', {
-      style: 'currency',
-      currency: 'TZS',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
 
   const getTotalBalance = () => {
     return wallets.reduce((total, wallet) => total + wallet.balance, 0);

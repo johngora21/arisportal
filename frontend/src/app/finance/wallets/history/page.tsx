@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useCurrency } from '../../../../contexts/CurrencyContext';
 import { 
   ArrowUpRight,
   ArrowDownLeft,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-react';
 
 export default function HistoryPage() {
+  const { formatCurrency } = useCurrency();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -92,13 +94,6 @@ export default function HistoryPage() {
     }
   ];
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-TZ', {
-      style: 'currency',
-      currency: 'TZS',
-      minimumFractionDigits: 0
-    }).format(Math.abs(amount));
-  };
 
   const formatDate = (dateString: string) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -214,7 +209,7 @@ export default function HistoryPage() {
                       color: '#1f2937',
                       marginBottom: '4px'
                     }}>
-                      {transaction.amount > 0 ? '+' : ''}{formatCurrency(transaction.amount)}
+                      {transaction.amount > 0 ? '+' : ''}{formatCurrency(Math.abs(transaction.amount))}
                     </div>
                     <div style={{ 
                       padding: '4px 10px', 
