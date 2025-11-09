@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 import jwt
@@ -100,7 +101,27 @@ def hash_password(password: str) -> str:
 
 def verify_password(password: str, hashed_password: str) -> bool:
     import bcrypt
-    return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+    try:
+        if not password or not hashed_password:
+            logger.warning("Password or hashed_password is empty")
+            return False
+        
+        # Ensure hashed_password is bytes
+        if isinstance(hashed_password, str):
+            hashed_password_bytes = hashed_password.encode('utf-8')
+        else:
+            hashed_password_bytes = hashed_password
+        
+        # Check if it's a valid bcrypt hash
+        if not hashed_password_bytes.startswith(b'$2b$') and not hashed_password_bytes.startswith(b'$2a$') and not hashed_password_bytes.startswith(b'$2y$'):
+            logger.error(f"Invalid bcrypt hash format: {hashed_password[:20] if len(hashed_password) > 20 else hashed_password}")
+            return False
+        
+        result = bcrypt.checkpw(password.encode('utf-8'), hashed_password_bytes)
+        return result
+    except Exception as e:
+        logger.error(f"Error in verify_password: {str(e)}", exc_info=True)
+        return False
 
 @router.post("/register", response_model=UserResponse)
 async def register(user_data: UserRegister, db: Session = Depends(get_db)):
@@ -179,15 +200,50 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
 async def login(user_data: UserLogin, db: Session = Depends(get_db)):
     """Login user"""
     try:
-        user = db.query(UserProfileModel).filter(UserProfileModel.email == user_data.email).first()
+        logger.info(f"Login attempt for email: {user_data.email}")
         
-        if not user or not verify_password(user_data.password, user.password_hash):
+        # Use case-insensitive email lookup
+        user = db.query(UserProfileModel).filter(
+            func.lower(UserProfileModel.email) == func.lower(user_data.email)
+        ).first()
+        
+        if not user:
+            logger.warning(f"User not found for email: {user_data.email}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials"
+            )
+        
+        logger.info(f"User found: id={user.id}, email={user.email}, has_password_hash={bool(user.password_hash)}")
+        
+        # Check if password_hash exists
+        if not user.password_hash:
+            logger.error(f"User {user.id} has no password_hash")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials"
+            )
+        
+        # Verify password
+        try:
+            password_valid = verify_password(user_data.password, user.password_hash)
+            logger.info(f"Password verification result: {password_valid}")
+        except Exception as verify_error:
+            logger.error(f"Error verifying password: {str(verify_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials"
+            )
+        
+        if not password_valid:
+            logger.warning(f"Invalid password for user: {user.email}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid credentials"
             )
         
         if user.status and user.status.value != 'active':
+            logger.warning(f"Account deactivated for user: {user.email}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Account is deactivated"
@@ -199,12 +255,13 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
             expires_delta=access_token_expires
         )
         
+        logger.info(f"Login successful for user: {user.email}")
         return Token(access_token=access_token, token_type="bearer")
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error logging in user: {str(e)}")
+        logger.error(f"Error logging in user: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/me", response_model=UserResponse)

@@ -17,7 +17,6 @@ import {
   UserCheck,
   CreditCard,
   FileCheck,
-  Banknote,
   Award,
   Wrench,
   Settings,
@@ -110,8 +109,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
           { id: 'finance-wallet', label: 'My Wallet', href: '/finance/wallets', icon: <Wallet size={16} /> },
           { id: 'finance-payroll', label: 'Payroll', href: '/finance/payroll', icon: <PayrollIcon size={16} color="currentColor" /> },
           { id: 'finance-invoicing', label: 'Invoicing', href: '/finance/invoicing', icon: <InvoicingIcon size={16} color="currentColor" /> },
-          { id: 'finance-escrow', label: 'Escrow', href: '/finance/escrow', icon: <Shield size={16} /> },
-          { id: 'finance-loans', label: 'Loans', href: '/finance/loans', icon: <Banknote size={16} /> }
+          { id: 'finance-escrow', label: 'Escrow', href: '/finance/escrow', icon: <Shield size={16} /> }
         ]
       },
       { 

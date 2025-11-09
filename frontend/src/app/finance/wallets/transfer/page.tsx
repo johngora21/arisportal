@@ -2,11 +2,6 @@
 
 import React, { useState } from 'react';
 import { useCurrency } from '../../../../contexts/CurrencyContext';
-import { 
-  User,
-  CreditCard,
-  Building
-} from 'lucide-react';
 
 export default function TransferPage() {
   const { formatCurrency } = useCurrency();
@@ -212,85 +207,35 @@ export default function TransferPage() {
           </h3>
 
           {/* Transfer Type */}
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
             <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
               Transfer Type
             </label>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-              <button
-                onClick={() => {
-                  setTransferType('card');
-                  setTransferMode('card');
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '12px 20px',
-                  backgroundColor: transferType === 'card' ? 'var(--mc-sidebar-bg)' : '#f3f4f6',
-                  color: transferType === 'card' ? 'white' : '#374151',
-                  border: 'none',
-                  borderRadius: '20px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <CreditCard size={16} />
-                Between Cards
-              </button>
-              <button
-                onClick={() => {
-                  setTransferType('peer');
-                  setTransferMode('card');
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '12px 20px',
-                  backgroundColor: transferType === 'peer' ? 'var(--mc-sidebar-bg)' : '#f3f4f6',
-                  color: transferType === 'peer' ? 'white' : '#374151',
-                  border: 'none',
-                  borderRadius: '20px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <User size={16} />
-                Peer Transfer
-              </button>
-              <button
-                onClick={() => {
-                  setTransferType('bulk');
-                  setTransferMode('card');
+            <select
+              value={transferType}
+              onChange={(e) => {
+                const newType = e.target.value as 'card' | 'peer' | 'bulk';
+                setTransferType(newType);
+                setTransferMode('card');
+                if (newType === 'bulk') {
                   setTransferMethod('bank');
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '12px 20px',
-                  backgroundColor: transferType === 'bulk' ? 'var(--mc-sidebar-bg)' : '#f3f4f6',
-                  color: transferType === 'bulk' ? 'white' : '#374151',
-                  border: 'none',
-                  borderRadius: '20px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <Building size={16} />
-                Bulk Transfer
-              </button>
-            </div>
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '12px 20px',
+                border: '1px solid #d1d5db',
+                borderRadius: '20px',
+                fontSize: '14px',
+                backgroundColor: 'white',
+                boxSizing: 'border-box',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="card">Between Cards</option>
+              <option value="peer">Peer Transfer</option>
+              <option value="bulk">Bulk Transfer</option>
+            </select>
           </div>
 
           {/* Card Transfer */}
