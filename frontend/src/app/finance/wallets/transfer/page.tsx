@@ -97,6 +97,56 @@ export default function TransferPage() {
     event.target.value = '';
   };
 
+  // Helper function to render fields in pairs
+  const renderFieldsInPairs = (fields: Array<React.ReactNode>) => {
+    if (fields.length === 0) return null;
+    
+    const pairs: Array<React.ReactNode[]> = [];
+    for (let i = 0; i < fields.length; i += 2) {
+      pairs.push(fields.slice(i, i + 2));
+    }
+    
+    return pairs.map((pair, idx) => {
+      // Always use 2-column grid, even for single fields (adds empty div to maintain pairing)
+      const isLastSingle = idx === pairs.length - 1 && pair.length === 1;
+      
+      return (
+        <div 
+          key={idx} 
+          style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(2, 360px)', 
+            gap: '16px', 
+            marginBottom: '20px', 
+            justifyContent: 'flex-start'
+          }}
+        >
+          {pair.map((field, fieldIdx) => (
+            <div key={fieldIdx} style={{ boxSizing: 'border-box' }}>
+              {field}
+            </div>
+          ))}
+          {/* Add empty div to maintain 2-column layout when last field is single */}
+          {isLastSingle && <div style={{ boxSizing: 'border-box' }} />}
+        </div>
+      );
+    });
+  };
+
+  // Helper to create a field wrapper
+  const createField = (
+    label: string,
+    children: React.ReactNode,
+    width?: string
+  ) => (
+    <div style={{ boxSizing: 'border-box', width: width || '100%' }}>
+      <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+
   const handleTransfer = () => {
     if (transferType === 'card') {
       if (!fromCard || !toCard) {
@@ -241,43 +291,42 @@ export default function TransferPage() {
           {/* Card Transfer */}
           {transferType === 'card' && (
             <>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 360px)', gap: '16px', marginBottom: '20px', justifyContent: 'flex-start' }}>
-                <div style={{ boxSizing: 'border-box' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>From Card</label>
+              {renderFieldsInPairs([
+                createField('From Card', (
                   <select value={fromCard} onChange={(e) => setFromCard(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
                     <option value="">Choose a card</option>
                     {cards.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-                <div style={{ boxSizing: 'border-box' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>To Card</label>
+                    ))}
+                  </select>
+                )),
+                createField('To Card', (
                   <select value={toCard} onChange={(e) => setToCard(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
                     <option value="">Choose a card</option>
                     {cards.filter(c => c.id !== fromCard).map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-              </div>
-              <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Amount (TZS)</label>
-                <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount" style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
-              </div>
+                    ))}
+                  </select>
+                )),
+                createField('Amount (TZS)', (
+                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount" style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
+                ))
+              ])}
             </>
           )}
 
           {/* Peer Transfer */}
-          {transferType === 'peer' && (
-            <>
-              <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Payment Mode</label>
+          {transferType === 'peer' && (() => {
+            const peerFields: React.ReactNode[] = [];
+            
+            // Payment Mode - always visible
+            peerFields.push(
+              createField('Payment Mode', (
                 <select
                   value={transferMode}
                   onChange={(e) => setTransferMode(e.target.value as 'card' | 'external')}
                   style={{
-                      width: '100%',
+                    width: '100%',
                     padding: '12px 20px',
                     border: '1px solid #d1d5db',
                     borderRadius: '20px',
@@ -289,116 +338,119 @@ export default function TransferPage() {
                   <option value="card">Use Card</option>
                   <option value="external">External Source</option>
                 </select>
-              </div>
+              ))
+            );
 
-              {transferMode === 'card' && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 360px)', gap: '16px', marginBottom: '20px', justifyContent: 'flex-start' }}>
-                <div style={{ boxSizing: 'border-box' }}>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>From Card</label>
-                    <select value={fromCard} onChange={(e) => setFromCard(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+            // From Card - only if card mode
+            if (transferMode === 'card') {
+              peerFields.push(
+                createField('From Card', (
+                  <select value={fromCard} onChange={(e) => setFromCard(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
                     <option value="">Choose a card</option>
-                      {cards.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                    {cards.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
                   </select>
-                </div>
-                <div style={{ boxSizing: 'border-box' }}>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Transfer Method</label>
-                    <select value={transferMethod} onChange={(e) => setTransferMethod(e.target.value as 'bank' | 'mno')} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                ))
+              );
+            }
+
+            // Transfer Method - always visible for peer
+            peerFields.push(
+              createField('Transfer Method', (
+                <select value={transferMethod} onChange={(e) => setTransferMethod(e.target.value as 'bank' | 'mno')} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
                   <option value="bank">Bank Transfer</option>
                   <option value="mno">Mobile Money</option>
                 </select>
-                </div>
-              </div>
-              )}
+              ))
+            );
 
-              {transferMode === 'external' && (
-                <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Transfer Method</label>
-                  <select value={transferMethod} onChange={(e) => setTransferMethod(e.target.value as 'bank' | 'mno')} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
-                    <option value="bank">Bank Transfer</option>
-                    <option value="mno">Mobile Money</option>
-                  </select>
-                </div>
-              )}
-
-              {transferMethod === 'bank' && (
-                <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Select Bank</label>
+            // Select Bank - only if bank method
+            if (transferMethod === 'bank') {
+              peerFields.push(
+                createField('Select Bank', (
                   <select value={selectedBank} onChange={(e) => setSelectedBank(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
                     <option value="">Choose a bank</option>
                     {banks.map((bank) => (<option key={bank.id} value={bank.id}>{bank.name}</option>))}
                   </select>
-                </div>
-              )}
+                ))
+              );
+            }
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 360px)', gap: '24px', marginBottom: '20px', justifyContent: 'flex-start' }}>
-                <div style={{ boxSizing: 'border-box' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>{transferMethod === 'bank' ? 'Account Number' : 'Phone Number'}</label>
-                  <input type="text" value={transferMethod === 'bank' ? bankAccount : phoneNumber} onChange={(e) => { if (transferMethod === 'bank') { setBankAccount(e.target.value); } else { setPhoneNumber(e.target.value); } }} placeholder={transferMethod === 'bank' ? 'Enter account number' : 'Enter phone number'} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
-                </div>
-                <div style={{ boxSizing: 'border-box' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Amount (TZS)</label>
-                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount" style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
-                </div>
-              </div>
+            // Account Number / Phone Number
+            peerFields.push(
+              createField(transferMethod === 'bank' ? 'Account Number' : 'Phone Number', (
+                <input type="text" value={transferMethod === 'bank' ? bankAccount : phoneNumber} onChange={(e) => { if (transferMethod === 'bank') { setBankAccount(e.target.value); } else { setPhoneNumber(e.target.value); } }} placeholder={transferMethod === 'bank' ? 'Enter account number' : 'Enter phone number'} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
+              ))
+            );
 
-              <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Recipient Name</label>
+            // Amount
+            peerFields.push(
+              createField('Amount (TZS)', (
+                <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount" style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
+              ))
+            );
+
+            // Recipient Name
+            peerFields.push(
+              createField('Recipient Name', (
                 <input type="text" value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="Enter recipient name" style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
-              </div>
-            </>
-          )}
+              ))
+            );
+
+            return <>{renderFieldsInPairs(peerFields)}</>;
+          })()}
 
           {/* Bulk Transfer Recipients */}
           {transferType === 'bulk' && (
             <>
-              <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Payment Mode</label>
-                  <select
-                  value={transferMode}
-                  onChange={(e) => setTransferMode(e.target.value as 'card' | 'external')}
-                    style={{
-                      width: '100%',
-                      padding: '12px 20px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '20px',
-                      fontSize: '14px',
-                    backgroundColor: 'white',
-                    boxSizing: 'border-box'
-                  }}
-                >
-                  <option value="card">Use Card</option>
-                  <option value="external">External Source</option>
-                </select>
-              </div>
-
-              {transferMode === 'card' && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 360px)', gap: '16px', marginBottom: '20px', justifyContent: 'flex-start' }}>
-                  <div style={{ boxSizing: 'border-box' }}>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>From Card</label>
-                    <select value={fromCard} onChange={(e) => setFromCard(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
-                    <option value="">Choose a card</option>
-                      {cards.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+              {(() => {
+                const bulkFields: React.ReactNode[] = [];
+                
+                // Payment Mode - always visible
+                bulkFields.push(
+                  createField('Payment Mode', (
+                    <select
+                      value={transferMode}
+                      onChange={(e) => setTransferMode(e.target.value as 'card' | 'external')}
+                      style={{
+                        width: '100%',
+                        padding: '12px 20px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '20px',
+                        fontSize: '14px',
+                        backgroundColor: 'white',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      <option value="card">Use Card</option>
+                      <option value="external">External Source</option>
                     </select>
-                  </div>
-                  <div style={{ boxSizing: 'border-box' }}>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Transfer Method</label>
+                  ))
+                );
+
+                // From Card - only if card mode
+                if (transferMode === 'card') {
+                  bulkFields.push(
+                    createField('From Card', (
+                      <select value={fromCard} onChange={(e) => setFromCard(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                        <option value="">Choose a card</option>
+                        {cards.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                      </select>
+                    ))
+                  );
+                }
+
+                // Transfer Method - always visible for bulk
+                bulkFields.push(
+                  createField('Transfer Method', (
                     <select value={transferMethod} onChange={(e) => setTransferMethod(e.target.value as 'bank' | 'mno')} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
                       <option value="bank">Bank Transfer</option>
                       <option value="mno">Mobile Money</option>
-                  </select>
-                  </div>
-                </div>
-              )}
+                    </select>
+                  ))
+                );
 
-              {transferMode === 'external' && (
-                <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>Transfer Method</label>
-                  <select value={transferMethod} onChange={(e) => setTransferMethod(e.target.value as 'bank' | 'mno')} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
-                    <option value="bank">Bank Transfer</option>
-                    <option value="mno">Mobile Money</option>
-                  </select>
-                </div>
-              )}
+                return renderFieldsInPairs(bulkFields);
+              })()}
 
                 <div style={{ marginBottom: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
