@@ -3,6 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from database import get_db
 from models.card import Card, CardTransaction
+from models.card_ledger import CardLedgerEntry, LedgerEntryType, LedgerEntrySource
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
@@ -63,6 +64,98 @@ class CreateCustomerPaymentRequest(BaseModel):
     customer_phone: Optional[str] = None
     customer_email: Optional[str] = None
 
+class SyncPaymentRequest(BaseModel):
+    """Request model for manual payment sync"""
+    order_ids: Optional[List[str]] = None  # Optional: specific Order IDs to sync (e.g., ["92727335-8943", "92726196-2838"])
+    # If not provided, will sync all cards
+
+
+# ============ Helper Functions ============
+def calculate_card_balance(card_id: int, db: Session) -> float:
+    """
+    Calculate card balance from ledger entries (debit/credit).
+    Balance = Sum of CREDITS - Sum of DEBITS
+    If no ledger entries exist, returns the current balance from cards table (for backward compatibility).
+    """
+    from sqlalchemy import text
+    
+    # Check if table exists and has entries
+    try:
+        balance_query = text("""
+            SELECT 
+                COALESCE(SUM(CASE WHEN entry_type = 'CREDIT' THEN amount ELSE 0 END), 0) -
+                COALESCE(SUM(CASE WHEN entry_type = 'DEBIT' THEN amount ELSE 0 END), 0) as balance
+            FROM card_ledger_entries
+            WHERE card_id = :card_id
+        """)
+        result = db.execute(balance_query, {"card_id": card_id}).fetchone()
+        balance = float(result[0]) if result and result[0] is not None else 0.0
+    except Exception as e:
+        # If ledger table doesn't exist or has issues, fallback to cards.balance
+        print(f"⚠️ Error calculating balance from ledger: {str(e)}, using cards.balance")
+        fallback_query = text("SELECT balance FROM cards WHERE id = :card_id")
+        fallback_result = db.execute(fallback_query, {"card_id": card_id}).fetchone()
+        balance = float(fallback_result[0]) if fallback_result and fallback_result[0] is not None else 0.0
+    
+    # Update the card's balance field (for backward compatibility and quick access)
+    try:
+        update_query = text("""
+            UPDATE cards 
+            SET balance = :balance, updated_at = NOW()
+            WHERE id = :card_id
+        """)
+        db.execute(update_query, {"balance": balance, "card_id": card_id})
+        db.commit()
+    except Exception as e:
+        print(f"⚠️ Error updating card balance: {str(e)}")
+        db.rollback()
+    
+    return balance
+
+def create_ledger_entry(
+    card_id: int,
+    user_id: int,
+    entry_type: LedgerEntryType,
+    entry_source: LedgerEntrySource,
+    amount: float,
+    currency: str = "TZS",
+    reference: Optional[str] = None,
+    description: Optional[str] = None,
+    clickpesa_order_id: Optional[str] = None,
+    clickpesa_control_number: Optional[str] = None,
+    clickpesa_response: Optional[str] = None,
+    related_transaction_id: Optional[int] = None,
+    related_card_id: Optional[int] = None,
+    db: Session = None
+) -> CardLedgerEntry:
+    """
+    Create a ledger entry (debit or credit) and update card balance.
+    """
+    ledger_entry = CardLedgerEntry(
+        card_id=card_id,
+        user_id=user_id,
+        entry_type=entry_type,
+        entry_source=entry_source,
+        amount=amount,
+        currency=currency,
+        reference=reference,
+        description=description,
+        clickpesa_order_id=clickpesa_order_id,
+        clickpesa_control_number=clickpesa_control_number,
+        clickpesa_response=clickpesa_response,
+        related_transaction_id=related_transaction_id,
+        related_card_id=related_card_id
+    )
+    
+    db.add(ledger_entry)
+    db.commit()
+    db.refresh(ledger_entry)
+    
+    # Recalculate and update card balance
+    calculate_card_balance(card_id, db)
+    
+    return ledger_entry
+
 # ============ Endpoints ============
 @router.get("", response_model=List[CardResponse])
 async def get_user_cards(
@@ -88,6 +181,9 @@ async def get_user_cards(
         for row in rows:
             control_number = row.topup_control_number if hasattr(row, 'topup_control_number') else None
             
+            # Recalculate balance from ledger entries
+            card_balance = calculate_card_balance(row.id, db)
+            
             result.append({
                 'id': row.id,
                 'card_type': row.card_type,
@@ -98,7 +194,7 @@ async def get_user_cards(
                 'cardholder_name': row.cardholder_name,
                 'is_active': bool(row.is_active),
                 'is_default': bool(row.is_default),
-                'balance': float(row.balance) if row.balance else 0.0,
+                'balance': card_balance,  # Calculate from ledger entries (not from cards.balance)
                 'created_at': row.created_at.isoformat() if row.created_at else None
             })
         
@@ -452,106 +548,343 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
     3. Remittance payments - routes to Wise when payment is received
     """
     data = await request.json()
+    print(f"🔔 ClickPesa Webhook Received: {data}")
     
     # Extract payment details from webhook
     payment_reference = data.get('paymentReference') or data.get('reference')
-    billpay_number = data.get('billPayNumber') or data.get('controlNumber')
-    amount = data.get('amount', 0)
+    billpay_number = data.get('billPayNumber') or data.get('controlNumber') or data.get('billpayNumber')
+    order_id = data.get('orderId') or data.get('order_id') or data.get('orderID')
+    amount = float(data.get('amount', 0) or data.get('amountReceived', 0) or 0)
     status = data.get('status', 'pending')
+    
+    # Normalize control number: remove dashes, spaces, and convert to string
+    def normalize_control_number(control_num):
+        if not control_num:
+            return None
+        # Remove dashes, spaces, and any non-digit characters
+        normalized = str(control_num).replace('-', '').replace(' ', '').replace('_', '')
+        # Extract only digits
+        normalized = ''.join(filter(str.isdigit, normalized))
+        return normalized if normalized else None
+    
+    # Try to extract control number from Order ID if provided
+    # Order ID format: "92727335-8943" or "927273358943"
+    if order_id and not billpay_number:
+        # Order ID might contain the control number
+        billpay_number = normalize_control_number(order_id)
+        print(f"📋 Extracted control number from Order ID: {order_id} -> {billpay_number}")
+    
+    # Normalize the control number for matching
+    normalized_control_number = normalize_control_number(billpay_number)
+    print(f"🔍 Normalized control number: {billpay_number} -> {normalized_control_number}")
+    
+    if not normalized_control_number:
+        print(f"❌ No control number found in webhook data")
+        return {"status": "error", "message": "No control number found"}
     
     # First, check if this is a remittance payment
     from models.remittance import Remittance, RemittanceProvider, RemittanceStatus
     from services.wise_service import WiseService
     
-    remittance = db.query(Remittance).filter(
-        Remittance.provider_control_number == billpay_number,
-        Remittance.provider == RemittanceProvider.WISE
-    ).first()
+    # Match remittances by normalized control number
+    remittance_query = text("""
+        SELECT id, remittance_id, provider_control_number, provider
+        FROM remittances
+        WHERE provider = 'WISE' AND provider_control_number IS NOT NULL
+    """)
+    all_remittances = db.execute(remittance_query).fetchall()
     
-    if remittance and status == 'completed':
+    matched_remittance = None
+    for rem_row in all_remittances:
+        rem_control_number = normalize_control_number(rem_row.provider_control_number)
+        if rem_control_number == normalized_control_number:
+            matched_remittance = rem_row
+            print(f"✅ Matched remittance {rem_row.remittance_id} with control number {rem_control_number}")
+            break
+    
+    if matched_remittance and status in ['completed', 'SUCCESS', 'SETTLED']:
         # This is a Wise remittance payment
         # Route payment to Wise by funding the transfer
         try:
-            wise_service = WiseService()
-            
-            # Fund the Wise transfer from balance
-            # Note: This assumes you have Wise balance. If not, you'll need to:
-            # 1. Add funds to Wise balance first (via bank transfer with reference T{transfer_id})
-            # 2. Then fund the transfer from balance
-            
-            # For now, we'll update the remittance status
-            remittance.status = RemittanceStatus.PROCESSING
-            remittance.status_message = f"Payment received via ClickPesa: {amount} TZS"
+            # Update remittance status
+            update_remittance_query = text("""
+                UPDATE remittances
+                SET status = 'PROCESSING',
+                    status_message = :status_message,
+                    updated_at = NOW()
+                WHERE id = :remittance_id
+            """)
+            db.execute(update_remittance_query, {
+                "status_message": f"Payment received via ClickPesa: {amount} TZS",
+                "remittance_id": matched_remittance.id
+            })
             db.commit()
             
             # TODO: Implement actual funding to Wise
             # Option 1: If you have Wise balance, fund directly:
-            # funding_result = wise_service.fund_transfer_from_balance(remittance.provider_transfer_id)
+            # wise_service = WiseService()
+            # funding_result = wise_service.fund_transfer_from_balance(matched_remittance.provider_transfer_id)
             
             # Option 2: Route to Wise bank account with reference T{transfer_id}
             # This requires sending money to Wise's bank account
             # The reference must be T{transfer_id} for Wise to match the payment
             
-            print(f"Remittance {remittance.remittance_id} payment received. Transfer ID: {remittance.provider_transfer_id}")
-            print(f"TODO: Fund Wise transfer {remittance.provider_transfer_id} with {amount} TZS")
+            print(f"💰 Remittance {matched_remittance.remittance_id} payment received: {amount} TZS")
+            print(f"📋 Transfer ID: {matched_remittance.provider_transfer_id}")
             
         except Exception as e:
-            print(f"Error routing remittance payment to Wise: {str(e)}")
+            print(f"❌ Error routing remittance payment to Wise: {str(e)}")
             # Don't fail the webhook, just log the error
         
-        return {"status": "success", "type": "remittance"}
+        return {"status": "success", "type": "remittance", "remittance_id": matched_remittance.remittance_id}
     
     # Check if this is a card top-up (payment to card's topup_control_number)
-    card = db.query(Card).filter(
-        Card.topup_control_number == billpay_number
-    ).first()
+    # Match by normalized control number (remove dashes/spaces for comparison)
+    from sqlalchemy import text
     
-    if card and status == 'completed':
-        # This is a top-up payment - credit the card balance
-        card.balance += amount
-        db.commit()
+    # Query cards and normalize control numbers for comparison
+    cards_query = text("""
+        SELECT id, user_id, card_type, cardholder_name, balance, topup_control_number
+        FROM cards
+        WHERE topup_control_number IS NOT NULL
+    """)
+    all_cards = db.execute(cards_query).fetchall()
+    
+    print(f"🔍 Searching through {len(all_cards)} cards for control number: {normalized_control_number}")
+    matched_card = None
+    for card_row in all_cards:
+        card_control_number = normalize_control_number(card_row.topup_control_number)
+        print(f"   Card ID {card_row.id} ({card_row.cardholder_name}): stored='{card_row.topup_control_number}' -> normalized='{card_control_number}'")
+        if card_control_number == normalized_control_number:
+            matched_card = card_row
+            print(f"✅ MATCHED! Card ID {card_row.id} ({card_row.cardholder_name}) with control number {card_control_number}")
+            break
+    
+    if not matched_card:
+        print(f"❌ No card found matching control number: {normalized_control_number}")
+        print(f"   Available control numbers: {[normalize_control_number(c.topup_control_number) for c in all_cards if c.topup_control_number]}")
+    
+    if matched_card and status in ['completed', 'SUCCESS', 'SETTLED']:
+        # This is a top-up payment - create CREDIT ledger entry
+        # Check if this payment was already processed (avoid duplicates)
+        existing_ledger_query = text("""
+            SELECT id FROM card_ledger_entries
+            WHERE card_id = :card_id
+            AND entry_type = 'CREDIT'
+            AND entry_source = 'CLICKPESA_TOPUP'
+            AND clickpesa_control_number = :control_number
+            AND amount = :amount
+            LIMIT 1
+        """)
+        existing_ledger = db.execute(existing_ledger_query, {
+            "card_id": matched_card.id,
+            "control_number": normalized_control_number,
+            "amount": amount
+        }).fetchone()
         
-        # Log the top-up transaction
-        topup_transaction = CardTransaction(
-            card_id=card.id,
-            user_id=card.user_id,
+        if existing_ledger:
+            print(f"⏭️ Payment already processed, skipping duplicate")
+            new_balance = calculate_card_balance(matched_card.id, db)
+            return {
+                "status": "success", 
+                "type": "card_topup", 
+                "message": "Payment already processed",
+                "card_id": matched_card.id,
+                "new_balance": new_balance
+            }
+        
+        # Create CREDIT ledger entry for top-up
+        ledger_entry = create_ledger_entry(
+            card_id=matched_card.id,
+            user_id=matched_card.user_id,
+            entry_type=LedgerEntryType.CREDIT,
+            entry_source=LedgerEntrySource.CLICKPESA_TOPUP,
             amount=amount,
             currency="TZS",
-            customer_billpay_control_number=billpay_number,
-            payment_reference=payment_reference or f"TOPUP-{billpay_number}",
-            description=f"Top-up payment for {card.cardholder_name or card.card_type} card",
-            status="completed",
-            transaction_type="deposit",
-            clickpesa_response=str(data)
+            reference=payment_reference or f"TOPUP-{normalized_control_number}",
+            description=f"Top-up payment for {matched_card.cardholder_name or matched_card.card_type} card",
+            clickpesa_order_id=order_id,
+            clickpesa_control_number=normalized_control_number,
+            clickpesa_response=str(data),
+            db=db
         )
-        db.add(topup_transaction)
+        
+        # Also log the transaction (for transaction history)
+        transaction_query = text("""
+            INSERT INTO card_transactions 
+            (card_id, user_id, amount, currency, customer_billpay_control_number, 
+             payment_reference, description, status, transaction_type, clickpesa_response, created_at)
+            VALUES 
+            (:card_id, :user_id, :amount, :currency, :control_number, 
+             :payment_reference, :description, :status, :transaction_type, :clickpesa_response, NOW())
+        """)
+        db.execute(transaction_query, {
+            "card_id": matched_card.id,
+            "user_id": matched_card.user_id,
+            "amount": amount,
+            "currency": "TZS",
+            "control_number": normalized_control_number,
+            "payment_reference": payment_reference or f"TOPUP-{normalized_control_number}",
+            "description": f"Top-up payment for {matched_card.cardholder_name or matched_card.card_type} card",
+            "status": "completed",
+            "transaction_type": "deposit",
+            "clickpesa_response": str(data)
+        })
         db.commit()
         
-        return {"status": "success", "type": "card_topup", "card_id": card.id, "new_balance": card.balance}
-    
-    # Check if this is a customer payment transaction
-    transaction = db.query(CardTransaction).filter(
-        CardTransaction.customer_billpay_control_number == billpay_number
-    ).first()
-    
-    if transaction:
-        # Update transaction status
-        transaction.status = status
-        transaction.payment_reference = payment_reference
-        transaction.clickpesa_response = str(data)
+        # Get updated balance (calculated from ledger)
+        new_balance = calculate_card_balance(matched_card.id, db)
         
-        if status == 'completed':
-            # Credit the business account
-            card = db.query(Card).filter(Card.id == transaction.card_id).first()
-            if card:
-                card.balance += amount
-                db.commit()
+        print(f"💰 Created CREDIT ledger entry: {amount} TZS to card ID {matched_card.id}. New balance: {new_balance}")
+        return {
+            "status": "success", 
+            "type": "card_topup", 
+            "card_id": matched_card.id, 
+            "amount": amount,
+            "new_balance": new_balance,
+            "ledger_entry_id": ledger_entry.id
+        }
     
-        return {"status": "success", "type": "card_transaction"}
+    # Check if this is a customer payment transaction (pending transactions)
+    transaction_query = text("""
+        SELECT id, card_id, user_id, customer_billpay_control_number
+        FROM card_transactions
+        WHERE customer_billpay_control_number IS NOT NULL
+    """)
+    all_transactions = db.execute(transaction_query).fetchall()
+    
+    matched_transaction = None
+    for trans_row in all_transactions:
+        trans_control_number = normalize_control_number(trans_row.customer_billpay_control_number)
+        if trans_control_number == normalized_control_number:
+            matched_transaction = trans_row
+            print(f"✅ Matched transaction ID {trans_row.id} with control number {trans_control_number}")
+            break
+    
+    if matched_transaction and status in ['completed', 'SUCCESS', 'SETTLED']:
+        # Check if this payment was already processed (avoid duplicates)
+        existing_ledger_query = text("""
+            SELECT id FROM card_ledger_entries
+            WHERE card_id = :card_id
+            AND entry_type = 'CREDIT'
+            AND entry_source = 'CLICKPESA_TOPUP'
+            AND clickpesa_control_number = :control_number
+            AND amount = :amount
+            LIMIT 1
+        """)
+        existing_ledger = db.execute(existing_ledger_query, {
+            "card_id": matched_transaction.card_id,
+            "control_number": normalized_control_number,
+            "amount": amount
+        }).fetchone()
+        
+        if existing_ledger:
+            print(f"⏭️ Customer payment already processed, skipping duplicate")
+            # Update transaction status anyway
+            update_trans_query = text("""
+                UPDATE card_transactions
+                SET status = 'completed',
+                    payment_reference = :payment_reference,
+                    clickpesa_response = :clickpesa_response,
+                    updated_at = NOW()
+                WHERE id = :transaction_id
+            """)
+            db.execute(update_trans_query, {
+                "payment_reference": payment_reference or f"PAY-{normalized_control_number}",
+                "clickpesa_response": str(data),
+                "transaction_id": matched_transaction.id
+            })
+            db.commit()
+            new_balance = calculate_card_balance(matched_transaction.card_id, db)
+            return {
+                "status": "success",
+                "type": "customer_payment",
+                "message": "Payment already processed",
+                "card_id": matched_transaction.card_id,
+                "new_balance": new_balance
+            }
+        
+        # Update transaction status
+        update_trans_query = text("""
+            UPDATE card_transactions
+            SET status = 'completed',
+                payment_reference = :payment_reference,
+                clickpesa_response = :clickpesa_response,
+                updated_at = NOW()
+            WHERE id = :transaction_id
+        """)
+        db.execute(update_trans_query, {
+            "payment_reference": payment_reference or f"PAY-{normalized_control_number}",
+            "clickpesa_response": str(data),
+            "transaction_id": matched_transaction.id
+        })
+        
+        # Create CREDIT ledger entry for customer payment
+        ledger_entry = create_ledger_entry(
+            card_id=matched_transaction.card_id,
+            user_id=matched_transaction.user_id,
+            entry_type=LedgerEntryType.CREDIT,
+            entry_source=LedgerEntrySource.CLICKPESA_TOPUP,
+            amount=amount,
+            currency="TZS",
+            reference=payment_reference or f"PAY-{normalized_control_number}",
+            description=f"Customer payment received",
+            clickpesa_order_id=order_id,
+            clickpesa_control_number=normalized_control_number,
+            clickpesa_response=str(data),
+            related_transaction_id=matched_transaction.id,
+            db=db
+        )
+        
+        # Get updated balance (calculated from ledger)
+        new_balance = calculate_card_balance(matched_transaction.card_id, db)
+        
+        print(f"💰 Created CREDIT ledger entry for customer payment: {amount} TZS to card ID {matched_transaction.card_id}. New balance: {new_balance}")
+        return {
+            "status": "success",
+            "type": "customer_payment",
+            "card_id": matched_transaction.card_id,
+            "amount": amount,
+            "new_balance": new_balance,
+            "ledger_entry_id": ledger_entry.id
+        }
     
     # No matching payment found
-    print(f"Payment not found for control number: {billpay_number}")
-    return {"status": "not_found", "control_number": billpay_number}
+    print(f"❌ Payment not found for control number: {normalized_control_number} (original: {billpay_number})")
+    print(f"📋 Full webhook data: {data}")
+    return {
+        "status": "not_found", 
+        "message": f"Payment not found for control number: {normalized_control_number}",
+        "control_number": normalized_control_number,
+        "order_id": order_id
+    }
+
+@router.get("/debug/control-numbers")
+async def debug_control_numbers(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Debug endpoint to check stored control numbers"""
+    from sqlalchemy import text
+    query = text("""
+        SELECT id, cardholder_name, topup_control_number, balance
+        FROM cards
+        WHERE user_id = :user_id
+        ORDER BY id
+    """)
+    rows = db.execute(query, {"user_id": user_id}).fetchall()
+    
+    result = []
+    for row in rows:
+        result.append({
+            "card_id": row.id,
+            "card_name": row.cardholder_name,
+            "control_number": row.topup_control_number,
+            "control_number_length": len(row.topup_control_number) if row.topup_control_number else 0,
+            "balance": float(row.balance) if row.balance else 0.0
+        })
+    
+    return {"cards": result}
 
 @router.get("/{card_id}/transactions")
 async def get_card_transactions(
@@ -566,6 +899,447 @@ async def get_card_transactions(
     ).order_by(CardTransaction.created_at.desc()).all()
     
     return transactions
+
+@router.post("/sync-payments")
+async def sync_payments_from_clickpesa(
+    sync_request: Optional[SyncPaymentRequest] = None,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Manually sync payments from ClickPesa API.
+    
+    Option 1: If order_ids provided, syncs those specific payments
+    Option 2: If no order_ids, queries each card's control number from ClickPesa API
+    
+    Only processes payments with status "SETTLED" or "SUCCESS".
+    """
+    try:
+        from sqlalchemy import text
+        import httpx
+        from routers.clickpesa import get_clickpesa_token
+        
+        # Normalize control number helper function
+        def normalize_control_number(control_num):
+            if not control_num:
+                return None
+            normalized = str(control_num).replace('-', '').replace(' ', '').replace('_', '')
+            normalized = ''.join(filter(str.isdigit, normalized))
+            return normalized if normalized else None
+        
+        # Get ClickPesa token
+        token = get_clickpesa_token()
+        
+        # Get all cards for this user
+        cards_query = text("""
+            SELECT id, user_id, card_type, cardholder_name, balance, topup_control_number
+            FROM cards
+            WHERE user_id = :user_id AND topup_control_number IS NOT NULL
+        """)
+        user_cards = db.execute(cards_query, {"user_id": user_id}).fetchall()
+        
+        if not user_cards:
+            return {
+                "status": "no_cards",
+                "message": "No cards found with control numbers for this user"
+            }
+        
+        synced_count = 0
+        updated_cards = []
+        errors = []
+        payments_to_process = []
+        
+        # If order_ids provided, process those specific payments
+        if sync_request and sync_request.order_ids:
+            print(f"📋 Syncing specific Order IDs: {sync_request.order_ids}")
+            for order_id in sync_request.order_ids:
+                # Normalize order ID to get control number
+                normalized_order_id = normalize_control_number(order_id)
+                if not normalized_order_id:
+                    errors.append(f"Order ID {order_id}: Invalid format")
+                    continue
+                
+                # Find matching card
+                matched_card = None
+                for card_row in user_cards:
+                    card_control_number = normalize_control_number(card_row.topup_control_number)
+                    if card_control_number == normalized_order_id:
+                        matched_card = card_row
+                        break
+                
+                if not matched_card:
+                    errors.append(f"Order ID {order_id}: No card found matching control number {normalized_order_id}")
+                    continue
+                
+                # Query ClickPesa API for this payment
+                # Try different endpoints
+                endpoints_to_try = [
+                    f"/third-parties/billpay/payments/{normalized_order_id}",
+                    f"/third-parties/billpay/payment/{normalized_order_id}",
+                    f"/third-parties/payments/{normalized_order_id}",
+                    f"/payments/{order_id}",  # Try with original order_id format
+                    f"/payments/{normalized_order_id}",
+                ]
+                
+                payment_data = None
+                for endpoint in endpoints_to_try:
+                    try:
+                        response = httpx.get(
+                            f"https://api.clickpesa.com{endpoint}",
+                            headers={
+                                'Authorization': token,
+                                'Content-Type': 'application/json'
+                            },
+                            timeout=10.0
+                        )
+                        
+                        if response.status_code == 200:
+                            payment_data = response.json()
+                            if isinstance(payment_data, dict) and 'data' in payment_data:
+                                payment_data = payment_data['data']
+                            print(f"✅ Found payment for Order ID {order_id} from endpoint: {endpoint}")
+                            break
+                    except httpx.HTTPStatusError as e:
+                        if e.response.status_code == 404:
+                            continue
+                    except Exception as e:
+                        continue
+                
+                if payment_data:
+                    payments_to_process.append({
+                        "card": matched_card,
+                        "payment_data": payment_data,
+                        "order_id": order_id,
+                        "control_number": normalized_order_id
+                    })
+                else:
+                    errors.append(f"Order ID {order_id}: Payment not found in ClickPesa API")
+        else:
+            # Fetch all transactions from ClickPesa API using the account statement endpoint
+            print(f"📋 Fetching all transactions from ClickPesa account statement...")
+            
+            all_transactions = []
+            
+            # Use ClickPesa's account statement endpoint to get ALL transactions
+            # This is the correct endpoint according to ClickPesa API docs
+            try:
+                from datetime import datetime, timedelta
+                # Get transactions from last 90 days (to catch all recent payments)
+                end_date = datetime.now()
+                start_date = end_date - timedelta(days=90)
+                
+                # Format dates as YYYY-MM-DD
+                start_date_str = start_date.strftime('%Y-%m-%d')
+                end_date_str = end_date.strftime('%Y-%m-%d')
+                
+                response = httpx.get(
+                    "https://api.clickpesa.com/third-parties/account/statement",
+                    headers={
+                        'Authorization': token,
+                        'Content-Type': 'application/json'
+                    },
+                    params={
+                        'startDate': start_date_str,
+                        'endDate': end_date_str,
+                        'currency': 'TZS'
+                    },
+                    timeout=15.0
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    # Debug: Print the response structure
+                    print(f"🔍 Account statement response keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+                    
+                    # Extract transactions from response
+                    # Response format: { "accountDetails": {...}, "transactions": [...] }
+                    if isinstance(data, dict):
+                        transactions = data.get('transactions', [])
+                        if transactions:
+                            all_transactions = transactions if isinstance(transactions, list) else []
+                            print(f"✅ Found {len(all_transactions)} transactions from account statement")
+                            # Debug: Print first transaction structure
+                            if all_transactions and len(all_transactions) > 0:
+                                print(f"🔍 First transaction keys: {list(all_transactions[0].keys()) if isinstance(all_transactions[0], dict) else 'Not a dict'}")
+                                print(f"🔍 First transaction sample: {str(all_transactions[0])[:500]}")
+                        else:
+                            print(f"⚠️ Account statement returned no transactions")
+                            print(f"🔍 Full response: {str(data)[:1000]}")
+                    else:
+                        print(f"⚠️ Unexpected account statement response format: {type(data)}")
+                        print(f"🔍 Response: {str(data)[:1000]}")
+                elif response.status_code == 401:
+                    print(f"❌ Authentication failed for account statement")
+                    errors.append("ClickPesa authentication failed")
+                else:
+                    error_text = response.text[:500] if hasattr(response, 'text') else str(response.status_code)
+                    print(f"⚠️ Account statement returned {response.status_code}: {error_text}")
+                    errors.append(f"Failed to fetch account statement: {response.status_code}")
+            except httpx.TimeoutException:
+                print(f"⚠️ Account statement request timed out")
+                errors.append("Account statement request timed out")
+            except Exception as e:
+                print(f"⚠️ Error fetching account statement: {str(e)}")
+                errors.append(f"Error fetching account statement: {str(e)}")
+            
+            # If account statement didn't work or returned no transactions, try querying each card's control number
+            if not all_transactions:
+                print(f"📋 Account statement didn't return transactions, querying each card's control number...")
+                for card_row in user_cards:
+                    control_number = card_row.topup_control_number
+                    normalized_control_number = normalize_control_number(control_number)
+                    
+                    if not normalized_control_number:
+                        print(f"⚠️ Card {card_row.id}: Invalid control number {control_number}")
+                        continue
+                    
+                    # Query BillPay number details using the correct endpoint
+                    # GET /third-parties/billpay/{billPayNumber}
+                    try:
+                        billpay_response = httpx.get(
+                            f"https://api.clickpesa.com/third-parties/billpay/{normalized_control_number}",
+                            headers={
+                                'Authorization': token,
+                                'Content-Type': 'application/json'
+                            },
+                            timeout=10.0
+                        )
+                        
+                        if billpay_response.status_code == 200:
+                            billpay_data = billpay_response.json()
+                            # This gives us the BillPay details, but we still need to find payments
+                            # The billpay endpoint shows the control number details, not payment transactions
+                            print(f"✅ Found BillPay details for {normalized_control_number}: {billpay_data.get('billDescription', 'N/A')}")
+                            # Note: This endpoint gives BillPay details, not payment transactions
+                            # We still need transactions from the account statement
+                    except Exception as e:
+                        print(f"⚠️ Error querying BillPay {normalized_control_number}: {str(e)}")
+                        continue
+            
+            # Match transactions to cards by control number (billPayNumber)
+            if all_transactions:
+                print(f"📋 Matching {len(all_transactions)} transactions to {len(user_cards)} cards...")
+                for transaction in all_transactions:
+                    # Extract control number from transaction
+                    # Account statement transactions should have billPayNumber field
+                    transaction_billpay = (
+                        transaction.get('billPayNumber') or 
+                        transaction.get('billpayNumber') or 
+                        transaction.get('controlNumber') or 
+                        transaction.get('billPay') or
+                        transaction.get('reference') or
+                        transaction.get('orderId') or
+                        transaction.get('order_id')
+                    )
+                    
+                    # Normalize the control number from transaction
+                    transaction_control_number = normalize_control_number(transaction_billpay)
+                    
+                    if not transaction_control_number:
+                        # Skip transactions without control numbers
+                        continue
+                    
+                    # Find matching card by control number
+                    matched_card = None
+                    for card_row in user_cards:
+                        card_control_number = normalize_control_number(card_row.topup_control_number)
+                        # Match by exact control number
+                        if card_control_number and transaction_control_number:
+                            if card_control_number == transaction_control_number:
+                                matched_card = card_row
+                                break
+                            # Also check if transaction control number contains card control number (for partial matches)
+                            if card_control_number in transaction_control_number or transaction_control_number in card_control_number:
+                                matched_card = card_row
+                                break
+                    
+                    if matched_card:
+                        # Extract transaction details
+                        transaction_status = (transaction.get('status') or transaction.get('Status') or transaction.get('transactionStatus') or '').upper()
+                        transaction_order_id = transaction.get('orderId') or transaction.get('order_id') or transaction.get('orderID') or transaction.get('reference') or transaction_billpay
+                        
+                        # Process all transactions (no status filter)
+                        payments_to_process.append({
+                            "card": matched_card,
+                            "payment_data": transaction,
+                            "order_id": transaction_order_id,
+                            "control_number": transaction_control_number
+                        })
+                        print(f"✅ Matched transaction {transaction_order_id} (control: {transaction_control_number}) to card {matched_card.id} ({matched_card.cardholder_name}) - Status: {transaction_status}")
+                    else:
+                        # Log unmatched transactions for debugging (only first few to avoid spam)
+                        if len([p for p in payments_to_process if p.get('control_number') == transaction_control_number]) == 0:
+                            print(f"⚠️ No card found for transaction control number: {transaction_control_number} (transaction: {transaction.get('orderId', transaction.get('reference', 'N/A'))})")
+            else:
+                errors.append("No transactions found in ClickPesa account statement. Payments may sync automatically via webhook.")
+        
+        # Process each payment
+        for payment_info in payments_to_process:
+            try:
+                card_row = payment_info["card"]
+                payment_data = payment_info["payment_data"]
+                order_id = payment_info["order_id"]
+                normalized_control_number = payment_info["control_number"]
+                
+                # Extract payment details - ClickPesa account statement uses various field names
+                payment_status = (
+                    payment_data.get('status') or 
+                    payment_data.get('Status') or 
+                    payment_data.get('transactionStatus') or 
+                    payment_data.get('paymentStatus') or 
+                    payment_data.get('state') or
+                    ''
+                ).upper()
+                
+                # Extract amount - account statement transactions might use different field names
+                amount = float(
+                    payment_data.get('amount') or 
+                    payment_data.get('amountReceived') or 
+                    payment_data.get('collectedAmount') or 
+                    payment_data.get('Amount') or 
+                    payment_data.get('Amount Received') or
+                    payment_data.get('AmountReceived') or
+                    payment_data.get('transactionAmount') or
+                    payment_data.get('creditAmount') or
+                    payment_data.get('debitAmount') or
+                    payment_data.get('value') or
+                    0
+                )
+                
+                # For account statement, amount might be negative for debits, so take absolute value if it's a credit transaction
+                if amount < 0 and payment_status in ['SETTLED', 'SUCCESS', 'COMPLETED', 'PAID']:
+                    # This might be a debit, but if status is SUCCESS it could be a payment received
+                    # Check transaction type if available
+                    transaction_type = payment_data.get('type') or payment_data.get('transactionType') or ''
+                    if 'credit' in transaction_type.lower() or 'payment' in transaction_type.lower():
+                        amount = abs(amount)
+                order_id_from_api = (
+                    payment_data.get('orderId') or 
+                    payment_data.get('order_id') or 
+                    payment_data.get('orderReference') or 
+                    payment_data.get('orderID') or 
+                    payment_data.get('Order ID') or
+                    payment_data.get('OrderID') or
+                    order_id
+                )
+                
+                # Also try to extract control number from Order ID if it contains it
+                # Order ID format might be like "92727335-8943" where the control number is embedded
+                if order_id_from_api and not normalized_control_number:
+                    # Remove dashes and extract digits
+                    normalized_from_order = normalize_control_number(order_id_from_api)
+                    if normalized_from_order:
+                        normalized_control_number = normalized_from_order
+                
+                # Process all payments regardless of status
+                # (Status check removed - process all transactions)
+                
+                if amount <= 0:
+                    errors.append(f"Card {card_row.id}: Invalid amount {amount}")
+                    continue
+                
+                # Check if ledger entry already exists (avoid duplicate credits)
+                ledger_check = text("""
+                    SELECT id FROM card_ledger_entries
+                    WHERE card_id = :card_id
+                    AND entry_type = 'CREDIT'
+                    AND entry_source = 'CLICKPESA_TOPUP'
+                    AND clickpesa_control_number = :control_number
+                    AND amount = :amount
+                    LIMIT 1
+                """)
+                existing_ledger = db.execute(ledger_check, {
+                    "card_id": card_row.id,
+                    "control_number": normalized_control_number,
+                    "amount": amount
+                }).fetchone()
+                
+                if existing_ledger:
+                    print(f"⏭️ Card {card_row.id}: Payment already processed (ledger entry exists), skipping")
+                    continue
+                
+                # Create CREDIT ledger entry for synced payment
+                ledger_entry = create_ledger_entry(
+                    card_id=card_row.id,
+                    user_id=card_row.user_id,
+                    entry_type=LedgerEntryType.CREDIT,
+                    entry_source=LedgerEntrySource.CLICKPESA_TOPUP,
+                    amount=amount,
+                    currency="TZS",
+                    reference=order_id_from_api or f"SYNC-{normalized_control_number}",
+                    description=f"Synced payment for {card_row.cardholder_name or card_row.card_type} card",
+                    clickpesa_order_id=order_id_from_api,
+                    clickpesa_control_number=normalized_control_number,
+                    clickpesa_response=str(payment_data),
+                    db=db
+                )
+                
+                # Also log the transaction (for transaction history)
+                transaction_query = text("""
+                    INSERT INTO card_transactions 
+                    (card_id, user_id, amount, currency, customer_billpay_control_number, 
+                     payment_reference, description, status, transaction_type, clickpesa_response, created_at)
+                    VALUES 
+                    (:card_id, :user_id, :amount, :currency, :control_number, 
+                     :payment_reference, :description, :status, :transaction_type, :clickpesa_response, NOW())
+                """)
+                db.execute(transaction_query, {
+                    "card_id": card_row.id,
+                    "user_id": card_row.user_id,
+                    "amount": amount,
+                    "currency": "TZS",
+                    "control_number": normalized_control_number,
+                    "payment_reference": order_id_from_api or f"SYNC-{normalized_control_number}",
+                    "description": f"Synced payment for {card_row.cardholder_name or card_row.card_type} card",
+                    "status": "completed",
+                    "transaction_type": "deposit",
+                    "clickpesa_response": str(payment_data)
+                })
+                
+                # Get updated balance (calculated from ledger)
+                new_balance = calculate_card_balance(card_row.id, db)
+                
+                synced_count += 1
+                updated_cards.append({
+                    "card_id": card_row.id,
+                    "card_name": card_row.cardholder_name,
+                    "control_number": normalized_control_number,
+                    "amount": amount,
+                    "status": payment_status,
+                    "new_balance": new_balance,
+                    "order_id": order_id_from_api
+                })
+                
+                print(f"✅ Synced payment: {amount} TZS to card {card_row.id} ({card_row.cardholder_name}). New balance: {new_balance}")
+                
+            except Exception as e:
+                import traceback
+                error_trace = traceback.format_exc()
+                errors.append(f"Card {card_row.id}: {str(e)}")
+                print(f"❌ Error processing payment: {str(e)}")
+                print(error_trace)
+                continue
+        
+        db.commit()
+        
+        return {
+            "status": "success",
+            "synced_count": synced_count,
+            "updated_cards": updated_cards,
+            "errors": errors if errors else None,
+            "message": f"Successfully synced {synced_count} payment(s) and updated card balances"
+        }
+        
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"❌ Error syncing payments: {str(e)}")
+        print(error_trace)
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to sync payments: {str(e)}"
+        )
 
 @router.get("/shared-billpay-namba")
 async def get_shared_billpay_namba():
