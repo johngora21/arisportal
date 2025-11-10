@@ -218,13 +218,13 @@ async def create_card(
     - ClickPesa BillPay control number is auto-generated for top-ups (no expiry, no fixed amount)
     """
     try:
-    # Check if this is the first card, make it default
+        # Check if this is the first card, make it default
         # Use raw SQL to avoid loading non-existent columns
         from sqlalchemy import text
         count_query = text("SELECT COUNT(*) as count FROM cards WHERE user_id = :user_id")
         result = db.execute(count_query, {"user_id": user_id}).fetchone()
         existing_cards = result[0] if result else 0
-    is_default = existing_cards == 0
+        is_default = existing_cards == 0
         
         # Calculate expiry date (3 years from now)
         from datetime import datetime, timedelta
@@ -404,19 +404,19 @@ async def create_card(
             )
         
         # Create card with control number and expiry date
-    card = Card(
-        user_id=user_id,
-        card_type=card_data.card_type,
-        cardholder_name=card_data.cardholder_name,
-        is_default=is_default,
+        card = Card(
+            user_id=user_id,
+            card_type=card_data.card_type,
+            cardholder_name=card_data.cardholder_name,
+            is_default=is_default,
             balance=0.0,
             topup_control_number=topup_control_number,  # Store the control number for top-ups
             expiry_month=expiry_month,  # MM format (e.g., "12")
             expiry_year=expiry_year     # YYYY format (e.g., "2027")
-    )
-    
-    db.add(card)
-    db.commit()
+        )
+        
+        db.add(card)
+        db.commit()
         # Don't use db.refresh() - it might try to load non-existent columns
         # Instead, get the card ID from the committed object
         
@@ -477,6 +477,29 @@ async def delete_card(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to delete card: {str(e)}")
+
+
+@router.put("/{card_id}/default", status_code=status.HTTP_200_OK)
+async def set_default_card(
+    card_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Set the specified card as the default card for the user."""
+    card = db.query(Card).filter(Card.id == card_id, Card.user_id == user_id, Card.is_active == True).first()
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    try:
+        # Unset existing default card(s)
+        db.query(Card).filter(Card.user_id == user_id, Card.is_default == True).update({Card.is_default: False})
+        # Set this card as default
+        card.is_default = True
+        db.commit()
+        return {"success": True, "message": "Default card updated"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to set default card: {str(e)}")
 
 
 @router.post("/{card_id}/create-customer-payment")

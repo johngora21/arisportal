@@ -41,6 +41,7 @@ export default function WalletsPage() {
   const [loadingCards, setLoadingCards] = useState(false);
   const [updatingPin, setUpdatingPin] = useState(false);
   const [deletingCardId, setDeletingCardId] = useState<number | null>(null);
+  const [settingDefaultId, setSettingDefaultId] = useState<number | null>(null);
 
   // Fetch cards when settings modal opens
   useEffect(() => {
@@ -130,6 +131,37 @@ export default function WalletsPage() {
       alert('Failed to delete card');
     } finally {
       setDeletingCardId(null);
+    }
+  };
+
+  const handleSetDefaultCard = async (cardId: number) => {
+    if (!token) return;
+
+    setSettingDefaultId(cardId);
+    try {
+      const response = await fetch(buildApiUrl(`/cards/${cardId}/default`), {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        setCards((prevCards) => prevCards.map((card) => ({
+          ...card,
+          is_default: card.id === cardId,
+        })));
+        alert('Default card updated');
+      } else {
+        const error = await response.json();
+        alert(error.detail || 'Failed to set default card');
+      }
+    } catch (error) {
+      console.error('Error setting default card:', error);
+      alert('Failed to set default card');
+    } finally {
+      setSettingDefaultId(null);
     }
   };
 
@@ -386,6 +418,7 @@ export default function WalletsPage() {
               ) : (
                 cards.map((card) => {
                 const hasBalance = card.balance > 0;
+                  const isDefault = card.is_default;
                   const cardName = card.cardholder_name || `${card.card_type.charAt(0).toUpperCase() + card.card_type.slice(1)} Card`;
                 return (
                   <div key={card.id} style={{ 
@@ -395,34 +428,69 @@ export default function WalletsPage() {
                     padding: '12px 0',
                     borderBottom: '1px solid #f3f4f6'
                   }}>
-                    <div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>
-                          {cardName}
+                            {cardName}
+                          </div>
+                          {isDefault && (
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              color: '#2563eb',
+                              backgroundColor: '#dbeafe',
+                              padding: '2px 8px',
+                              borderRadius: '999px'
+                            }}>
+                              Default
+                            </span>
+                          )}
                       </div>
                       <div style={{ fontSize: '12px', color: '#6b7280' }}>
                           {formatCardNumber(card.card_number)}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
                         Balance: {formatCurrency(card.balance)}
                       </div>
                     </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {!isDefault && (
                     <button
-                        onClick={() => handleDeleteCard(card.id)}
-                        disabled={hasBalance || deletingCardId === card.id}
+                            onClick={() => handleSetDefaultCard(card.id)}
+                            disabled={settingDefaultId === card.id}
+                            style={{
+                              padding: '6px 14px',
+                              backgroundColor: '#2563eb',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '20px',
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              cursor: settingDefaultId === card.id ? 'not-allowed' : 'pointer',
+                              opacity: settingDefaultId === card.id ? 0.7 : 1
+                            }}
+                          >
+                            {settingDefaultId === card.id ? 'Setting...' : 'Set as default'}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteCard(card.id)}
+                          disabled={hasBalance || deletingCardId === card.id}
                       style={{
                         padding: '6px 16px',
-                          backgroundColor: hasBalance || deletingCardId === card.id ? '#d1d5db' : '#EF4444',
+                            backgroundColor: hasBalance || deletingCardId === card.id ? '#d1d5db' : '#EF4444',
                         color: 'white',
                         border: 'none',
                         borderRadius: '20px',
                         fontSize: '12px',
                         fontWeight: '500',
-                          cursor: hasBalance || deletingCardId === card.id ? 'not-allowed' : 'pointer',
-                          opacity: hasBalance || deletingCardId === card.id ? 0.6 : 1
+                            cursor: hasBalance || deletingCardId === card.id ? 'not-allowed' : 'pointer',
+                            opacity: hasBalance || deletingCardId === card.id ? 0.6 : 1
                       }}
                     >
-                        {deletingCardId === card.id ? 'Deleting...' : 'Delete'}
+                          {deletingCardId === card.id ? 'Deleting...' : 'Delete'}
                     </button>
+                      </div>
                   </div>
                 );
                 })
