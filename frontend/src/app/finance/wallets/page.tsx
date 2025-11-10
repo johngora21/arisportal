@@ -1,164 +1,152 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
 import { useCurrency } from '../../../contexts/CurrencyContext';
+import { useAuth } from '../../../contexts/AuthContext';
+import { buildApiUrl } from '../../../config/api';
 
 import CardsTab from './cards/page';
 import TransferTab from './transfer/page';
 import HistoryTab from './history/page';
-import { 
-  Plus, 
-  Wallet,
-  TrendingUp,
-  DollarSign,
-  Users,
-  ArrowRightLeft,
-  Minus,
-  Building,
-  Smartphone,
-  CreditCard,
-  History,
-  Settings,
-  Eye,
-  EyeOff,
-  Filter,
-  Download
-} from 'lucide-react';
+import { ArrowRightLeft, CreditCard, History, Settings } from 'lucide-react';
+
+interface Card {
+  id: number;
+  card_type: string;
+  cardholder_name: string | null;
+  card_number?: string | null;
+  balance: number;
+  is_active: boolean;
+  is_default: boolean;
+  expiry_month?: string | null;
+  expiry_year?: string | null;
+}
 
 export default function WalletsPage() {
-  const router = useRouter();
   const { formatCurrency } = useCurrency();
-  const [activeTab, setActiveTab] = useState<'cards' | 'cards' | 'transfer' | 'history'>('cards');
+  const { token } = useAuth();
+  const [activeTab, setActiveTab] = useState<'cards' | 'transfer' | 'history'>('cards');
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   
   // Settings state
   const [walletPin, setWalletPin] = useState('');
-  const [biometricAuth, setBiometricAuth] = useState(true);
-  const [defaultWallet, setDefaultWallet] = useState('main');
-  const [cardStatus, setCardStatus] = useState<Record<string, boolean>>({
-    '1': true,
-    '2': true,
-    '3': true
+  const [biometricAuth, setBiometricAuth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('biometricAuth');
+      return stored ? JSON.parse(stored) : false;
+    }
+    return false;
   });
-  const [walletBalanceVisibility, setWalletBalanceVisibility] = useState<Record<string, boolean>>({
-    'main': true,
-    'savings': true,
-    'business': true
-  });
-  const [cardBalanceVisibility, setCardBalanceVisibility] = useState<Record<string, boolean>>({
-    '1': true,
-    '2': true,
-    '3': true
-  });
-  const [selectedWallet, setSelectedWallet] = useState('main');
+  const [cards, setCards] = useState<Card[]>([]);
+  const [loadingCards, setLoadingCards] = useState(false);
+  const [updatingPin, setUpdatingPin] = useState(false);
+  const [deletingCardId, setDeletingCardId] = useState<number | null>(null);
 
-  // Mock data
-  const wallets = [
-    { id: 'main', name: 'Main Wallet', balance: 2500000, currency: 'TZS', type: 'primary', status: 'active' },
-    { id: 'savings', name: 'Savings Wallet', balance: 1500000, currency: 'TZS', type: 'savings', status: 'active' },
-    { id: 'business', name: 'Business Wallet', balance: 5000000, currency: 'TZS', type: 'business', status: 'active' }
-  ];
+  // Fetch cards when settings modal opens
+  useEffect(() => {
+    if (showSettingsModal && token) {
+      fetchCards();
+    }
+  }, [showSettingsModal, token]);
 
-  const currencies = [
-    // East African currencies
-    { id: 'TZS', name: 'TZS' },
-    { id: 'KES', name: 'KES' },
-    { id: 'UGX', name: 'UGX' },
-    { id: 'RWF', name: 'RWF' },
-    { id: 'BIF', name: 'BIF' },
-    { id: 'DJF', name: 'DJF' },
-    { id: 'ETB', name: 'ETB' },
-    { id: 'SOS', name: 'SOS' },
-    { id: 'SSP', name: 'SSP' },
-    { id: 'ERN', name: 'ERN' },
+  const fetchCards = async () => {
+    if (!token) return;
     
-    // Southern African currencies
-    { id: 'ZAR', name: 'ZAR' },
-    { id: 'BWP', name: 'BWP' },
-    { id: 'SZL', name: 'SZL' },
-    { id: 'LSL', name: 'LSL' },
-    { id: 'NAD', name: 'NAD' },
-    { id: 'MZN', name: 'MZN' },
-    { id: 'ZMW', name: 'ZMW' },
-    { id: 'ZWL', name: 'ZWL' },
-    { id: 'MGA', name: 'MGA' },
-    { id: 'MUR', name: 'MUR' },
-    { id: 'SCR', name: 'SCR' },
-    { id: 'MWK', name: 'MWK' },
+    setLoadingCards(true);
+    try {
+      const response = await fetch(buildApiUrl('/cards'), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCards(data || []);
+      } else {
+        console.error('Failed to fetch cards');
+      }
+    } catch (error) {
+      console.error('Error fetching cards:', error);
+    } finally {
+      setLoadingCards(false);
+    }
+  };
+
+  const handleUpdatePin = async () => {
+    if (!walletPin || walletPin.length < 4) {
+      alert('PIN must be at least 4 digits');
+      return;
+    }
+
+    setUpdatingPin(true);
+    try {
+      // Store PIN in localStorage (in production, this should be sent to backend)
+      localStorage.setItem('walletPin', walletPin);
+      alert('PIN updated successfully');
+      setWalletPin('');
+    } catch (error) {
+      console.error('Error updating PIN:', error);
+      alert('Failed to update PIN');
+    } finally {
+      setUpdatingPin(false);
+    }
+  };
+
+  const handleBiometricToggle = () => {
+    const newValue = !biometricAuth;
+    setBiometricAuth(newValue);
+    localStorage.setItem('biometricAuth', JSON.stringify(newValue));
+  };
+
+  const handleDeleteCard = async (cardId: number) => {
+    if (!token) return;
     
-    // Major international currencies
-    { id: 'USD', name: 'USD' },
-    { id: 'EUR', name: 'EUR' },
-    { id: 'GBP', name: 'GBP' }
-  ];
-
-  const cards = [
-    { 
-      id: '1', 
-      type: 'visa', 
-      name: 'Visa Platinum', 
-      number: '**** **** **** 4532', 
-      expiry: '12/26', 
-      holder: 'John Doe',
-      balance: 850000,
-      status: 'active',
-      color: 'blue'
-    },
-    { 
-      id: '2', 
-      type: 'visa', 
-      name: 'Visa Gold', 
-      number: '**** **** **** 7890', 
-      expiry: '08/27', 
-      holder: 'John Doe',
-      balance: 1200000,
-      status: 'active',
-      color: 'gold'
-    },
-    { 
-      id: '3', 
-      type: 'visa', 
-      name: 'Visa Business', 
-      number: '**** **** **** 1234', 
-      expiry: '03/28', 
-      holder: 'John Doe',
-      balance: 2500000,
-      status: 'active',
-      color: 'green'
+    if (!confirm('Are you sure you want to delete this card? This action cannot be undone.')) {
+      return;
     }
-  ];
 
-  const recentTransactions = [
-    { id: '1', type: 'topup', amount: 500000, description: 'Top-up via M-Pesa', date: '2025-01-15', status: 'completed', method: 'mobile' },
-    { id: '2', type: 'transfer', amount: -250000, description: 'Transfer to John Doe', date: '2025-01-14', status: 'completed', method: 'wallet' },
-    { id: '3', type: 'cashout', amount: -100000, description: 'Cashout to Bank Account', date: '2025-01-13', status: 'pending', method: 'bank' }
-  ];
+    setDeletingCardId(cardId);
+    try {
+      const response = await fetch(buildApiUrl(`/cards/${cardId}`), {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-
-  const getTotalBalance = () => {
-    return wallets.reduce((total, wallet) => total + wallet.balance, 0);
-  };
-
-  const getTransactionIcon = (type: string) => {
-    switch (type) {
-      case 'topup': return <Plus size={20} color="#10b981" />;
-      case 'cashout': return <Minus size={20} color="#ef4444" />;
-      case 'transfer': return <ArrowRightLeft size={20} color="#3b82f6" />;
-      default: return <DollarSign size={20} color="#6b7280" />;
+      if (response.ok) {
+        // Remove card from local state
+        setCards((prevCards) => prevCards.filter(card => card.id !== cardId));
+        alert('Card deleted successfully');
+      } else {
+        const error = await response.json();
+        alert(error.detail || 'Failed to delete card');
+      }
+    } catch (error) {
+      console.error('Error deleting card:', error);
+      alert('Failed to delete card');
+    } finally {
+      setDeletingCardId(null);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return { color: '#10b981', backgroundColor: '#f0fdf4' };
-      case 'pending': return { color: '#f59e0b', backgroundColor: '#fffbeb' };
-      case 'failed': return { color: '#ef4444', backgroundColor: '#fef2f2' };
-      default: return { color: '#6b7280', backgroundColor: '#f9fafb' };
-    }
-  };
+  const formatCardNumber = (cardNumber: string | null | undefined): string => {
+    if (!cardNumber) return '';
+    const digitsOnly = cardNumber.replace(/\D/g, '');
+    if (digitsOnly.length === 0) return '';
 
+    let formattedNumber = digitsOnly;
+    if (formattedNumber.length < 16) {
+      formattedNumber = formattedNumber.padEnd(16, '0');
+    } else if (formattedNumber.length > 16) {
+      formattedNumber = formattedNumber.substring(0, 16);
+    }
+
+    return formattedNumber.replace(/(\d{4})(?=\d)/g, '$1 ');
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -330,18 +318,21 @@ export default function WalletsPage() {
                 />
               </div>
               <button
+                onClick={handleUpdatePin}
+                disabled={updatingPin || !walletPin}
                 style={{
                   padding: '10px 20px',
-                  backgroundColor: 'var(--mc-sidebar-bg)',
+                  backgroundColor: updatingPin || !walletPin ? '#d1d5db' : 'var(--mc-sidebar-bg)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '20px',
                   fontSize: '14px',
                   fontWeight: '500',
-                  cursor: 'pointer'
+                  cursor: updatingPin || !walletPin ? 'not-allowed' : 'pointer',
+                  opacity: updatingPin || !walletPin ? 0.6 : 1
                 }}
               >
-                Update PIN
+                {updatingPin ? 'Updating...' : 'Update PIN'}
               </button>
             </div>
 
@@ -353,7 +344,7 @@ export default function WalletsPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '14px', color: '#374151' }}>Enable fingerprint/face ID</span>
                 <button
-                  onClick={() => setBiometricAuth(!biometricAuth)}
+                  onClick={handleBiometricToggle}
                   style={{
                     width: '48px',
                     height: '24px',
@@ -384,8 +375,18 @@ export default function WalletsPage() {
               <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0 0 12px 0' }}>
                 Card Management
               </h3>
-              {cards.map((card) => {
+              {loadingCards ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
+                  Loading cards...
+                </div>
+              ) : cards.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
+                  No cards found
+                </div>
+              ) : (
+                cards.map((card) => {
                 const hasBalance = card.balance > 0;
+                  const cardName = card.cardholder_name || `${card.card_type.charAt(0).toUpperCase() + card.card_type.slice(1)} Card`;
                 return (
                   <div key={card.id} style={{ 
                     display: 'flex', 
@@ -396,40 +397,36 @@ export default function WalletsPage() {
                   }}>
                     <div>
                       <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>
-                        {card.name}
+                          {cardName}
                       </div>
                       <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                        **** **** **** {card.number.slice(-4)}
+                          {formatCardNumber(card.card_number)}
                       </div>
                       <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                         Balance: {formatCurrency(card.balance)}
                       </div>
                     </div>
                     <button
-                      onClick={() => {
-                        if (!hasBalance) {
-                          // Handle delete card
-                          alert(`Delete card ${card.name}`);
-                        }
-                      }}
-                      disabled={hasBalance}
+                        onClick={() => handleDeleteCard(card.id)}
+                        disabled={hasBalance || deletingCardId === card.id}
                       style={{
                         padding: '6px 16px',
-                        backgroundColor: hasBalance ? '#d1d5db' : '#EF4444',
+                          backgroundColor: hasBalance || deletingCardId === card.id ? '#d1d5db' : '#EF4444',
                         color: 'white',
                         border: 'none',
                         borderRadius: '20px',
                         fontSize: '12px',
                         fontWeight: '500',
-                        cursor: hasBalance ? 'not-allowed' : 'pointer',
-                        opacity: hasBalance ? 0.6 : 1
+                          cursor: hasBalance || deletingCardId === card.id ? 'not-allowed' : 'pointer',
+                          opacity: hasBalance || deletingCardId === card.id ? 0.6 : 1
                       }}
                     >
-                      Delete
+                        {deletingCardId === card.id ? 'Deleting...' : 'Delete'}
                     </button>
                   </div>
                 );
-              })}
+                })
+              )}
             </div>
 
             {/* Modal Footer */}

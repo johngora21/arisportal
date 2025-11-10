@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from database import get_db
@@ -172,6 +172,7 @@ async def get_user_cards(
                    expiry_month, expiry_year, created_at
             FROM cards
             WHERE user_id = :user_id
+              AND (is_active = 1 OR is_active IS NULL)
             ORDER BY created_at DESC
         """)
         rows = db.execute(query, {"user_id": user_id}).fetchall()
@@ -217,13 +218,13 @@ async def create_card(
     - ClickPesa BillPay control number is auto-generated for top-ups (no expiry, no fixed amount)
     """
     try:
-        # Check if this is the first card, make it default
+    # Check if this is the first card, make it default
         # Use raw SQL to avoid loading non-existent columns
         from sqlalchemy import text
         count_query = text("SELECT COUNT(*) as count FROM cards WHERE user_id = :user_id")
         result = db.execute(count_query, {"user_id": user_id}).fetchone()
         existing_cards = result[0] if result else 0
-        is_default = existing_cards == 0
+    is_default = existing_cards == 0
         
         # Calculate expiry date (3 years from now)
         from datetime import datetime, timedelta
@@ -403,19 +404,19 @@ async def create_card(
             )
         
         # Create card with control number and expiry date
-        card = Card(
-            user_id=user_id,
-            card_type=card_data.card_type,
-            cardholder_name=card_data.cardholder_name,
-            is_default=is_default,
+    card = Card(
+        user_id=user_id,
+        card_type=card_data.card_type,
+        cardholder_name=card_data.cardholder_name,
+        is_default=is_default,
             balance=0.0,
             topup_control_number=topup_control_number,  # Store the control number for top-ups
             expiry_month=expiry_month,  # MM format (e.g., "12")
             expiry_year=expiry_year     # YYYY format (e.g., "2027")
-        )
-        
-        db.add(card)
-        db.commit()
+    )
+    
+    db.add(card)
+    db.commit()
         # Don't use db.refresh() - it might try to load non-existent columns
         # Instead, get the card ID from the committed object
         
@@ -450,6 +451,33 @@ async def create_card(
             status_code=500,
             detail=f"Failed to create card: {str(e)}"
         )
+
+@router.delete("/{card_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_card(
+    card_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Soft delete a card after ensuring it has zero balance."""
+    card = db.query(Card).filter(Card.id == card_id, Card.user_id == user_id).first()
+    if not card or not card.is_active:
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    balance = calculate_card_balance(card.id, db)
+    if balance > 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete a card with a remaining balance. Please move or withdraw funds first."
+        )
+
+    try:
+        card.is_active = False
+        card.is_default = False
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to delete card: {str(e)}")
+
 
 @router.post("/{card_id}/create-customer-payment")
 async def create_customer_payment(
@@ -1119,7 +1147,12 @@ async def sync_payments_from_clickpesa(
             # Match transactions to cards by control number (billPayNumber)
             if all_transactions:
                 print(f"📋 Matching {len(all_transactions)} transactions to {len(user_cards)} cards...")
-                for transaction in all_transactions:
+                print(f"🔍 User cards control numbers: {[normalize_control_number(c.topup_control_number) for c in user_cards if c.topup_control_number]}")
+                
+                for idx, transaction in enumerate(all_transactions):
+                    if idx < 3:  # Debug first 3 transactions
+                        print(f"🔍 Transaction {idx} keys: {list(transaction.keys()) if isinstance(transaction, dict) else 'Not a dict'}")
+                        print(f"🔍 Transaction {idx} sample: {str(transaction)[:500]}")
                     # Extract control number from transaction
                     # Account statement transactions should have billPayNumber field
                     transaction_billpay = (
@@ -1129,14 +1162,24 @@ async def sync_payments_from_clickpesa(
                         transaction.get('billPay') or
                         transaction.get('reference') or
                         transaction.get('orderId') or
-                        transaction.get('order_id')
+                        transaction.get('order_id') or
+                        transaction.get('orderReference') or
+                        transaction.get('description') or  # Sometimes control number is in description
+                        str(transaction.get('id', '')) or  # Sometimes ID contains control number
+                        ''
                     )
                     
                     # Normalize the control number from transaction
                     transaction_control_number = normalize_control_number(transaction_billpay)
                     
+                    if idx < 3:  # Debug first 3 transactions
+                        print(f"🔍 Transaction {idx} billPayNumber field: {transaction_billpay}")
+                        print(f"🔍 Transaction {idx} normalized control: {transaction_control_number}")
+                    
                     if not transaction_control_number:
                         # Skip transactions without control numbers
+                        if idx < 3:
+                            print(f"⚠️ Transaction {idx} has no control number - skipping")
                         continue
                     
                     # Find matching card by control number
@@ -1147,11 +1190,18 @@ async def sync_payments_from_clickpesa(
                         if card_control_number and transaction_control_number:
                             if card_control_number == transaction_control_number:
                                 matched_card = card_row
+                                if idx < 3:
+                                    print(f"✅ EXACT MATCH: Transaction {idx} control {transaction_control_number} = Card {card_row.id} control {card_control_number}")
                                 break
                             # Also check if transaction control number contains card control number (for partial matches)
                             if card_control_number in transaction_control_number or transaction_control_number in card_control_number:
                                 matched_card = card_row
+                                if idx < 3:
+                                    print(f"✅ PARTIAL MATCH: Transaction {idx} control {transaction_control_number} contains Card {card_row.id} control {card_control_number}")
                                 break
+                    
+                    if idx < 3 and not matched_card:
+                        print(f"❌ NO MATCH: Transaction {idx} control {transaction_control_number} doesn't match any card")
                     
                     if matched_card:
                         # Extract transaction details
@@ -1238,27 +1288,47 @@ async def sync_payments_from_clickpesa(
                     errors.append(f"Card {card_row.id}: Invalid amount {amount}")
                     continue
                 
-                # Check if ledger entry already exists (avoid duplicate credits)
+                # Extract unique payment ID from transaction
+                # Each payment has a unique ID (e.g., "927273358943LCP3350", "927273358943LCP5488")
+                # This is different from order_id which can be reused for multiple top-ups
+                # ClickPesa account statement returns 'id' field with unique payment ID
+                payment_id = (
+                    payment_data.get('id') or  # This is the unique payment ID from ClickPesa
+                    payment_data.get('paymentId') or 
+                    payment_data.get('transactionId') or 
+                    payment_data.get('ID') or
+                    payment_data.get('transaction_id') or
+                    None  # Don't fallback to order_id - we need the unique ID
+                )
+                
+                # If no unique payment ID, skip this transaction (it's not a valid payment)
+                if not payment_id or payment_id == order_id_from_api:
+                    print(f"⚠️ Card {card_row.id}: No unique payment ID found for transaction, skipping")
+                    continue
+                
+                # Check if this EXACT payment (by unique payment ID) was already processed
+                # Each payment has a unique ID (e.g., "927273358943LCP3350") - use that to prevent duplicates
                 ledger_check = text("""
                     SELECT id FROM card_ledger_entries
                     WHERE card_id = :card_id
                     AND entry_type = 'CREDIT'
                     AND entry_source = 'CLICKPESA_TOPUP'
-                    AND clickpesa_control_number = :control_number
-                    AND amount = :amount
+                    AND clickpesa_order_id = :payment_id
                     LIMIT 1
                 """)
                 existing_ledger = db.execute(ledger_check, {
                     "card_id": card_row.id,
-                    "control_number": normalized_control_number,
-                    "amount": amount
+                    "payment_id": payment_id
                 }).fetchone()
                 
                 if existing_ledger:
-                    print(f"⏭️ Card {card_row.id}: Payment already processed (ledger entry exists), skipping")
+                    print(f"⏭️ Card {card_row.id}: Payment with ID {payment_id} already processed, skipping duplicate")
                     continue
                 
                 # Create CREDIT ledger entry for synced payment
+                # Always use unique payment ID (e.g., "927273358943LCP3350") as clickpesa_order_id
+                unique_payment_id = payment_id  # This is the unique payment ID from ClickPesa
+                
                 ledger_entry = create_ledger_entry(
                     card_id=card_row.id,
                     user_id=card_row.user_id,
@@ -1266,35 +1336,42 @@ async def sync_payments_from_clickpesa(
                     entry_source=LedgerEntrySource.CLICKPESA_TOPUP,
                     amount=amount,
                     currency="TZS",
-                    reference=order_id_from_api or f"SYNC-{normalized_control_number}",
+                    reference=unique_payment_id or f"SYNC-{normalized_control_number}",
                     description=f"Synced payment for {card_row.cardholder_name or card_row.card_type} card",
-                    clickpesa_order_id=order_id_from_api,
+                    clickpesa_order_id=unique_payment_id,  # Store unique payment ID
                     clickpesa_control_number=normalized_control_number,
                     clickpesa_response=str(payment_data),
                     db=db
                 )
                 
                 # Also log the transaction (for transaction history)
-                transaction_query = text("""
-                    INSERT INTO card_transactions 
-                    (card_id, user_id, amount, currency, customer_billpay_control_number, 
-                     payment_reference, description, status, transaction_type, clickpesa_response, created_at)
-                    VALUES 
-                    (:card_id, :user_id, :amount, :currency, :control_number, 
-                     :payment_reference, :description, :status, :transaction_type, :clickpesa_response, NOW())
-                """)
-                db.execute(transaction_query, {
-                    "card_id": card_row.id,
-                    "user_id": card_row.user_id,
-                    "amount": amount,
-                    "currency": "TZS",
-                    "control_number": normalized_control_number,
-                    "payment_reference": order_id_from_api or f"SYNC-{normalized_control_number}",
-                    "description": f"Synced payment for {card_row.cardholder_name or card_row.card_type} card",
-                    "status": "completed",
-                    "transaction_type": "deposit",
-                    "clickpesa_response": str(payment_data)
-                })
+                # Skip if card_transactions table has foreign key issues - ledger is the source of truth
+                try:
+                    transaction_query = text("""
+                        INSERT INTO card_transactions 
+                        (card_id, user_id, amount, currency, customer_billpay_control_number, 
+                         payment_reference, description, status, transaction_type, clickpesa_response, created_at)
+                        VALUES 
+                        (:card_id, :user_id, :amount, :currency, :control_number, 
+                         :payment_reference, :description, :status, :transaction_type, :clickpesa_response, NOW())
+                    """)
+                    db.execute(transaction_query, {
+                        "card_id": card_row.id,
+                        "user_id": card_row.user_id,
+                        "amount": amount,
+                        "currency": "TZS",
+                        "control_number": normalized_control_number,
+                        "payment_reference": unique_payment_id or f"SYNC-{normalized_control_number}",
+                        "description": f"Synced payment for {card_row.cardholder_name or card_row.card_type} card",
+                        "status": "completed",
+                        "transaction_type": "deposit",
+                        "clickpesa_response": str(payment_data)
+                    })
+                except Exception as trans_error:
+                    # Transaction logging failed, but ledger entry was created - that's OK
+                    # Ledger is the source of truth for balances
+                    print(f"⚠️ Failed to log transaction (non-critical): {str(trans_error)}")
+                    pass
                 
                 # Get updated balance (calculated from ledger)
                 new_balance = calculate_card_balance(card_row.id, db)
