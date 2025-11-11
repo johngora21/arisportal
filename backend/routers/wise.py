@@ -20,12 +20,19 @@ import os
 
 router = APIRouter()
 payment_service = UnifiedPaymentService()
-try:
-    wise_service = WiseService()
-except ValueError:
-    wise_service = None
-    print("⚠️ Warning: Wise service not available - some endpoints may not work")
 clickpesa_service = ClickPesaService()
+
+# Lazy initialization of WiseService - only when actually needed
+def get_wise_service():
+    """Get WiseService instance, raises error if not configured"""
+    try:
+        return WiseService()
+    except ValueError as e:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=503,
+            detail="Wise service is not configured. Please set WISE_API_TOKEN in your .env file."
+        )
 
 # Get ClickPesa BillPay merchant number
 SHARED_BILLPAY_NAMBA = os.getenv('CLICKPESA_BILLPAY_NAMBA', '1234')
@@ -139,6 +146,7 @@ async def create_remittance(
             
             # Step 1: Create Wise transfer (TZS → Target Currency)
             # Use targetAmount so Wise calculates how much TZS we need
+            wise_service = get_wise_service()  # Lazy initialization
             wise_transfer_result = wise_service.create_transfer(
                 amount=target_amount,
                 currency='TZS',  # Source currency is always TZS (customer pays in TZS)
@@ -193,7 +201,7 @@ async def create_remittance(
                 remittance_id=remittance_id,
                 provider=RemittanceProvider.WISE,
                 amount=wise_source_amount,
-                currency=wise_source_currency,
+                currency='TZS',  # Source currency is TZS (customer pays in TZS)
                 recipient_amount=wise_transfer_result.get('target_amount'),
                 recipient_name=remittance_data.recipient_name,
                 recipient_account=remittance_data.recipient_account,

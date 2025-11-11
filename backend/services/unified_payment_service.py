@@ -12,16 +12,22 @@ class UnifiedPaymentService:
     
     def __init__(self):
         self.clickpesa = ClickPesaService()
-        try:
-            self.wise = WiseService()
-        except ValueError as e:
-            print(f"⚠️ Warning: Wise service not available: {e}")
-            self.wise = None
+        self._wise = None  # Lazy initialization
         self._providers = {
             PaymentProvider.CLICKPESA: self.clickpesa,
         }
-        if self.wise:
-            self._providers[PaymentProvider.WISE] = self.wise
+    
+    @property
+    def wise(self):
+        """Lazy initialization of WiseService"""
+        if self._wise is None:
+            try:
+                self._wise = WiseService()
+                self._providers[PaymentProvider.WISE] = self._wise
+            except ValueError as e:
+                # Wise API token not set - service not available
+                raise ValueError("Wise service is not configured. Please set WISE_API_TOKEN in your .env file.")
+        return self._wise
     
     def _select_provider(self, 
                         destination_country: Optional[str] = None,
@@ -122,7 +128,10 @@ class UnifiedPaymentService:
     def get_supported_currencies(self, provider: PaymentProvider) -> list:
         """Get supported currencies for a provider"""
         if provider == PaymentProvider.WISE:
-            return self.wise.get_supported_currencies()
+            try:
+                return self.wise.get_supported_currencies()
+            except ValueError:
+                return []  # Wise not configured
         elif provider == PaymentProvider.CLICKPESA:
             return ['TZS']  # ClickPesa primarily supports TZS
         return []

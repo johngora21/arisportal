@@ -1,10 +1,8 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, Enum
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 from datetime import datetime
 import enum
-
-Base = declarative_base()
+from database import Base
 
 class UserStatus(enum.Enum):
     ACTIVE = "active"

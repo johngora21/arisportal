@@ -7,11 +7,11 @@ class Card(Base):
     __tablename__ = "cards"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("user_profiles.id"), nullable=False)
     card_type = Column(String(50), nullable=False)
-    last_four = Column(String(4), nullable=False)
-    expiry_month = Column(String(2))
-    expiry_year = Column(String(4))
+    # Note: last_four removed - not needed for control-number based cards
+    expiry_month = Column(String(2))  # MM format (01-12)
+    expiry_year = Column(String(4))   # YYYY format (e.g., 2027)
     cardholder_name = Column(String(100))
     is_active = Column(Boolean, default=True)
     is_default = Column(Boolean, default=False)
@@ -30,7 +30,7 @@ class CardTransaction(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     card_id = Column(Integer, ForeignKey("cards.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("user_profiles.id"), nullable=False)
     
     # Transaction details
     amount = Column(Float, nullable=False)

@@ -135,16 +135,17 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       //   ]
       // },
       // { id: 'real-estates', label: 'Real Estates', href: '/real-estates', icon: <Landmark size={20} /> },
-      { 
-        id: 'settings', 
-        label: 'Settings', 
-        href: '/settings', 
-        icon: <Settings size={20} />,
-        subItems: [
-          { id: 'settings-configuration', label: 'Configuration', href: '/settings', icon: <Settings size={16} /> },
-          { id: 'settings-apis', label: 'APIs', href: '/settings/apis', icon: <Key size={16} /> }
-        ]
-      },
+      // Settings tab hidden for now
+      // { 
+      //   id: 'settings', 
+      //   label: 'Settings', 
+      //   href: '/settings', 
+      //   icon: <Settings size={20} />,
+      //   subItems: [
+      //     { id: 'settings-configuration', label: 'Configuration', href: '/settings', icon: <Settings size={16} /> },
+      //     { id: 'settings-apis', label: 'APIs', href: '/settings/apis', icon: <Key size={16} /> }
+      //   ]
+      // },
     ];
     return [{ id: 'main', items: base }];
   }, []);
@@ -180,14 +181,14 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       header={{
         actions: (
           <>
-            {/* SMS Credits Display */}
-            <div style={{
+            {/* SMS Credits Display - hidden for now */}
+            {/* <div style={{
               fontSize: '14px',
               fontWeight: '700',
               color: '#1f2937'
             }}>
               SMS Credits: <span style={{ color: '#10b981' }}>1,250</span>
-            </div>
+            </div> */}
             
             {/* Currency Dropdown */}
             <div ref={currencyDropdownRef} style={{ position: 'relative' }}>
@@ -275,9 +276,10 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
               )}
             </div>
             
-            <button className="mc-icon-btn" aria-label="Chats" onClick={() => router.push('/communications')}>
+            {/* Chat icon hidden for now */}
+            {/* <button className="mc-icon-btn" aria-label="Chats" onClick={() => router.push('/communications')}>
               <MessageSquare size={18} />
-            </button>
+            </button> */}
             <button className="mc-icon-btn" aria-label="Notifications">
               <Bell size={18} />
             </button>

@@ -25,6 +25,7 @@ interface Invoice {
   email?: string;
   phone?: string;
   whatsapp?: string;
+  invoiceData?: any;
 }
 
 interface InvoicesTabProps {
@@ -36,6 +37,7 @@ interface InvoicesTabProps {
   setDurationFilter: (duration: string) => void;
   invoices: Invoice[];
   onEditInvoice: (invoice: Invoice) => void;
+  onDownloadInvoice: (invoice: Invoice) => void;
   onDeleteInvoice: (invoiceId: string) => void;
   onUpdateInvoiceStatus: (invoiceId: string, status: 'paid' | 'pending' | 'overdue') => void;
 }
@@ -49,6 +51,7 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
   setDurationFilter,
   invoices,
   onEditInvoice,
+  onDownloadInvoice,
   onDeleteInvoice,
   onUpdateInvoiceStatus
 }) => {
@@ -217,6 +220,13 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
                   </td>
                   <td style={{ padding: '16px 0' }}>
                     <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        onClick={() => onDownloadInvoice(invoice)}
+                        style={{ padding: '6px', backgroundColor: '#eef2ff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                        title="Download Invoice"
+                      >
+                        <Download size={16} color="#4f46e5" />
+                      </button>
                       <button 
                         onClick={() => onEditInvoice(invoice)}
                         style={{ padding: '6px', backgroundColor: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
@@ -454,3 +464,4 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
     </>
   );
 };
+

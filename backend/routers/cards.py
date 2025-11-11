@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.card import Card, CardTransaction
 from models.card_ledger import CardLedgerEntry, LedgerEntryType, LedgerEntrySource
+from models.transfer import Transfer, TransferStatus, TransferMethod, TransferType
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
@@ -33,6 +34,10 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
 # Environment variable for shared BillPay-Namba
 import os
 SHARED_BILLPAY_NAMBA = os.getenv('CLICKPESA_BILLPAY_NAMBA', '3864')  # Your ClickPesa merchant number
+
+from services.clickpesa_service import ClickPesaService
+import time
+from sqlalchemy import or_
 
 # ============ Models ============
 class CardCreate(BaseModel):
@@ -156,14 +161,95 @@ def create_ledger_entry(
     
     return ledger_entry
 
+
+def reconcile_pending_mno_payouts(user_id: int, db: Session) -> None:
+    """
+    For pending MNO payouts, poll ClickPesa status and debit card once provider marks SUCCESS.
+    """
+    try:
+        pending_q = db.query(Transfer).filter(
+            Transfer.user_id == user_id,
+            Transfer.transfer_type == TransferType.LOCAL_PEER,
+            Transfer.transfer_method == TransferMethod.MNO,
+            or_(
+                Transfer.status == TransferStatus.PROCESSING,
+                Transfer.status == TransferStatus.COMPLETED
+            ),
+            Transfer.from_card_id.isnot(None),
+            Transfer.clickpesa_reference.isnot(None)
+        ).limit(3)  # Avoid blocking the cards request
+
+        pending_transfers = pending_q.all()
+        if not pending_transfers:
+            return
+
+        clickpesa_service = ClickPesaService()
+        start_ts = time.time()
+        max_budget_seconds = 2.0  # keep reconciliation under 2s so /cards stays responsive
+
+        for transfer in pending_transfers:
+            if time.time() - start_ts > max_budget_seconds:
+                print("[MNO PAYOUT][RECONCILE] time budget exceeded; will continue next request")
+                break
+            try:
+                # Skip if ledger already has this debit (idempotent)
+                existing_debit = db.query(CardLedgerEntry).filter(
+                    CardLedgerEntry.card_id == transfer.from_card_id,
+                    CardLedgerEntry.entry_type == LedgerEntryType.DEBIT,
+                    CardLedgerEntry.reference == transfer.clickpesa_reference
+                ).first()
+
+                if existing_debit:
+                    if transfer.status != TransferStatus.COMPLETED:
+                        transfer.status = TransferStatus.COMPLETED
+                    continue
+
+                status_payload = clickpesa_service.get_mobile_money_payout(
+                    transfer.clickpesa_reference,
+                    timeout_seconds=3.0
+                )
+                provider_status = (status_payload.get('status') or '').upper()
+                print(f"[MNO PAYOUT][RECONCILE] ref={transfer.clickpesa_reference} status={provider_status}")
+
+                if provider_status == "SUCCESS":
+                    create_ledger_entry(
+                        card_id=transfer.from_card_id,
+                        user_id=user_id,
+                        entry_type=LedgerEntryType.DEBIT,
+                        entry_source=LedgerEntrySource.WITHDRAWAL,
+                        amount=transfer.amount,
+                        reference=transfer.clickpesa_reference,
+                        description=transfer.description or f"Mobile payout to {transfer.recipient_name}",
+                        db=db
+                    )
+                    transfer.status = TransferStatus.COMPLETED
+                elif provider_status == "REVERSED":
+                    transfer.status = TransferStatus.FAILED
+                else:
+                    # Leave as processing; will retry later
+                    continue
+            except Exception as reconcile_error:
+                print(f"[MNO PAYOUT][RECONCILE][ERROR] ref={transfer.clickpesa_reference} error={reconcile_error}")
+                continue
+
+        db.commit()
+    except Exception as outer_error:
+        print(f"[MNO PAYOUT][RECONCILE][FATAL] error={outer_error}")
+        db.rollback()
+
 # ============ Endpoints ============
 @router.get("", response_model=List[CardResponse])
 async def get_user_cards(
     user_id: int = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    skip_reconcile: bool = False
 ):
     """Get all cards for the current user"""
     try:
+        # Before returning cards, reconcile any pending mobile payouts (unless explicitly skipped)
+        if not skip_reconcile:
+            reconcile_pending_mno_payouts(user_id, db)
+
         # Use raw SQL to select only columns that exist in the database
         from sqlalchemy import text
         query = text("""
@@ -218,14 +304,14 @@ async def create_card(
     - ClickPesa BillPay control number is auto-generated for top-ups (no expiry, no fixed amount)
     """
     try:
-        # Check if this is the first card, make it default
+    # Check if this is the first card, make it default
         # Use raw SQL to avoid loading non-existent columns
         from sqlalchemy import text
         count_query = text("SELECT COUNT(*) as count FROM cards WHERE user_id = :user_id")
         result = db.execute(count_query, {"user_id": user_id}).fetchone()
         existing_cards = result[0] if result else 0
-        is_default = existing_cards == 0
-        
+    is_default = existing_cards == 0
+    
         # Calculate expiry date (3 years from now)
         from datetime import datetime, timedelta
         expiry_date = datetime.now() + timedelta(days=3*365)  # 3 years
@@ -404,22 +490,21 @@ async def create_card(
             )
         
         # Create card with control number and expiry date
-        card = Card(
-            user_id=user_id,
-            card_type=card_data.card_type,
-            cardholder_name=card_data.cardholder_name,
-            is_default=is_default,
+    card = Card(
+        user_id=user_id,
+        card_type=card_data.card_type,
+        cardholder_name=card_data.cardholder_name,
+        is_default=is_default,
             balance=0.0,
             topup_control_number=topup_control_number,  # Store the control number for top-ups
             expiry_month=expiry_month,  # MM format (e.g., "12")
             expiry_year=expiry_year     # YYYY format (e.g., "2027")
-        )
-        
-        db.add(card)
-        db.commit()
+    )
+    
+    db.add(card)
+    db.commit()
         # Don't use db.refresh() - it might try to load non-existent columns
         # Instead, get the card ID from the committed object
-        
         card_id = card.id  # Get ID before we lose the object reference
         
         # Return as dict using data we already have (avoid querying database again)
@@ -670,7 +755,7 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
                 "remittance_id": matched_remittance.id
             })
             db.commit()
-            
+    
             # TODO: Implement actual funding to Wise
             # Option 1: If you have Wise balance, fund directly:
             # wise_service = WiseService()
@@ -689,9 +774,172 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
         
         return {"status": "success", "type": "remittance", "remittance_id": matched_remittance.remittance_id}
     
+    # Check if this is an invoice payment
+    from models.invoice import Invoice, InvoiceStatus
+    invoices_query = text("""
+        SELECT id, user_id, invoice_number, control_number, total, amount_paid, status
+        FROM invoices
+        WHERE control_number IS NOT NULL
+    """)
+    all_invoices = db.execute(invoices_query).fetchall()
+    
+    matched_invoice = None
+    for inv_row in all_invoices:
+        inv_control_number = normalize_control_number(inv_row.control_number)
+        if inv_control_number == normalized_control_number:
+            matched_invoice = inv_row
+            print(f"✅ Matched invoice ID {inv_row.id} (Invoice #{inv_row.invoice_number}) with control number {inv_control_number}")
+            break
+    
+    if matched_invoice and status in ['completed', 'SUCCESS', 'SETTLED']:
+        # This is an invoice payment - credit the invoice owner's default card
+        try:
+            # Get the invoice owner's default card
+            default_card_query = text("""
+                SELECT id, user_id, cardholder_name, balance
+                FROM cards
+                WHERE user_id = :user_id
+                  AND is_default = 1
+                  AND is_active = 1
+                LIMIT 1
+            """)
+            default_card_row = db.execute(default_card_query, {"user_id": matched_invoice.user_id}).fetchone()
+            
+            if not default_card_row:
+                print(f"❌ Invoice owner (user_id={matched_invoice.user_id}) has no default card. Cannot credit payment.")
+                return {
+                    "status": "error",
+                    "type": "invoice_payment",
+                    "message": f"Invoice owner has no default card. Payment received but not credited.",
+                    "invoice_id": matched_invoice.id
+                }
+            
+            # Check if this specific payment was already processed (avoid duplicates)
+            # Check by order_id (most reliable) or payment_reference + control_number + amount
+            existing_ledger_query = text("""
+                SELECT id FROM card_ledger_entries
+                WHERE card_id = :card_id
+                AND entry_type = 'CREDIT'
+                AND entry_source = 'CLICKPESA_TOPUP'
+                AND description LIKE :description_pattern
+                AND (
+                    (clickpesa_order_id = :order_id AND :order_id IS NOT NULL AND :order_id != '')
+                    OR (reference = :payment_reference AND :payment_reference IS NOT NULL AND :payment_reference != '')
+                    OR (clickpesa_control_number = :control_number AND amount = :amount)
+                )
+                LIMIT 1
+            """)
+            existing_ledger = db.execute(existing_ledger_query, {
+                "card_id": default_card_row.id,
+                "control_number": normalized_control_number,
+                "amount": amount,
+                "order_id": order_id or "",
+                "payment_reference": payment_reference or "",
+                "description_pattern": f"%Invoice payment: {matched_invoice.invoice_number}%"
+            }).fetchone()
+            
+            if existing_ledger:
+                print(f"⏭️ Invoice payment already processed (ledger entry ID: {existing_ledger.id}), skipping duplicate")
+                # Don't update invoice or create ledger entry - payment was already processed
+                new_balance = calculate_card_balance(default_card_row.id, db)
+                return {
+                    "status": "success",
+                    "type": "invoice_payment",
+                    "message": "Payment already processed",
+                    "invoice_id": matched_invoice.id,
+                    "card_id": default_card_row.id,
+                    "new_balance": new_balance,
+                    "duplicate": True
+                }
+            
+            # Create CREDIT ledger entry for invoice payment
+            ledger_entry = create_ledger_entry(
+                card_id=default_card_row.id,
+                user_id=matched_invoice.user_id,
+                entry_type=LedgerEntryType.CREDIT,
+                entry_source=LedgerEntrySource.CLICKPESA_TOPUP,
+                amount=amount,
+                currency="TZS",
+                reference=payment_reference or f"INV-{matched_invoice.invoice_number}",
+                description=f"Invoice payment: {matched_invoice.invoice_number}",
+                clickpesa_order_id=order_id,
+                clickpesa_control_number=normalized_control_number,
+                clickpesa_response=str(data),
+                db=db
+            )
+            
+            # Update invoice: add to amount_paid and update status
+            # Calculate new amount_paid (add this payment to existing amount_paid)
+            current_amount_paid = float(matched_invoice.amount_paid) or 0.0
+            new_amount_paid = current_amount_paid + amount
+            invoice_total = float(matched_invoice.total)
+            
+            # Determine status: PENDING (0 paid), PARTIAL_PAID (>0 but < total), PAID (>= total)
+            if new_amount_paid >= invoice_total:
+                new_status = InvoiceStatus.PAID
+            elif new_amount_paid > 0:
+                new_status = InvoiceStatus.PARTIAL_PAID
+            else:
+                new_status = InvoiceStatus.PENDING
+            
+            update_invoice_query = text("""
+                UPDATE invoices
+                SET amount_paid = :amount_paid,
+                    status = :status,
+                    paid_at = CASE WHEN :status = 'PAID' AND paid_at IS NULL THEN NOW() ELSE paid_at END,
+                    updated_at = NOW()
+                WHERE id = :invoice_id
+            """)
+            db.execute(update_invoice_query, {
+                "amount_paid": new_amount_paid,
+                "status": new_status.value,
+                "invoice_id": matched_invoice.id
+            })
+            db.commit()
+            
+            # Get updated balance (calculated from ledger)
+            new_balance = calculate_card_balance(default_card_row.id, db)
+            
+            status_display = {
+                "PENDING": "Pending",
+                "PARTIAL_PAID": "Partial Paid",
+                "PAID": "Fully Paid"
+            }.get(new_status.value, new_status.value)
+            
+            print(f"💰 Invoice payment received: {amount} TZS for invoice {matched_invoice.invoice_number}")
+            print(f"   Credited to default card ID {default_card_row.id} (Balance: {new_balance} TZS)")
+            print(f"   Invoice payment progress: {new_amount_paid} / {invoice_total} TZS ({status_display})")
+            
+            return {
+                "status": "success",
+                "type": "invoice_payment",
+                "invoice_id": matched_invoice.id,
+                "invoice_number": matched_invoice.invoice_number,
+                "amount": amount,
+                "amount_paid": new_amount_paid,
+                "invoice_total": invoice_total,
+                "invoice_status": new_status.value,
+                "card_id": default_card_row.id,
+                "new_balance": new_balance,
+                "ledger_entry_id": ledger_entry.id
+            }
+            
+        except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
+            print(f"❌ Error processing invoice payment: {str(e)}")
+            print(error_trace)
+            db.rollback()
+            # Don't fail the webhook, just log the error
+            return {
+                "status": "error",
+                "type": "invoice_payment",
+                "message": f"Error processing invoice payment: {str(e)}",
+                "invoice_id": matched_invoice.id if matched_invoice else None
+            }
+    
     # Check if this is a card top-up (payment to card's topup_control_number)
     # Match by normalized control number (remove dashes/spaces for comparison)
-    from sqlalchemy import text
     
     # Query cards and normalize control numbers for comparison
     cards_query = text("""

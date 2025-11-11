@@ -88,8 +88,8 @@ export default function CardsPage() {
         const result = await response.json();
         
         // Always refresh cards after sync to show updated balances (even if synced_count is 0)
-        // This ensures balances are recalculated from the ledger
-        const cardsResponse = await fetch(buildApiUrl('/cards'), {
+        // Use skip_reconcile=true here because the sync endpoint already updated the ledger
+        const cardsResponse = await fetch(buildApiUrl('/cards?skip_reconcile=true'), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ export default function CardsPage() {
 
         let response;
         try {
-          response = await fetch(buildApiUrl('/cards'), {
+          response = await fetch(buildApiUrl('/cards?skip_reconcile=true'), {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
@@ -384,19 +384,19 @@ export default function CardsPage() {
             >
               {showAllBalances ? <Eye size={20} /> : <EyeOff size={20} />}
             </div>
-            <button
+        <button
               onClick={() => setShowCreateModal(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                backgroundColor: 'var(--mc-sidebar-bg-hover)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '20px',
-                fontSize: '14px',
-                fontWeight: '500',
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            backgroundColor: 'var(--mc-sidebar-bg-hover)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '20px',
+            fontSize: '14px',
+            fontWeight: '500',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
@@ -405,11 +405,11 @@ export default function CardsPage() {
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
-              }}
-            >
-              <Plus size={16} />
-              Add Card
-            </button>
+          }}
+        >
+          <Plus size={16} />
+          Add Card
+        </button>
           </div>
         </div>
       </div>

@@ -1,11 +1,28 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCurrency } from '../../../../contexts/CurrencyContext';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { buildApiUrl } from '../../../../config/api';
+import { useRouter } from 'next/navigation';
+import { countries } from '../../../../data/countries';
+
+interface Card {
+  id: number;
+  card_type: string;
+  last_four: string;
+  cardholder_name: string | null;
+  balance: number;
+  is_active: boolean;
+  is_default: boolean;
+}
 
 export default function TransferPage() {
   const { formatCurrency } = useCurrency();
-  const [transferType, setTransferType] = useState<'card' | 'peer' | 'bulk'>('card');
+  const { token } = useAuth();
+  const router = useRouter();
+  const [transferType, setTransferType] = useState<'card' | 'local' | 'international'>('card');
+  const [transferSubType, setTransferSubType] = useState<'peer' | 'bulk'>('peer');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [recipient, setRecipient] = useState('');
@@ -14,20 +31,102 @@ export default function TransferPage() {
   const [transferMethod, setTransferMethod] = useState<'bank' | 'mno'>('bank');
   const [selectedBank, setSelectedBank] = useState('');
   const [selectedMno, setSelectedMno] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('');
   const [transferMode, setTransferMode] = useState<'card' | 'external'>('card');
   const [fromCard, setFromCard] = useState('');
   const [toCard, setToCard] = useState('');
-  const [bulkRecipients, setBulkRecipients] = useState<Array<{ id: string; name: string; amount: string; bank: string }>>([
-    { id: '1', name: '', amount: '', bank: '' }
+  const [bulkRecipients, setBulkRecipients] = useState<Array<{ id: string; recipientName: string; account: string; amount: string; bank: string; mno: string; country?: string }>>([
+    { id: '1', recipientName: '', account: '', amount: '', bank: '', mno: '' }
   ]);
   const [importError, setImportError] = useState('');
+  const [cards, setCards] = useState<Card[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingCards, setLoadingCards] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   
-  // Mock cards
-  const cards = [
-    { id: 'card1', name: "Emergency Fund", type: 'savings' },
-    { id: 'card2', name: "My Shop", type: 'business' },
-    { id: 'card3', name: "John's Card", type: 'personal' }
+  // African countries that support MNO
+  const africanMnoCountries = [
+    'Benin',
+    'Burkina Faso',
+    'Cameroon',
+    'Ghana',
+    'Côte d\'Ivoire',
+    'Ivory Coast',
+    'Nigeria',
+    'Senegal',
+    'Sierra Leone',
+    'Congo',
+    'Congo, Democratic Republic of the',
+    'DRC',
+    'Gabon',
+    'Lesotho',
+    'Malawi',
+    'Mozambique',
+    'Zambia',
+    'Ethiopia',
+    'Kenya',
+    'Rwanda',
+    'Tanzania, United Republic of',
+    'Tanzania',
+    'Uganda'
   ];
+
+  // Fetch cards from API
+  useEffect(() => {
+    const fetchCards = async () => {
+      if (!token) {
+        setLoadingCards(false);
+        return;
+      }
+
+      try {
+        setLoadingCards(true);
+        const response = await fetch(buildApiUrl('/cards'), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.status === 401) {
+          // Token invalid, redirect to login
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user_data');
+          router.push('/authentication/login');
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch cards');
+        }
+
+        const data = await response.json();
+        setCards(data);
+      } catch (err) {
+        console.error('Error fetching cards:', err);
+        setError('Failed to load cards. Please try again.');
+      } finally {
+        setLoadingCards(false);
+      }
+    };
+
+    fetchCards();
+  }, [token, router]);
+
+  // Helper to get card display name
+  const getCardDisplayName = (card: Card): string => {
+    const cardType = card.card_type?.toUpperCase() || 'CARD';
+    if (card.cardholder_name) {
+      return `${cardType} - ${card.cardholder_name}`;
+    }
+    return `${cardType} Card`;
+  };
+
+  const getCardOptionLabel = (card: Card): string => {
+    const base = getCardDisplayName(card);
+    return card.is_default ? `${base} (Default)` : base;
+  };
 
   // Tanzanian Banks
   const banks = [
@@ -74,13 +173,13 @@ export default function TransferPage() {
           setImportError('File must contain: Bank Name, Account Number, Amount');
           return;
         }
-        const imported: Array<{ id: string; name: string; amount: string; bank: string }> = [];
+        const imported: Array<{ id: string; recipientName: string; account: string; amount: string; bank: string; mno: string }> = [];
         for (let i = 1; i < lines.length; i++) {
           const values = lines[i].split(',').map(v => v.trim());
           if (values.length >= 3 && values[accountIndex] && values[amountIndex]) {
             const bankName = values[bankIndex];
             const match = banks.find(b => b.name.toLowerCase().includes(bankName.toLowerCase()) || bankName.toLowerCase().includes(b.name.toLowerCase()));
-            imported.push({ id: String(Date.now() + i), name: values[accountIndex], amount: values[amountIndex], bank: match?.id || '' });
+            imported.push({ id: String(Date.now() + i), recipientName: '', account: values[accountIndex], amount: values[amountIndex], bank: match?.id || '', mno: '' });
           }
         }
         if (imported.length > 0) {
@@ -147,100 +246,279 @@ export default function TransferPage() {
     </div>
   );
 
-  const handleTransfer = () => {
+  // Check if selected country supports MNO
+  const supportsMno = (countryName: string): boolean => {
+    return africanMnoCountries.some(country => 
+      countryName.toLowerCase().includes(country.toLowerCase()) || 
+      country.toLowerCase().includes(countryName.toLowerCase())
+    );
+  };
+
+  const handleTransfer = async () => {
+    if (!token) {
+      setError('Please login to continue');
+      router.push('/authentication/login');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    try {
+      // Validation
     if (transferType === 'card') {
       if (!fromCard || !toCard) {
-        alert('Please select both source and destination cards');
+          setError('Please select both source and destination cards');
+          setLoading(false);
         return;
       }
     if (!amount || parseFloat(amount) <= 0) {
-      alert('Please enter a valid amount');
+          setError('Please enter a valid amount');
+          setLoading(false);
       return;
     }
-    } else if (transferType === 'peer') {
+
+        // Card-to-card transfer
+        const response = await fetch(buildApiUrl('/transfers/card-to-card'), {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from_card_id: parseInt(fromCard),
+            to_card_id: parseInt(toCard),
+            amount: parseFloat(amount),
+            description: description || undefined
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || 'Transfer failed');
+        }
+
+        setSuccess('Transfer completed successfully!');
+        // Auto-clear success message after 5 seconds
+        setTimeout(() => setSuccess(''), 5000);
+        
+        // Refresh cards to update balances
+        const cardsResponse = await fetch(buildApiUrl('/cards'), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (cardsResponse.ok) {
+          const updatedCards = await cardsResponse.json();
+          setCards(updatedCards);
+        }
+        
+        // Reset form
+        setAmount('');
+        setDescription('');
+        setFromCard('');
+        setToCard('');
+
+      } else if (transferType === 'local' && transferSubType === 'peer') {
+        // Validation for local peer transfer
       if (transferMode === 'card' && !fromCard) {
-        alert('Please select a source card');
+          setError('Please select a source card');
+          setLoading(false);
         return;
       }
       if (transferMethod === 'bank') {
         if (!selectedBank) {
-          alert('Please select a bank');
+            setError('Please select a bank');
+            setLoading(false);
           return;
         }
         if (!bankAccount) {
-          alert('Please enter account number');
+            setError('Please enter account number');
+            setLoading(false);
           return;
         }
-      } else {
+        } else if (transferMethod === 'mno') {
         if (!selectedMno) {
-          alert('Please select a mobile network');
+            setError('Please select a mobile network');
+            setLoading(false);
           return;
         }
         if (!phoneNumber) {
-          alert('Please enter phone number');
+            setError('Please enter phone number');
+            setLoading(false);
           return;
         }
       }
       if (!amount || parseFloat(amount) <= 0) {
-        alert('Please enter a valid amount');
+          setError('Please enter a valid amount');
+          setLoading(false);
         return;
       }
       if (!recipient) {
-        alert('Please enter recipient name');
+          setError('Please enter recipient name');
+          setLoading(false);
         return;
       }
-    } else if (transferType === 'bulk') {
+
+        // Local peer transfer
+        const response = await fetch(buildApiUrl('/transfers/local-peer'), {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from_card_id: transferMode === 'card' ? parseInt(fromCard) : null,
+            transfer_mode: transferMode,
+            transfer_method: transferMethod,
+            recipient_name: recipient,
+            recipient_account: transferMethod === 'bank' ? bankAccount : phoneNumber,
+            recipient_bank: transferMethod === 'bank' ? selectedBank : null,
+            recipient_mno: transferMethod === 'mno' ? selectedMno : null,
+            amount: parseFloat(amount),
+            description: description || undefined
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || 'Transfer failed');
+        }
+
+        // Only show success when provider has disbursed successfully
+        if (data?.status === 'COMPLETED') {
+          setSuccess('Disbursed successfully!');
+          setTimeout(() => setSuccess(''), 5000);
+        } else {
+          setError(`Transfer not completed. Provider status: ${data?.status || 'UNKNOWN'}`);
+          // Don't proceed as success
+          return;
+        }
+        
+        // Refresh cards to update balances
+        if (transferMode === 'card') {
+          const cardsResponse = await fetch(buildApiUrl('/cards'), {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          if (cardsResponse.ok) {
+            const updatedCards = await cardsResponse.json();
+            setCards(updatedCards);
+          }
+        }
+
+        // Reset form
+        setAmount('');
+        setDescription('');
+        setRecipient('');
+        setBankAccount('');
+        setPhoneNumber('');
+        setSelectedBank('');
+        setSelectedMno('');
+
+      } else if (transferType === 'local' && transferSubType === 'bulk') {
+        // Validation for local bulk transfer
       if (transferMode === 'card' && !fromCard) {
-        alert('Please select a source card');
+          setError('Please select a source card');
+          setLoading(false);
         return;
       }
       if (bulkRecipients.length === 0) {
-        alert('Please add at least one recipient');
-        return;
-      }
-      const invalidRecipient = bulkRecipients.some(r => !r.name || !r.amount || parseFloat(r.amount) <= 0 || (transferMethod === 'bank' && !r.bank));
-      if (invalidRecipient) {
-        alert('Please fill in all recipient details');
-        return;
-      }
-    }
+          setError('Please add at least one recipient');
+          setLoading(false);
+          return;
+        }
+        // Validate based on transfer method
+        if (transferMethod === 'bank') {
+          const invalidRecipient = bulkRecipients.some(r => !r.account || !r.amount || parseFloat(r.amount) <= 0 || !r.bank);
+          if (invalidRecipient) {
+            setError('Please fill in all recipient details including bank selection');
+            setLoading(false);
+            return;
+          }
+        } else if (transferMethod === 'mno') {
+          const invalidRecipient = bulkRecipients.some(r => !r.account || !r.amount || parseFloat(r.amount) <= 0 || !r.mno);
+          if (invalidRecipient) {
+            setError('Please fill in all recipient details including mobile network selection');
+            setLoading(false);
+            return;
+          }
+        }
 
-    if (transferType === 'bulk') {
-      console.log('Bulk transfer initiated:', {
-        from: fromCard,
-        recipients: bulkRecipients,
-        totalAmount: bulkRecipients.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0),
-        description,
-        transferMode
-      });
-      alert(`Bulk transfer initiated for ${bulkRecipients.length} recipients`);
-    } else {
-      const payload: Record<string, unknown> = {
-      type: transferType,
-      amount: parseFloat(amount),
-        description
-      };
-
-      if (transferType === 'card') {
-        Object.assign(payload, {
-          from: fromCard,
-          to: toCard
+        // Local bulk transfer
+        const response = await fetch(buildApiUrl('/transfers/local-bulk'), {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from_card_id: transferMode === 'card' ? parseInt(fromCard) : null,
+            transfer_mode: transferMode,
+            transfer_method: transferMethod,
+            recipients: bulkRecipients.map(r => ({
+              recipient_name: r.recipientName || r.account, // Use account as fallback if name not provided
+              recipient_account: r.account,
+              amount: parseFloat(r.amount),
+              bank_id: transferMethod === 'bank' ? r.bank : null,
+              mno_id: transferMethod === 'mno' ? r.mno : null
+            })),
+            description: description || undefined
+          }),
         });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || 'Bulk transfer failed');
+        }
+
+        // Only show success when provider has disbursed successfully (if backend aggregates status)
+        if (data?.status === 'COMPLETED') {
+          setSuccess(`Bulk disbursement completed for ${bulkRecipients.length} recipient${bulkRecipients.length > 1 ? 's' : ''}!`);
+          setTimeout(() => setSuccess(''), 5000);
+        } else {
+          setError(`Bulk transfer not completed. Provider status: ${data?.status || 'UNKNOWN'}`);
+          return;
+        }
+        
+        // Refresh cards to update balances
+        if (transferMode === 'card') {
+          const cardsResponse = await fetch(buildApiUrl('/cards'), {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          if (cardsResponse.ok) {
+            const updatedCards = await cardsResponse.json();
+            setCards(updatedCards);
+          }
+        }
+
+        // Reset form
+        setBulkRecipients([{ id: '1', recipientName: '', account: '', amount: '', bank: '', mno: '' }]);
+        setDescription('');
+        setFromCard('');
+
       } else {
-        Object.assign(payload, {
-          from: transferMode === 'card' ? fromCard : 'external-control-number',
-          to: transferMethod === 'bank' ? bankAccount : phoneNumber,
-          recipient,
-          transferMode,
-        transferMethod,
-          ...(transferMethod === 'bank'
-            ? { bank: selectedBank, accountNumber: bankAccount }
-            : { mno: selectedMno, phoneNumber })
-        });
+        // International transfers - not implemented yet
+        setError('International transfers are not yet implemented');
+        setLoading(false);
+        return;
       }
 
-      console.log('Transfer initiated:', payload);
-      alert('Transfer initiated successfully');
+    } catch (err: any) {
+      console.error('Transfer error:', err);
+      setError(err.message || 'An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -250,89 +528,197 @@ export default function TransferPage() {
         Transfer Money
       </h2>
 
+      {error && (
+        <div style={{
+          marginBottom: '16px',
+          padding: '12px 16px',
+          backgroundColor: '#FEF2F2',
+          border: '1px solid #FECACA',
+          color: '#991B1B',
+          borderRadius: '12px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <span style={{ fontSize: '14px' }}>{error}</span>
+          <button onClick={() => setError('')} style={{
+            marginLeft: '12px',
+            background: 'transparent',
+            border: 'none',
+            color: '#991B1B',
+            fontSize: '16px',
+            cursor: 'pointer'
+          }}>×</button>
+        </div>
+      )}
+
+      {success && (
+        <div style={{
+          marginBottom: '16px',
+          padding: '12px 16px',
+          backgroundColor: '#ECFDF5',
+          border: '1px solid #A7F3D0',
+          color: '#065F46',
+          borderRadius: '12px'
+        }}>
+          <span style={{ fontSize: '14px' }}>{success}</span>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
         <div style={{ maxWidth: '800px', boxSizing: 'border-box' }}>
           <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0 0 20px 0' }}>
             New Transfer
           </h3>
 
-          {/* Transfer Type */}
-          <div style={{ marginBottom: '20px', width: '360px', boxSizing: 'border-box' }}>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-              Transfer Type
-            </label>
-            <select
-              value={transferType}
-              onChange={(e) => {
-                const newType = e.target.value as 'card' | 'peer' | 'bulk';
-                setTransferType(newType);
-                setTransferMode('card');
-                if (newType === 'bulk') {
+          {/* Transfer Type and Transfer Option */}
+          {renderFieldsInPairs([
+            createField('Transfer Type', (
+              <select
+                value={transferType}
+                onChange={(e) => {
+                  const newType = e.target.value as 'card' | 'local' | 'international';
+                  setTransferType(newType);
+                  setTransferMode('card');
+                  setError('');
+                  if (newType === 'card') {
+                    setTransferSubType('peer');
+                  } else if (newType !== 'card' && transferSubType === 'peer') {
+                    // Keep peer as default for local/international
+                  }
+                }}
+                disabled={loading || loadingCards}
+                style={{
+                  width: '100%',
+                  padding: '12px 20px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                  backgroundColor: (loading || loadingCards) ? '#f3f4f6' : 'white',
+                  boxSizing: 'border-box',
+                  cursor: (loading || loadingCards) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                <option value="card">Between Cards</option>
+                <option value="local">Local Transfer</option>
+                <option value="international">International Transfer</option>
+              </select>
+            )),
+            // Transfer Option - only show when Local or International is selected
+            ...((transferType === 'local' || transferType === 'international') ? [
+              createField('Transfer Option', (
+                <select
+                  value={transferSubType}
+                  onChange={(e) => {
+                    const newSubType = e.target.value as 'peer' | 'bulk';
+                    setTransferSubType(newSubType);
+                  setTransferMode('card');
+                    setError('');
+                    if (newSubType === 'bulk') {
                   setTransferMethod('bank');
-                }
-              }}
-              style={{
-                width: '100%',
-                padding: '12px 20px',
-                border: '1px solid #d1d5db',
-                borderRadius: '20px',
-                fontSize: '14px',
-                backgroundColor: 'white',
-                boxSizing: 'border-box',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="card">Between Cards</option>
-              <option value="peer">Peer Transfer</option>
-              <option value="bulk">Bulk Transfer</option>
-            </select>
-          </div>
+                    }
+                }}
+                disabled={loading || loadingCards}
+                style={{
+                    width: '100%',
+                  padding: '12px 20px',
+                    border: '1px solid #d1d5db',
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                    backgroundColor: (loading || loadingCards) ? '#f3f4f6' : 'white',
+                    boxSizing: 'border-box',
+                    cursor: (loading || loadingCards) ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  <option value="peer">Peer Transfer</option>
+                  <option value="bulk">Bulk Transfer</option>
+                </select>
+              ))
+            ] : [])
+          ])}
 
           {/* Card Transfer */}
           {transferType === 'card' && (
             <>
               {renderFieldsInPairs([
                 createField('From Card', (
-                  <select value={fromCard} onChange={(e) => setFromCard(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                  <select value={fromCard} onChange={(e) => { setFromCard(e.target.value); setError(''); }} disabled={loadingCards || loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loadingCards || loading ? '#f3f4f6' : 'white', boxSizing: 'border-box', cursor: loadingCards || loading ? 'not-allowed' : 'pointer' }}>
                     <option value="">Choose a card</option>
-                    {cards.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+                    {cards.filter(c => c.is_active).map((c) => (
+                      <option key={c.id} value={c.id}>{getCardOptionLabel(c)}</option>
+              ))}
+            </select>
                 )),
                 createField('To Card', (
-                  <select value={toCard} onChange={(e) => setToCard(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                  <select value={toCard} onChange={(e) => { setToCard(e.target.value); setError(''); }} disabled={loadingCards || loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loadingCards || loading ? '#f3f4f6' : 'white', boxSizing: 'border-box', cursor: loadingCards || loading ? 'not-allowed' : 'pointer' }}>
                     <option value="">Choose a card</option>
-                    {cards.filter(c => c.id !== fromCard).map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+                    {cards.filter(c => c.is_active && c.id.toString() !== fromCard).map((c) => (
+                      <option key={c.id} value={c.id}>{getCardOptionLabel(c)}</option>
+                ))}
+              </select>
                 )),
                 createField('Amount (TZS)', (
-                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount" style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
+                <input type="number" value={amount} onChange={(e) => { setAmount(e.target.value); setError(''); }} placeholder="Enter amount" disabled={loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box', backgroundColor: loading ? '#f3f4f6' : 'white' }} />
                 ))
               ])}
             </>
           )}
 
-          {/* Peer Transfer */}
-          {transferType === 'peer' && (() => {
+          {/* Local/International Peer Transfer */}
+          {((transferType === 'local' && transferSubType === 'peer') || (transferType === 'international' && transferSubType === 'peer')) && (() => {
             const peerFields: React.ReactNode[] = [];
             
+            // Country Selection - only for international
+            if (transferType === 'international') {
+              peerFields.push(
+                createField('Destination Country', (
+                  <select
+                    value={selectedCountry}
+                    onChange={(e) => {
+                      setSelectedCountry(e.target.value);
+                      setError('');
+                      // Reset MNO if country doesn't support it
+                      if (!supportsMno(e.target.value) && transferMethod === 'mno') {
+                        setTransferMethod('bank');
+                      }
+                    }}
+                    disabled={loading}
+                    style={{
+                      width: '100%',
+                      padding: '12px 20px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      backgroundColor: loading ? '#f3f4f6' : 'white',
+                      boxSizing: 'border-box',
+                      cursor: loading ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <option value="">Select Country</option>
+                    {countries.map((country) => (
+                      <option key={country.code} value={country.name}>{country.name}</option>
+                    ))}
+                  </select>
+                ))
+              );
+            }
+
             // Payment Mode - always visible
             peerFields.push(
               createField('Payment Mode', (
                 <select
                   value={transferMode}
-                  onChange={(e) => setTransferMode(e.target.value as 'card' | 'external')}
+                  onChange={(e) => { setTransferMode(e.target.value as 'card' | 'external'); setError(''); }}
+                  disabled={loading}
                   style={{
-                    width: '100%',
+                      width: '100%',
                     padding: '12px 20px',
                     border: '1px solid #d1d5db',
                     borderRadius: '20px',
                     fontSize: '14px',
-                    backgroundColor: 'white',
-                    boxSizing: 'border-box'
+                    backgroundColor: loading ? '#f3f4f6' : 'white',
+                    boxSizing: 'border-box',
+                    cursor: loading ? 'not-allowed' : 'pointer'
                   }}
                 >
                   <option value="card">Use Card</option>
@@ -345,20 +731,37 @@ export default function TransferPage() {
             if (transferMode === 'card') {
               peerFields.push(
                 createField('From Card', (
-                  <select value={fromCard} onChange={(e) => setFromCard(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                    <select value={fromCard} onChange={(e) => { setFromCard(e.target.value); setError(''); }} disabled={loadingCards || loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loadingCards || loading ? '#f3f4f6' : 'white', boxSizing: 'border-box', cursor: loadingCards || loading ? 'not-allowed' : 'pointer' }}>
                     <option value="">Choose a card</option>
-                    {cards.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                      {cards.filter(c => c.is_active).map((c) => (<option key={c.id} value={c.id}>{getCardOptionLabel(c)}</option>))}
                   </select>
                 ))
               );
             }
 
-            // Transfer Method - always visible for peer
+            // Transfer Method - show MNO only for local or international with MNO-supporting countries
+            const showMnoOption = transferType === 'local' || (transferType === 'international' && selectedCountry && supportsMno(selectedCountry));
+            
             peerFields.push(
               createField('Transfer Method', (
-                <select value={transferMethod} onChange={(e) => setTransferMethod(e.target.value as 'bank' | 'mno')} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                <select 
+                  value={transferMethod} 
+                  onChange={(e) => {
+                    const newMethod = e.target.value as 'bank' | 'mno';
+                    setTransferMethod(newMethod);
+                    setError('');
+                    // If switching to MNO but country doesn't support it, prevent it
+                    if (newMethod === 'mno' && transferType === 'international' && selectedCountry && !supportsMno(selectedCountry)) {
+                      setTransferMethod('bank');
+                      alert('Mobile Money is not available for the selected country');
+                      return;
+                    }
+                  }} 
+                  disabled={loading}
+                  style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loading ? '#f3f4f6' : 'white', boxSizing: 'border-box', cursor: loading ? 'not-allowed' : 'pointer' }}
+                >
                   <option value="bank">Bank Transfer</option>
-                  <option value="mno">Mobile Money</option>
+                  {showMnoOption && <option value="mno">Mobile Money</option>}
                 </select>
               ))
             );
@@ -367,9 +770,21 @@ export default function TransferPage() {
             if (transferMethod === 'bank') {
               peerFields.push(
                 createField('Select Bank', (
-                  <select value={selectedBank} onChange={(e) => setSelectedBank(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                  <select value={selectedBank} onChange={(e) => { setSelectedBank(e.target.value); setError(''); }} disabled={loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loading ? '#f3f4f6' : 'white', boxSizing: 'border-box', cursor: loading ? 'not-allowed' : 'pointer' }}>
                     <option value="">Choose a bank</option>
                     {banks.map((bank) => (<option key={bank.id} value={bank.id}>{bank.name}</option>))}
+                  </select>
+                ))
+              );
+            }
+
+            // Select MNO - only if MNO method and (local or international with MNO-supporting country)
+            if (transferMethod === 'mno' && showMnoOption) {
+              peerFields.push(
+                createField('Select Mobile Network', (
+                  <select value={selectedMno} onChange={(e) => { setSelectedMno(e.target.value); setError(''); }} disabled={loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loading ? '#f3f4f6' : 'white', boxSizing: 'border-box', cursor: loading ? 'not-allowed' : 'pointer' }}>
+                    <option value="">Choose a mobile network</option>
+                    {mnos.map((mno) => (<option key={mno.id} value={mno.id}>{mno.name}</option>))}
                   </select>
                 ))
               );
@@ -378,52 +793,87 @@ export default function TransferPage() {
             // Account Number / Phone Number
             peerFields.push(
               createField(transferMethod === 'bank' ? 'Account Number' : 'Phone Number', (
-                <input type="text" value={transferMethod === 'bank' ? bankAccount : phoneNumber} onChange={(e) => { if (transferMethod === 'bank') { setBankAccount(e.target.value); } else { setPhoneNumber(e.target.value); } }} placeholder={transferMethod === 'bank' ? 'Enter account number' : 'Enter phone number'} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
+                  <input type="text" value={transferMethod === 'bank' ? bankAccount : phoneNumber} onChange={(e) => { if (transferMethod === 'bank') { setBankAccount(e.target.value); } else { setPhoneNumber(e.target.value); } }} placeholder={transferMethod === 'bank' ? 'Enter account number' : 'Enter phone number'} disabled={loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box', backgroundColor: loading ? '#f3f4f6' : 'white' }} />
               ))
             );
 
             // Amount
             peerFields.push(
               createField('Amount (TZS)', (
-                <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount" style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
+                  <input type="number" value={amount} onChange={(e) => { setAmount(e.target.value); setError(''); }} placeholder="Enter amount" disabled={loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box', backgroundColor: loading ? '#f3f4f6' : 'white' }} />
               ))
             );
 
             // Recipient Name
             peerFields.push(
               createField('Recipient Name', (
-                <input type="text" value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="Enter recipient name" style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
+                <input type="text" value={recipient} onChange={(e) => { setRecipient(e.target.value); setError(''); }} placeholder="Enter recipient name" disabled={loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box', backgroundColor: loading ? '#f3f4f6' : 'white' }} />
               ))
             );
 
             return <>{renderFieldsInPairs(peerFields)}</>;
           })()}
 
-          {/* Bulk Transfer Recipients */}
-          {transferType === 'bulk' && (
+          {/* Local/International Bulk Transfer */}
+          {((transferType === 'local' && transferSubType === 'bulk') || (transferType === 'international' && transferSubType === 'bulk')) && (
             <>
               {(() => {
                 const bulkFields: React.ReactNode[] = [];
                 
+                // Country Selection - only for international
+                if (transferType === 'international') {
+                  bulkFields.push(
+                    createField('Destination Country', (
+                      <select
+                        value={selectedCountry}
+                        onChange={(e) => {
+                          setSelectedCountry(e.target.value);
+                          setError('');
+                          // Reset MNO if country doesn't support it
+                          if (!supportsMno(e.target.value) && transferMethod === 'mno') {
+                            setTransferMethod('bank');
+                          }
+                        }}
+                        disabled={loading}
+                        style={{
+                          width: '100%',
+                          padding: '12px 20px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '20px',
+                          fontSize: '14px',
+                          backgroundColor: loading ? '#f3f4f6' : 'white',
+                          boxSizing: 'border-box',
+                          cursor: loading ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        <option value="">Select Country</option>
+                        {countries.map((country) => (
+                          <option key={country.code} value={country.name}>{country.name}</option>
+                        ))}
+                      </select>
+                    ))
+                  );
+                }
+                
                 // Payment Mode - always visible
                 bulkFields.push(
                   createField('Payment Mode', (
-                    <select
-                      value={transferMode}
-                      onChange={(e) => setTransferMode(e.target.value as 'card' | 'external')}
-                      style={{
-                        width: '100%',
-                        padding: '12px 20px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '20px',
-                        fontSize: '14px',
-                        backgroundColor: 'white',
-                        boxSizing: 'border-box'
-                      }}
-                    >
-                      <option value="card">Use Card</option>
-                      <option value="external">External Source</option>
-                    </select>
+                  <select
+                  value={transferMode}
+                  onChange={(e) => { setTransferMode(e.target.value as 'card' | 'external'); setError(''); }}
+                    style={{
+                      width: '100%',
+                      padding: '12px 20px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                    backgroundColor: 'white',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="card">Use Card</option>
+                  <option value="external">External Source</option>
+                </select>
                   ))
                 );
 
@@ -431,20 +881,37 @@ export default function TransferPage() {
                 if (transferMode === 'card') {
                   bulkFields.push(
                     createField('From Card', (
-                      <select value={fromCard} onChange={(e) => setFromCard(e.target.value)} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
-                        <option value="">Choose a card</option>
-                        {cards.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
-                      </select>
+                    <select value={fromCard} onChange={(e) => { setFromCard(e.target.value); setError(''); }} disabled={loadingCards || loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loadingCards || loading ? '#f3f4f6' : 'white', boxSizing: 'border-box', cursor: loadingCards || loading ? 'not-allowed' : 'pointer' }}>
+                    <option value="">Choose a card</option>
+                      {cards.filter(c => c.is_active).map((c) => (<option key={c.id} value={c.id}>{getCardOptionLabel(c)}</option>))}
+                    </select>
                     ))
                   );
                 }
 
-                // Transfer Method - always visible for bulk
+                // Transfer Method - show MNO only for local or international with MNO-supporting countries
+                const showMnoOption = transferType === 'local' || (transferType === 'international' && selectedCountry && supportsMno(selectedCountry));
+                
                 bulkFields.push(
                   createField('Transfer Method', (
-                    <select value={transferMethod} onChange={(e) => setTransferMethod(e.target.value as 'bank' | 'mno')} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                    <select 
+                      value={transferMethod} 
+                      onChange={(e) => {
+                        const newMethod = e.target.value as 'bank' | 'mno';
+                        setTransferMethod(newMethod);
+                        setError('');
+                        // If switching to MNO but country doesn't support it, prevent it
+                        if (newMethod === 'mno' && transferType === 'international' && selectedCountry && !supportsMno(selectedCountry)) {
+                          setTransferMethod('bank');
+                          alert('Mobile Money is not available for the selected country');
+                          return;
+                        }
+                      }} 
+                      disabled={loading}
+                      style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loading ? '#f3f4f6' : 'white', boxSizing: 'border-box', cursor: loading ? 'not-allowed' : 'pointer' }}
+                    >
                       <option value="bank">Bank Transfer</option>
-                      <option value="mno">Mobile Money</option>
+                      {showMnoOption && <option value="mno">Mobile Money</option>}
                     </select>
                   ))
                 );
@@ -460,11 +927,11 @@ export default function TransferPage() {
                   <div style={{ display: 'flex', gap: '8px' }}>
                     {transferMethod === 'bank' && (
                       <>
-                        <input type="file" accept=".csv" onChange={handleExcelImport} style={{ display: 'none' }} id="excel-import" />
-                        <button onClick={() => document.getElementById('excel-import')?.click()} style={{ padding: '8px 12px', backgroundColor: '#1f2937', color: 'white', border: 'none', borderRadius: '20px', fontSize: '12px', fontWeight: '500', cursor: 'pointer' }}>📊 Import Excel</button>
+                        <input type="file" accept=".csv" onChange={handleExcelImport} style={{ display: 'none' }} id="excel-import" disabled={loading} />
+                        <button onClick={() => document.getElementById('excel-import')?.click()} disabled={loading} style={{ padding: '8px 12px', backgroundColor: loading ? '#9ca3af' : '#1f2937', color: 'white', border: 'none', borderRadius: '20px', fontSize: '12px', fontWeight: '500', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}>📊 Import Excel</button>
                       </>
                     )}
-                    <button onClick={() => setBulkRecipients([...bulkRecipients, { id: String(Date.now()), name: '', amount: '', bank: '' }])} style={{ padding: '8px 12px', backgroundColor: '#10B981', color: 'white', border: 'none', borderRadius: '20px', fontSize: '12px', fontWeight: '500', cursor: 'pointer' }}>+ Add Recipient</button>
+                    <button onClick={() => setBulkRecipients([...bulkRecipients, { id: String(Date.now()), recipientName: '', account: '', amount: '', bank: '', mno: '', ...(transferType === 'international' ? { country: selectedCountry || '' } : {}) }])} disabled={loading} style={{ padding: '8px 12px', backgroundColor: loading ? '#9ca3af' : '#10B981', color: 'white', border: 'none', borderRadius: '20px', fontSize: '12px', fontWeight: '500', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}>+ Add Recipient</button>
                   </div>
                 </div>
                 {importError && (
@@ -472,15 +939,22 @@ export default function TransferPage() {
                     {importError}
                   </div>
                 )}
-                {bulkRecipients.map((rec, index) => (
+                {bulkRecipients.map((rec, index) => {
+                  // Adjust grid columns based on transfer type and method
+                  const isInternational = transferType === 'international';
+                  // For local: [Bank/MNO] [Recipient Name] [Account/Phone] [Amount] [Delete]
+                  // For international: [Country] [Bank/MNO] [Recipient Name] [Account/Phone] [Amount] [Delete]
+                  const gridCols = isInternational 
+                    ? '150px 150px 180px 180px 150px 40px'
+                    : '150px 180px 180px 150px 40px';
+                  
+                  return (
                   <div
                     key={rec.id}
                     style={{
                       marginBottom: '12px',
                       display: 'grid',
-                      gridTemplateColumns: transferMethod === 'bank'
-                        ? '200px 250px 170px 40px'
-                        : '250px 200px 40px',
+                        gridTemplateColumns: gridCols,
                       gap: '10px',
                       alignItems: 'center',
                       justifyContent: 'flex-start',
@@ -488,21 +962,79 @@ export default function TransferPage() {
                       maxWidth: '100%'
                     }}
                   >
-                    {transferMethod === 'bank' && (
-                      <select value={rec.bank} onChange={(e) => { const updated = [...bulkRecipients]; updated[index].bank = e.target.value; setBulkRecipients(updated); }} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                      {/* Country selector for international - shown first */}
+                      {isInternational && (
+                        <select 
+                          value={rec.country || selectedCountry} 
+                          onChange={(e) => { 
+                            const updated = [...bulkRecipients]; 
+                            updated[index].country = e.target.value; 
+                            // If switching country and MNO doesn't support it, clear MNO
+                            if (transferMethod === 'mno' && !supportsMno(e.target.value)) {
+                              updated[index].mno = '';
+                            }
+                            setBulkRecipients(updated); 
+                          }} 
+                          disabled={loading}
+                          style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loading ? '#f3f4f6' : 'white', boxSizing: 'border-box' }}
+                        >
+                          <option value="">Select Country</option>
+                          {countries.map((country) => (
+                            <option key={country.code} value={country.name}>{country.name}</option>
+                          ))}
+                        </select>
+                      )}
+                      
+                      {/* Bank or MNO selector */}
+                      {transferMethod === 'bank' ? (
+                      <select value={rec.bank} onChange={(e) => { const updated = [...bulkRecipients]; updated[index].bank = e.target.value; setBulkRecipients(updated); }} disabled={loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loading ? '#f3f4f6' : 'white', boxSizing: 'border-box' }}>
                         <option value="">Select Bank</option>
                         {banks.map((b) => (
                           <option key={b.id} value={b.id}>{b.name}</option>
                         ))}
                       </select>
+                      ) : (
+                        <select 
+                          value={rec.mno} 
+                          onChange={(e) => { 
+                            const updated = [...bulkRecipients]; 
+                            updated[index].mno = e.target.value; 
+                            setBulkRecipients(updated); 
+                          }} 
+                          disabled={(isInternational && rec.country && !supportsMno(rec.country)) || loading}
+                          style={{ 
+                            width: '100%', 
+                            padding: '12px 20px', 
+                            border: '1px solid #d1d5db', 
+                            borderRadius: '20px', 
+                            fontSize: '14px', 
+                            backgroundColor: (isInternational && rec.country && !supportsMno(rec.country)) || loading ? '#f3f4f6' : 'white', 
+                            boxSizing: 'border-box',
+                            cursor: (isInternational && rec.country && !supportsMno(rec.country)) || loading ? 'not-allowed' : 'pointer'
+                          }}
+                        >
+                          <option value="">Select MNO</option>
+                          {mnos.map((m) => (
+                            <option key={m.id} value={m.id}>{m.name}</option>
+                        ))}
+                      </select>
                     )}
-                    <input type="text" value={rec.name} onChange={(e) => { const updated = [...bulkRecipients]; updated[index].name = e.target.value; setBulkRecipients(updated); }} placeholder={transferMethod === 'bank' ? 'Account number' : 'Phone number'} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
-                    <input type="number" value={rec.amount} onChange={(e) => { const updated = [...bulkRecipients]; updated[index].amount = e.target.value; setBulkRecipients(updated); }} placeholder="Amount (TZS)" style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box' }} />
+                      
+                      {/* Recipient Name */}
+                      <input type="text" value={rec.recipientName} onChange={(e) => { const updated = [...bulkRecipients]; updated[index].recipientName = e.target.value; setBulkRecipients(updated); }} placeholder="Recipient name" disabled={loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box', backgroundColor: loading ? '#f3f4f6' : 'white' }} />
+                      
+                      {/* Account/Phone Number */}
+                      <input type="text" value={rec.account} onChange={(e) => { const updated = [...bulkRecipients]; updated[index].account = e.target.value; setBulkRecipients(updated); }} placeholder={transferMethod === 'bank' ? 'Account number' : 'Phone number'} disabled={loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box', backgroundColor: loading ? '#f3f4f6' : 'white' }} />
+                      
+                      {/* Amount */}
+                      <input type="number" value={rec.amount} onChange={(e) => { const updated = [...bulkRecipients]; updated[index].amount = e.target.value; setBulkRecipients(updated); }} placeholder="Amount (TZS)" disabled={loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', boxSizing: 'border-box', backgroundColor: loading ? '#f3f4f6' : 'white' }} />
+                      
                     {bulkRecipients.length > 1 && (
-                      <button onClick={() => setBulkRecipients(bulkRecipients.filter((_, i) => i !== index))} style={{ width: '40px', height: '40px', backgroundColor: '#EF4444', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '16px', fontWeight: '600', boxSizing: 'border-box', flexShrink: 0 }}>×</button>
+                      <button onClick={() => setBulkRecipients(bulkRecipients.filter((_, i) => i !== index))} disabled={loading} style={{ width: '40px', height: '40px', backgroundColor: loading ? '#9ca3af' : '#EF4444', color: 'white', border: 'none', borderRadius: '12px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '16px', fontWeight: '600', boxSizing: 'border-box', flexShrink: 0 }}>×</button>
                     )}
                   </div>
-                ))}
+                  );
+                })}
                 <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#f3f4f6', borderRadius: '20px' }}>
                   <div style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>
                     Total Amount: {formatCurrency(bulkRecipients.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0))}
@@ -525,6 +1057,7 @@ export default function TransferPage() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add a note about this transfer"
               rows={3}
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '12px 20px',
@@ -532,7 +1065,8 @@ export default function TransferPage() {
                 borderRadius: '20px',
                 fontSize: '14px',
                 resize: 'vertical',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                backgroundColor: loading ? '#f3f4f6' : 'white'
               }}
             />
           </div>
@@ -540,27 +1074,33 @@ export default function TransferPage() {
           {/* Transfer Button */}
           <button
             onClick={handleTransfer}
+            disabled={loading || loadingCards || cards.length === 0}
             style={{
               width: '360px',
               padding: '12px 20px',
-              backgroundColor: 'var(--mc-sidebar-bg)',
+              backgroundColor: (loading || loadingCards || cards.length === 0) ? '#9ca3af' : 'var(--mc-sidebar-bg)',
               color: 'white',
               border: 'none',
               borderRadius: '20px',
               fontSize: '16px',
               fontWeight: '600',
-              cursor: 'pointer',
+              cursor: (loading || loadingCards || cards.length === 0) ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s ease',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              opacity: (loading || loadingCards || cards.length === 0) ? 0.6 : 1
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+              if (!loading && !loadingCards && cards.length > 0) {
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+              }
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+              if (!loading && !loadingCards && cards.length > 0) {
+                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+              }
             }}
           >
-            Initiate Transfer
+            {loading ? 'Processing...' : 'Initiate Transfer'}
           </button>
         </div>
       </div>

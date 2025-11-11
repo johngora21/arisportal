@@ -3,11 +3,21 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.escrow import Escrow, EscrowMilestone, EscrowStatus, PaymentType
 from services.escrow_smart_contract import escrow_smart_contract
-from services.document_generator import document_generator
 from typing import List, Optional
 from datetime import datetime
 import json
 import logging
+
+# Lazy import of document_generator (only when needed)
+def get_document_generator():
+    try:
+        from services.document_generator import document_generator
+        return document_generator
+    except ImportError:
+        raise HTTPException(
+            status_code=503,
+            detail="Document generator service is not available. Please install reportlab: pip install reportlab"
+        )
 
 logger = logging.getLogger(__name__)
 
@@ -523,6 +533,7 @@ async def get_escrow_document(
                 }
             
             # Use the PDF generator response
+            document_generator = get_document_generator()
             return document_generator.generate_contract_response(escrow_data, "agreement")
             
     except FileNotFoundError:

@@ -5,7 +5,13 @@ Handles blockchain smart contract deployment for escrow accounts
 
 import os
 from typing import Dict
-from web3 import Web3
+try:
+    from web3 import Web3
+    WEB3_AVAILABLE = True
+except ImportError:
+    WEB3_AVAILABLE = False
+    Web3 = None
+    print("⚠️ web3 not available - running in mock mode")
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,29 +22,25 @@ class EscrowSmartContract:
     """
     
     def __init__(self):
-        self.chain_id = int(os.getenv("CHAIN_ID", "80001"))  # Polygon Mumbai testnet
-        self.network_url = os.getenv("NETWORK_URL", "https://rpc-mumbai.maticvigil.com")
-        self.contract_address = os.getenv("CONTRACT_ADDRESS", "")
-        self.private_key = os.getenv("WALLET_PRIVATE_KEY", "")
-        self.w3 = None
-        
-        if self.network_url:
-            try:
-                self.w3 = Web3(Web3.HTTPProvider(self.network_url))
-                if not self.w3.is_connected():
-                    print("⚠️ Warning: Could not connect to blockchain network - running in mock mode")
+        """Initialize the smart contract service"""
+        if not WEB3_AVAILABLE:
+            print("⚠️  web3 not available - running in mock mode")
+            self.web3 = None
+            self.contract_address = None
                 else:
-                    print(f"✅ Connected to blockchain: {self.w3.eth.chain_id}")
-            except Exception as e:
-                print(f"⚠️ Blockchain not available - running in mock mode: {str(e)}")
+            # Initialize Web3 connection
+            # TODO: Configure with actual blockchain RPC endpoint
+            self.web3 = None
+            self.contract_address = None
     
-    def deploy_escrow_contract(self, escrow_id: str, total_amount: float) -> Dict:
+    def deploy_escrow_contract(self, escrow_id: str, total_amount: float, currency: str = "TZS") -> Dict:
         """
-        Deploy a smart contract for an escrow account
+        Deploy a new escrow smart contract
         
         Args:
-            escrow_id: Unique escrow ID
-            total_amount: Total amount in escrow
+            escrow_id: Unique escrow identifier
+            total_amount: Total amount to be held in escrow
+            currency: Currency code (default: TZS)
             
         Returns:
             Dict with success status and contract address
@@ -50,28 +52,25 @@ class EscrowSmartContract:
             
             return {
                 "success": True,
-                "contract_address": "0x0000000000000000000000000000000000000000",
-                "escrow_id": escrow_id,
-                "total_amount": total_amount,
-                "mock": True,
-                "message": "Escrow contract deployed (mock mode)"
+                "contract_address": f"0x{escrow_id[:40]}",  # Mock address
+                "transaction_hash": f"0x{escrow_id[:64]}",  # Mock hash
+                "block_number": 12345,  # Mock block
+                "message": "Mock contract deployed (web3 not available)"
             }
-            
         except Exception as e:
-            print(f"Error deploying escrow contract: {str(e)}")
             return {
                 "success": False,
-                "error": str(e),
-                "message": "Failed to deploy escrow contract"
+                "error": str(e)
             }
     
-    def deposit_into_escrow(self, escrow_id: str, amount: float) -> Dict:
+    def record_deposit(self, escrow_id: str, amount: float, transaction_hash: str) -> Dict:
         """
-        Record a deposit into the escrow account
+        Record a deposit to the escrow contract
         
         Args:
-            escrow_id: Unique escrow ID
-            amount: Amount to deposit
+            escrow_id: Unique escrow identifier
+            amount: Deposit amount
+            transaction_hash: Blockchain transaction hash
             
         Returns:
             Dict with transaction hash
@@ -81,29 +80,24 @@ class EscrowSmartContract:
             
             return {
                 "success": True,
-                "transaction_hash": f"0x{'0'*64}",
-                "escrow_id": escrow_id,
-                "amount": amount,
-                "mock": True,
-                "message": "Deposit recorded (mock mode)"
+                "transaction_hash": transaction_hash,
+                "block_number": 12346,
+                "message": "Mock deposit recorded (web3 not available)"
             }
-            
         except Exception as e:
-            print(f"Error recording deposit: {str(e)}")
             return {
                 "success": False,
-                "error": str(e),
-                "message": "Failed to record deposit"
+                "error": str(e)
             }
     
-    def release_escrow_payment(self, escrow_id: str, amount: float, payee_address: str) -> Dict:
+    def release_payment(self, escrow_id: str, amount: float, payee_address: str) -> Dict:
         """
         Release payment from escrow to payee
         
         Args:
-            escrow_id: Unique escrow ID
+            escrow_id: Unique escrow identifier
             amount: Amount to release
-            payee_address: Payee's address
+            payee_address: Recipient blockchain address
             
         Returns:
             Dict with transaction hash
@@ -113,28 +107,22 @@ class EscrowSmartContract:
             
             return {
                 "success": True,
-                "transaction_hash": f"0x{'0'*64}",
-                "escrow_id": escrow_id,
-                "amount": amount,
-                "payee_address": payee_address,
-                "mock": True,
-                "message": "Payment released (mock mode)"
+                "transaction_hash": f"0x{escrow_id[:64]}",
+                "block_number": 12347,
+                "message": "Mock payment released (web3 not available)"
             }
-            
         except Exception as e:
-            print(f"Error releasing payment: {str(e)}")
             return {
                 "success": False,
-                "error": str(e),
-                "message": "Failed to release payment"
+                "error": str(e)
             }
     
     def cancel_escrow(self, escrow_id: str) -> Dict:
         """
-        Cancel an escrow and refund to payer
+        Cancel escrow and return funds to depositor
         
         Args:
-            escrow_id: Unique escrow ID
+            escrow_id: Unique escrow identifier
             
         Returns:
             Dict with transaction hash
@@ -144,20 +132,15 @@ class EscrowSmartContract:
             
             return {
                 "success": True,
-                "transaction_hash": f"0x{'0'*64}",
-                "escrow_id": escrow_id,
-                "mock": True,
-                "message": "Escrow canceled (mock mode)"
+                "transaction_hash": f"0x{escrow_id[:64]}",
+                "block_number": 12348,
+                "message": "Mock escrow canceled (web3 not available)"
             }
-            
         except Exception as e:
-            print(f"Error canceling escrow: {str(e)}")
             return {
                 "success": False,
-                "error": str(e),
-                "message": "Failed to cancel escrow"
+                "error": str(e)
             }
 
-# Create singleton instance
+# Create a singleton instance
 escrow_smart_contract = EscrowSmartContract()
-

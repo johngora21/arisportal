@@ -1,11 +1,14 @@
-from fastapi import FastAPI, Depends, HTTPException
+
+from fastapi import FastAPI, Depends, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from database import get_db, Base, engine
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+import traceback
 
 # Load environment variables
 load_dotenv()
@@ -17,20 +20,46 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS
+# Configure CORS - MUST be before other middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4000", "http://localhost:3000", "http://localhost:3002"],
+    allow_origins=["http://localhost:4000", "http://localhost:3000", "http://localhost:3002", "http://127.0.0.1:3002"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+)
+
+# Global exception handler for unhandled exceptions (but not HTTPException which FastAPI handles)
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Global exception handler to ensure errors are logged and CORS headers included"""
+    # Don't handle HTTPException - let FastAPI handle it with proper CORS
+    if isinstance(exc, HTTPException):
+        raise exc
+    
+    import traceback
+    error_trace = traceback.format_exc()
+    print(f"Unhandled exception in {request.url.path}: {str(exc)}")
+    print(error_trace)
+    
+    # Return error with CORS headers
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": f"Internal server error: {str(exc)}"},
+        headers={
+            "Access-Control-Allow-Origin": request.headers.get("origin", "http://localhost:3002"),
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        }
 )
 
 # Mount static files for uploaded images and videos
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Import all routers
-from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile
+from routers import properties, investments, finance, inventory, suppliers, crm, payroll, pools, upload, escrow, transaction, auth, profile, wise, cards, transfers, invoices
 
 # Include all routers
 # app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
@@ -47,6 +76,10 @@ app.include_router(escrow.router, prefix="/api/v1/escrow", tags=["Escrow"])
 app.include_router(transaction.router, prefix="/api/v1/transactions", tags=["Transactions"])
 app.include_router(profile.router, prefix="/api/v1", tags=["Profile"])
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(wise.router, prefix="/api/v1/remittances", tags=["Remittances"])
+app.include_router(cards.router, prefix="/api/v1/cards", tags=["Cards"])
+app.include_router(transfers.router, prefix="/api/v1/transfers", tags=["Transfers"])
+app.include_router(invoices.router, prefix="/api/v1/invoices", tags=["Invoices"])
 
 # Create database tables
 @app.on_event("startup")

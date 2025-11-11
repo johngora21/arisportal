@@ -6,7 +6,6 @@ import {
   Plus,
   Minus,
   Save,
-  Download,
   FileText,
   User,
   Building,
@@ -17,6 +16,9 @@ import {
   Trash2,
   Receipt
 } from 'lucide-react';
+import { useCurrency } from '../../../../contexts/CurrencyContext';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { buildApiUrl } from '../../../../config/api';
 
 interface InvoiceItem {
   id: string;
@@ -45,9 +47,45 @@ interface CreateInvoiceModalProps {
   initialTab?: 'details' | 'items' | 'services' | 'summary' | 'invoice';
   selectedTemplateId?: string | null;
   editingInvoice?: any;
+  autoDownload?: boolean;
 }
 
-const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose, onSave, onSend, initialTab = 'details', selectedTemplateId, editingInvoice }) => {
+const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose, onSave, onSend, initialTab = 'details', selectedTemplateId, editingInvoice, autoDownload = false }) => {
+  const { selectedCurrency } = useCurrency();
+  const { token } = useAuth();
+  
+  // Company/Business profile data
+  const [companyInfo, setCompanyInfo] = useState({
+    companyName: '',
+    companyEmail: '',
+    companyPhone: '',
+    companyAddress: ''
+  });
+  
+  // Format currency for invoice display (no conversion, just formatting)
+  const formatInvoiceCurrency = (amount: number, currency?: string): string => {
+    const currencyCode = currency || selectedCurrency;
+    try {
+      const locale = currencyCode === 'TZS' ? 'en-TZ' :
+                     currencyCode === 'KES' ? 'en-KE' :
+                     currencyCode === 'USD' ? 'en-US' :
+                     currencyCode === 'EUR' ? 'de-DE' :
+                     currencyCode === 'GBP' ? 'en-GB' : 'en-US';
+      
+      return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: currencyCode,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }).format(amount);
+    } catch (error) {
+      return `${currencyCode} ${amount.toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      })}`;
+    }
+  };
+  
   // Generate auto invoice number
   const generateInvoiceNumber = () => {
     const now = new Date();
@@ -84,12 +122,16 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
   const [currentTemplateId, setCurrentTemplateId] = useState<string>(selectedTemplateId || 'minimal');
   const invoiceRef = useRef<HTMLDivElement>(null);
 
-  // Auto-generate preview if opened on invoice tab
+  // Auto-generate preview if opened on invoice tab (wait for companyInfo if needed)
   useEffect(() => {
     if (initialTab === 'invoice' && !generatedInvoice) {
-      generateInvoicePreview();
+      // If we have companyInfo or editingInvoice data, generate immediately
+      // Otherwise, wait for companyInfo to load (handled by the other useEffect)
+      if (companyInfo.companyName || editingInvoice?.invoiceData) {
+        generateInvoicePreview();
+      }
     }
-  }, [initialTab, selectedTemplateId]);
+  }, [initialTab, selectedTemplateId, companyInfo.companyName, editingInvoice]);
 
   // Populate form when editing an invoice
   useEffect(() => {
@@ -115,6 +157,16 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
       if (data.services && data.services.length > 0) {
         setServices(data.services);
       }
+      
+      // If invoice has company info, use it (preserves original invoice data)
+      if (data.companyName || data.companyEmail || data.companyAddress) {
+        setCompanyInfo({
+          companyName: data.companyName || '',
+          companyEmail: data.companyEmail || '',
+          companyPhone: data.companyPhone || '',
+          companyAddress: data.companyAddress || ''
+        });
+      }
     }
   }, [editingInvoice]);
 
@@ -126,12 +178,110 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     }
   }, [selectedTemplateId]);
 
-  // Auto-update preview when form data changes
+  // Fetch business profile data when modal opens
+  useEffect(() => {
+    const fetchBusinessProfile = async () => {
+      if (!token || !isOpen) return;
+      
+      try {
+        const response = await fetch(buildApiUrl('/profile'), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const businessInfo = data.business_info || {};
+          
+          // Build address string from components - handle null/undefined/empty values
+          const addressParts = [];
+          
+          // Check for business_address (might be businessAddress in some cases)
+          const businessAddress = businessInfo.business_address || businessInfo.businessAddress || '';
+          if (businessAddress && businessAddress.trim()) {
+            addressParts.push(businessAddress.trim());
+          }
+          
+          const city = businessInfo.city || '';
+          if (city && city.trim()) {
+            addressParts.push(city.trim());
+          }
+          
+          const country = businessInfo.country || '';
+          if (country && country.trim()) {
+            addressParts.push(country.trim());
+          }
+          
+          const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : '';
+          
+          console.log('Building company address:', {
+            business_address: businessAddress,
+            city: city,
+            country: country,
+            addressParts: addressParts,
+            fullAddress: fullAddress,
+            rawBusinessInfo: businessInfo
+          });
+          
+          const newCompanyInfo = {
+            companyName: businessInfo.business_name || businessInfo.businessName || '',
+            companyEmail: businessInfo.business_email || businessInfo.businessEmail || '',
+            companyPhone: businessInfo.business_phone || businessInfo.businessPhone || '',
+            companyAddress: fullAddress
+          };
+          
+          console.log('Setting company info:', newCompanyInfo);
+          setCompanyInfo(newCompanyInfo);
+          
+          // If we're on the invoice tab and have a generated invoice, regenerate it with the new company info
+          if (activeTab === 'invoice' && generatedInvoice) {
+            console.log('Regenerating invoice with new company info...');
+            setTimeout(() => {
+              generateInvoicePreview();
+            }, 100);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching business profile:', error);
+        // Keep default values if fetch fails
+      }
+    };
+    
+    fetchBusinessProfile();
+  }, [token, isOpen, activeTab, generatedInvoice]);
+
+  // Auto-update preview when form data or companyInfo changes
   useEffect(() => {
     if (activeTab === 'invoice') {
       generateInvoicePreview();
     }
-  }, [formData, items, services, activeTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData, items, services, activeTab, companyInfo, selectedCurrency]);
+
+  useEffect(() => {
+    if (!isOpen || !autoDownload) {
+      return;
+    }
+
+    if (!generatedInvoice) {
+      generateInvoicePreview();
+      return;
+    }
+
+    if (!invoiceRef.current) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      await handleDownload({ silent: true });
+      onClose();
+    }, 400);
+
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, autoDownload, generatedInvoice, onClose]);
 
   const inputStyle = (hasError: boolean = false) => ({
     width: '100%',
@@ -228,32 +378,85 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
       clientEmail: formData.clientEmail,
       clientPhone: formData.clientPhone,
       clientAddress: formData.clientAddress,
-      companyName: 'Your Company Name',
-      companyEmail: 'info@yourcompany.com',
-      companyPhone: '+1 (555) 987-6543',
-      companyAddress: '456 Office Ave, Business City, BC 67890',
+      companyName: companyInfo.companyName || 'Your Company Name',
+      companyEmail: companyInfo.companyEmail || 'info@yourcompany.com',
+      companyPhone: companyInfo.companyPhone || '+1 (555) 987-6543',
+      companyAddress: (companyInfo.companyAddress && companyInfo.companyAddress.trim()) || (editingInvoice?.invoiceData?.companyAddress && editingInvoice.invoiceData.companyAddress.trim()) || '',
       items: items.filter(item => item.description && item.amount > 0),
       subtotal: subtotal,
       discount: discountAmount,
       discountRate: formData.discount,
       tax: taxAmount,
       total: total,
-      notes: formData.notes
+      notes: formData.notes,
+      currency: selectedCurrency
     };
     
+    console.log('Generating invoice preview with company info:', {
+      companyName: invoiceData.companyName,
+      companyAddress: invoiceData.companyAddress,
+      companyEmail: invoiceData.companyEmail,
+      companyPhone: invoiceData.companyPhone,
+      companyInfoState: companyInfo,
+      hasAddress: !!invoiceData.companyAddress,
+      addressLength: invoiceData.companyAddress?.length || 0
+    });
+    
     setGeneratedInvoice(invoiceData);
-    setActiveTab('invoice');
+    if (activeTab !== 'invoice') {
+      setActiveTab('invoice');
+    }
   };
 
   const handleSave = () => {
-    generateInvoicePreview();
+    // Generate invoice preview if not already generated
+    if (!generatedInvoice) {
+      generateInvoicePreview();
+      // Wait a bit for state to update, then save
+      setTimeout(() => {
+        if (onSave) {
+          const invoiceData = {
+            invoiceNumber: formData.invoiceNumber,
+            date: formData.issueDate,
+            dueDate: formData.dueDate,
+            clientName: formData.clientName,
+            clientEmail: formData.clientEmail,
+            clientPhone: formData.clientPhone,
+            clientAddress: formData.clientAddress,
+            companyName: companyInfo.companyName || 'Your Company Name',
+            companyEmail: companyInfo.companyEmail || 'info@yourcompany.com',
+            companyPhone: companyInfo.companyPhone || '+1 (555) 987-6543',
+            companyAddress: companyInfo.companyAddress || '456 Office Ave, Business City, BC 67890',
+            items: items.filter(item => item.description && item.amount > 0),
+            subtotal: subtotal,
+            discount: discountAmount,
+            discountRate: formData.discount,
+            tax: taxAmount,
+            taxRate: formData.taxRate, // Include taxRate for backend update
+            total: total,
+            notes: formData.notes,
+            currency: selectedCurrency,
+            templateId: currentTemplateId
+          };
+          onSave(invoiceData);
+        }
+      }, 100);
+    } else {
+      // If preview already exists, save immediately
+      if (onSave) {
+        onSave(generatedInvoice);
+      }
+    }
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
     if (!generatedInvoice || !invoiceRef.current) {
+      if (!silent) {
       alert('Please generate an invoice first');
-      return;
-    }
+      }
+        return;
+      }
 
     try {
       // Dynamic imports to avoid TypeScript issues
@@ -295,7 +498,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
       }
 
       // Download the PDF
-      const fileName = `invoice-${generatedInvoice.invoiceNumber}-${new Date().toISOString().split('T')[0]}.pdf`;
+      const safeInvoiceNumber = (generatedInvoice.invoiceNumber || 'invoice').toString().replace(/[^a-zA-Z0-9._-]/g, '_');
+      const fileName = `invoice-${safeInvoiceNumber}-${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
 
       // Save the invoice to the system after successful download
@@ -305,7 +509,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      if (!silent) {
+        alert('Error generating PDF. Please try again.');
+      }
     }
   };
 
@@ -656,7 +862,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                   width: '18%',             // AMOUNT CELL WIDTH - Match header width
                   minWidth: '100px'         // AMOUNT CELL MIN WIDTH - Match header min width
                 }}>
-                  ${item.amount.toFixed(2)}
+                  {formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}
                 </td>
                 <td style={{ 
                   padding: '12px 16px',     // ACTION CELL PADDING - Adjust these values
@@ -747,14 +953,28 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         <div style={{ flex: 1 }}>
           <p style={{ margin: '0 0 8px 0', fontSize: '11px', fontWeight: 'bold' }}>FROM</p>
           <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.companyName}</p>
-          <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.companyEmail}</p>
-          <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.companyPhone}</p>
+          {generatedInvoice.companyAddress && generatedInvoice.companyAddress.trim() && (
+            <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.companyAddress}</p>
+          )}
+          {generatedInvoice.companyEmail && generatedInvoice.companyEmail.trim() && (
+            <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.companyEmail}</p>
+          )}
+          {generatedInvoice.companyPhone && generatedInvoice.companyPhone.trim() && (
+            <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.companyPhone}</p>
+          )}
         </div>
         <div style={{ flex: 1, textAlign: 'right' }}>
           <p style={{ margin: '0 0 8px 0', fontSize: '11px', fontWeight: 'bold' }}>TO</p>
           <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.clientName}</p>
-          <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.clientEmail}</p>
-          <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.clientPhone}</p>
+          {generatedInvoice.clientAddress && generatedInvoice.clientAddress.trim() && (
+            <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.clientAddress}</p>
+          )}
+          {generatedInvoice.clientEmail && generatedInvoice.clientEmail.trim() && (
+            <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.clientEmail}</p>
+          )}
+          {generatedInvoice.clientPhone && generatedInvoice.clientPhone.trim() && (
+            <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.clientPhone}</p>
+          )}
         </div>
       </div>
 
@@ -769,9 +989,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           }}>
             <div>
               <p style={{ margin: '0 0 2px 0', fontSize: '11px', fontWeight: 'bold' }}>{item.description}</p>
-              <p style={{ margin: '0', fontSize: '10px', color: '#666' }}>{item.quantity} × ${item.rate}</p>
+              <p style={{ margin: '0', fontSize: '10px', color: '#666' }}>{item.quantity} × {formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}</p>
             </div>
-            <p style={{ margin: '0', fontSize: '11px', fontWeight: 'bold' }}>${item.amount}</p>
+            <p style={{ margin: '0', fontSize: '11px', fontWeight: 'bold' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</p>
           </div>
         ))}
       </div>
@@ -790,7 +1010,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           marginBottom: '8px'
         }}>
           <span>Subtotal</span>
-          <span>${generatedInvoice.subtotal}</span>
+          <span>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -800,7 +1020,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           marginBottom: '8px'
         }}>
           <span>Discount ({generatedInvoice.discount}%)</span>
-          <span>-${generatedInvoice.discount}</span>
+          <span>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -810,7 +1030,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           marginBottom: '8px'
         }}>
           <span>Tax ({generatedInvoice.taxRate}%)</span>
-          <span>${generatedInvoice.tax}</span>
+          <span>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -822,7 +1042,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           marginTop: '10px'
         }}>
           <span>TOTAL</span>
-          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
         </div>
       </div>
 
@@ -957,8 +1177,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
               <td style={{ padding: '12px', border: 'none' }}>{item.description}</td>
               <td style={{ padding: '12px', textAlign: 'center', border: 'none' }}>{item.quantity}</td>
-              <td style={{ padding: '12px', textAlign: 'right', border: 'none' }}>${item.rate}</td>
-              <td style={{ padding: '12px', textAlign: 'right', border: 'none' }}>${item.amount}</td>
+              <td style={{ padding: '12px', textAlign: 'right', border: 'none' }}>{formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}</td>
+              <td style={{ padding: '12px', textAlign: 'right', border: 'none' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</td>
           </tr>
           ))}
         </tbody>
@@ -978,7 +1198,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             borderBottom: '1px solid #eee'
           }}>
             <span style={{ fontSize: '11px' }}>Subtotal:</span>
-            <span style={{ fontSize: '11px' }}>${generatedInvoice.subtotal}</span>
+            <span style={{ fontSize: '11px' }}>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
         </div>
       <div style={{ 
             display: 'flex', 
@@ -987,7 +1207,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             borderBottom: '1px solid #eee'
           }}>
             <span style={{ fontSize: '11px' }}>Discount ({generatedInvoice.discountRate}%):</span>
-            <span style={{ fontSize: '11px' }}>-${generatedInvoice.discount}</span>
+            <span style={{ fontSize: '11px' }}>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
         </div>
       <div style={{ 
             display: 'flex', 
@@ -996,7 +1216,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             borderBottom: '1px solid #eee'
           }}>
             <span style={{ fontSize: '11px' }}>Tax ({generatedInvoice.taxRate}%):</span>
-            <span style={{ fontSize: '11px' }}>${generatedInvoice.tax}</span>
+            <span style={{ fontSize: '11px' }}>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
         </div>
           <div style={{ 
             display: 'flex', 
@@ -1011,7 +1231,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             paddingRight: '15px'
           }}>
             <span>TOTAL:</span>
-            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
         </div>
         </div>
       </div>
@@ -1113,9 +1333,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           }}>
             <div>
               <p style={{ margin: '0 0 2px 0', fontSize: '11px', fontWeight: 'bold' }}>{item.description}</p>
-              <p style={{ margin: '0', fontSize: '10px', color: '#666' }}>{item.quantity} × ${item.rate}</p>
+              <p style={{ margin: '0', fontSize: '10px', color: '#666' }}>{item.quantity} × {formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}</p>
             </div>
-            <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold' }}>${item.amount}</p>
+            <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</p>
           </div>
         ))}
       </div>
@@ -1137,7 +1357,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           marginTop: '10px'
         }}>
           <span>TOTAL AMOUNT</span>
-          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
         </div>
       </div>
 
@@ -1267,7 +1487,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           }}>
             <div>
               <p style={{ margin: '0 0 2px 0', fontSize: '11px', fontWeight: 'bold' }}>{item.description}</p>
-              <p style={{ margin: '0', fontSize: '10px', color: '#666' }}>{item.quantity} × ${item.rate}</p>
+              <p style={{ margin: '0', fontSize: '10px', color: '#666' }}>{item.quantity} × {formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}</p>
         </div>
             <div style={{ 
               backgroundColor: 'var(--mc-sidebar-bg)',
@@ -1276,7 +1496,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               fontSize: '11px',
               fontWeight: 'bold'
             }}>
-              ${item.amount}
+              {formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}
             </div>
         </div>
         ))}
@@ -1293,7 +1513,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           fontSize: '11px'
         }}>
           <span>Subtotal</span>
-          <span>${generatedInvoice.subtotal}</span>
+          <span>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -1302,7 +1522,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           fontSize: '11px'
         }}>
           <span>Discount ({generatedInvoice.discountRate}%)</span>
-          <span>-${generatedInvoice.discount}</span>
+          <span>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -1311,7 +1531,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           fontSize: '11px'
         }}>
           <span>Tax ({generatedInvoice.taxRate}%)</span>
-          <span>${generatedInvoice.tax}</span>
+          <span>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
       </div>
         <div style={{ 
           display: 'flex', 
@@ -1324,7 +1544,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           marginTop: '10px'
         }}>
           <span>TOTAL</span>
-          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
         </div>
       </div>
 
@@ -1475,8 +1695,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             <tr key={index} style={{ borderBottom: '1px solid #000' }}>
               <td style={{ padding: '12px', border: '1px solid #000' }}>{item.description}</td>
               <td style={{ padding: '12px', textAlign: 'center', border: '1px solid #000' }}>{item.quantity}</td>
-              <td style={{ padding: '12px', textAlign: 'right', border: '1px solid #000' }}>${item.rate}</td>
-              <td style={{ padding: '12px', textAlign: 'right', border: '1px solid #000' }}>${item.amount}</td>
+              <td style={{ padding: '12px', textAlign: 'right', border: '1px solid #000' }}>{formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}</td>
+              <td style={{ padding: '12px', textAlign: 'right', border: '1px solid #000' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</td>
           </tr>
           ))}
         </tbody>
@@ -1496,7 +1716,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             borderBottom: '1px solid #000'
           }}>
             <span style={{ fontSize: '11px' }}>Subtotal:</span>
-            <span style={{ fontSize: '11px' }}>${generatedInvoice.subtotal}</span>
+            <span style={{ fontSize: '11px' }}>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
         </div>
       <div style={{ 
             display: 'flex', 
@@ -1505,7 +1725,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             borderBottom: '1px solid #000'
           }}>
             <span style={{ fontSize: '11px' }}>Discount ({generatedInvoice.discountRate}%):</span>
-            <span style={{ fontSize: '11px' }}>-${generatedInvoice.discount}</span>
+            <span style={{ fontSize: '11px' }}>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
         </div>
       <div style={{ 
             display: 'flex', 
@@ -1514,7 +1734,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             borderBottom: '1px solid #000'
           }}>
             <span style={{ fontSize: '11px' }}>Tax ({generatedInvoice.taxRate}%):</span>
-            <span style={{ fontSize: '11px' }}>${generatedInvoice.tax}</span>
+            <span style={{ fontSize: '11px' }}>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
         </div>
           <div style={{ 
             display: 'flex', 
@@ -1530,7 +1750,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             border: '2px solid #000'
           }}>
             <span>TOTAL AMOUNT:</span>
-            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
         </div>
         </div>
       </div>
@@ -1668,10 +1888,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           }}>
             <div style={{ flex: 1 }}>
               <p style={{ margin: '0 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>{item.description}</p>
-              <p style={{ margin: '0', fontSize: '10px', color: '#666', fontStyle: 'italic' }}>{item.quantity} hours at ${item.rate}/hour</p>
+              <p style={{ margin: '0', fontSize: '10px', color: '#666', fontStyle: 'italic' }}>{item.quantity} hours at {formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}/hour</p>
             </div>
             <div style={{ textAlign: 'right', minWidth: '80px' }}>
-              <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold' }}>${item.amount}</p>
+              <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</p>
             </div>
           </div>
         ))}
@@ -1690,7 +1910,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           fontSize: '12px'
         }}>
           <span>Subtotal:</span>
-          <span>${generatedInvoice.subtotal}</span>
+          <span>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -1699,7 +1919,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           fontSize: '12px'
         }}>
           <span>Discount ({generatedInvoice.discountRate}%):</span>
-          <span>-${generatedInvoice.discount}</span>
+          <span>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -1708,7 +1928,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           fontSize: '12px'
         }}>
           <span>Tax ({generatedInvoice.taxRate}%):</span>
-          <span>${generatedInvoice.tax}</span>
+          <span>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
       </div>
         <div style={{ 
           display: 'flex', 
@@ -1721,7 +1941,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           border: '2px solid #000'
         }}>
           <span>TOTAL AMOUNT:</span>
-          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
         </div>
       </div>
 
@@ -1858,8 +2078,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             <tr key={index} style={{ borderBottom: '1px solid #000' }}>
               <td style={{ padding: '15px', border: '1px solid #000' }}>{item.description}</td>
               <td style={{ padding: '15px', textAlign: 'center', border: '1px solid #000' }}>{item.quantity}</td>
-              <td style={{ padding: '15px', textAlign: 'right', border: '1px solid #000' }}>${item.rate}</td>
-              <td style={{ padding: '15px', textAlign: 'right', border: '1px solid #000' }}>${item.amount}</td>
+              <td style={{ padding: '15px', textAlign: 'right', border: '1px solid #000' }}>{formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}</td>
+              <td style={{ padding: '15px', textAlign: 'right', border: '1px solid #000' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</td>
           </tr>
           ))}
         </tbody>
@@ -1879,7 +2099,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             borderBottom: '1px solid #000'
           }}>
             <span style={{ fontSize: '12px' }}>Subtotal:</span>
-            <span style={{ fontSize: '12px' }}>${generatedInvoice.subtotal}</span>
+            <span style={{ fontSize: '12px' }}>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
         </div>
           <div style={{ 
             display: 'flex', 
@@ -1888,7 +2108,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             borderBottom: '1px solid #000'
           }}>
             <span style={{ fontSize: '12px' }}>Discount ({generatedInvoice.discountRate}%):</span>
-            <span style={{ fontSize: '12px' }}>-${generatedInvoice.discount}</span>
+            <span style={{ fontSize: '12px' }}>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
           </div>
           <div style={{ 
             display: 'flex', 
@@ -1897,7 +2117,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             borderBottom: '1px solid #000'
           }}>
             <span style={{ fontSize: '12px' }}>Tax ({generatedInvoice.taxRate}%):</span>
-            <span style={{ fontSize: '12px' }}>${generatedInvoice.tax}</span>
+            <span style={{ fontSize: '12px' }}>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
           </div>
           <div style={{ 
             display: 'flex', 
@@ -1913,7 +2133,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             border: '2px solid #000'
           }}>
             <span>TOTAL DUE:</span>
-            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
           </div>
         </div>
       </div>
@@ -2060,7 +2280,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         </div>
         <div>
           <p style={{ margin: '2px 0', fontSize: '11px' }}><strong>Due:</strong> {generatedInvoice.dueDate}</p>
-          <p style={{ margin: '2px 0', fontSize: '11px' }}><strong>Amount:</strong> ${generatedInvoice.total}</p>
+          <p style={{ margin: '2px 0', fontSize: '11px' }}><strong>Amount:</strong> {formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</p>
         </div>
       </div>
 
@@ -2085,10 +2305,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               }}></div>
               <div>
                 <p style={{ margin: '0 0 2px 0', fontSize: '11px', fontWeight: 'bold' }}>{item.description}</p>
-                <p style={{ margin: '0', fontSize: '10px', color: '#666' }}>{item.quantity} × ${item.rate}</p>
+                <p style={{ margin: '0', fontSize: '10px', color: '#666' }}>{item.quantity} × {formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}</p>
               </div>
             </div>
-            <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold' }}>${item.amount}</p>
+            <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</p>
           </div>
         ))}
       </div>
@@ -2104,7 +2324,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           fontSize: '11px'
         }}>
           <span>Subtotal</span>
-          <span>${generatedInvoice.subtotal}</span>
+          <span>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -2113,7 +2333,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           fontSize: '11px'
         }}>
           <span>Discount ({generatedInvoice.discountRate}%)</span>
-          <span>-${generatedInvoice.discount}</span>
+          <span>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -2122,7 +2342,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           fontSize: '11px'
         }}>
           <span>Tax ({generatedInvoice.taxRate}%)</span>
-          <span>${generatedInvoice.tax}</span>
+          <span>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -2136,7 +2356,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           border: '2px solid #000'
         }}>
           <span>TOTAL</span>
-          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
         </div>
       </div>
 
@@ -2296,7 +2516,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 fontStyle: 'italic',
                 letterSpacing: '0.5px'
               }}>
-                {item.quantity} hours × ${item.rate} per hour
+                {item.quantity} hours × {formatInvoiceCurrency(item.rate, generatedInvoice?.currency)} per hour
               </p>
             </div>
             <div style={{ textAlign: 'right', minWidth: '100px' }}>
@@ -2306,7 +2526,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 fontWeight: '300',
                 letterSpacing: '1px'
               }}>
-                ${item.amount}
+                {formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}
               </p>
             </div>
           </div>
@@ -2327,7 +2547,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           fontWeight: '300'
         }}>
           <span>Subtotal</span>
-          <span>${generatedInvoice.subtotal}</span>
+          <span>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -2337,7 +2557,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           fontWeight: '300'
         }}>
           <span>Discount ({generatedInvoice.discountRate}%)</span>
-          <span>-${generatedInvoice.discount}</span>
+          <span>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -2347,7 +2567,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           fontWeight: '300'
         }}>
           <span>Tax ({generatedInvoice.taxRate}%)</span>
-          <span>${generatedInvoice.tax}</span>
+          <span>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -2359,7 +2579,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           letterSpacing: '2px'
         }}>
           <span>TOTAL</span>
-          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
         </div>
       </div>
 
@@ -2495,8 +2715,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               <tr key={index} style={{ borderBottom: '1px solid #000' }}>
                 <td style={{ padding: '12px', border: '1px solid #000' }}>{item.description}</td>
                 <td style={{ padding: '12px', textAlign: 'center', border: '1px solid #000' }}>{item.quantity}</td>
-                <td style={{ padding: '12px', textAlign: 'right', border: '1px solid #000' }}>${item.rate}</td>
-                <td style={{ padding: '12px', textAlign: 'right', border: '1px solid #000' }}>${item.amount}</td>
+                <td style={{ padding: '12px', textAlign: 'right', border: '1px solid #000' }}>{formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}</td>
+                <td style={{ padding: '12px', textAlign: 'right', border: '1px solid #000' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</td>
           </tr>
             ))}
         </tbody>
@@ -2533,7 +2753,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             fontSize: '11px'
           }}>
             <span>Subtotal:</span>
-            <span>${generatedInvoice.subtotal}</span>
+            <span>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
         </div>
           <div style={{ 
             display: 'flex', 
@@ -2542,7 +2762,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             fontSize: '11px'
           }}>
             <span>Discount ({generatedInvoice.discountRate}%):</span>
-            <span>-${generatedInvoice.discount}</span>
+            <span>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
       </div>
           <div style={{ 
             display: 'flex', 
@@ -2551,7 +2771,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             fontSize: '11px'
           }}>
             <span>Tax ({generatedInvoice.taxRate}%):</span>
-            <span>${generatedInvoice.tax}</span>
+            <span>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
       </div>
       <div style={{ 
             display: 'flex', 
@@ -2562,7 +2782,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             borderTop: '1px solid #fff'
           }}>
             <span>TOTAL:</span>
-            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
           </div>
         </div>
       </div>
@@ -2671,7 +2891,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         </div>
         <div>
           <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#666' }}><strong>Due Date:</strong> {generatedInvoice.dueDate}</p>
-          <p style={{ margin: '0', fontSize: '11px', color: '#666' }}><strong>Amount:</strong> ${generatedInvoice.total}</p>
+          <p style={{ margin: '0', fontSize: '11px', color: '#666' }}><strong>Amount:</strong> {formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</p>
         </div>
       </div>
 
@@ -2686,9 +2906,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           }}>
             <div>
               <p style={{ margin: '0 0 2px 0', fontSize: '11px', fontWeight: 'bold', color: '#666' }}>{item.description}</p>
-              <p style={{ margin: '0', fontSize: '10px', color: '#999' }}>{item.quantity} hours × ${item.rate}/hr</p>
+              <p style={{ margin: '0', fontSize: '10px', color: '#999' }}>{item.quantity} hours × {formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}/hr</p>
             </div>
-            <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold', color: '#333' }}>${item.amount}</p>
+            <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold', color: '#333' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</p>
           </div>
         ))}
       </div>
@@ -2707,7 +2927,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           color: '#666'
         }}>
           <span>Subtotal:</span>
-          <span>${generatedInvoice.subtotal}</span>
+          <span>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -2717,7 +2937,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           color: '#666'
         }}>
           <span>Discount ({generatedInvoice.discountRate}%):</span>
-          <span>-${generatedInvoice.discount}</span>
+          <span>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -2727,7 +2947,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           color: '#666'
         }}>
           <span>Tax ({generatedInvoice.taxRate}%):</span>
-          <span>${generatedInvoice.tax}</span>
+          <span>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
       </div>
         <div style={{ 
           display: 'flex', 
@@ -2739,7 +2959,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           color: '#666'
         }}>
           <span>TOTAL:</span>
-          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
         </div>
       </div>
 
@@ -2835,7 +3055,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#666' }}><strong>Invoice #:</strong> {generatedInvoice.invoiceNumber}</p>
         <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#666' }}><strong>Date:</strong> {generatedInvoice.date}</p>
         <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#666' }}><strong>Due Date:</strong> {generatedInvoice.dueDate}</p>
-        <p style={{ margin: '0', fontSize: '11px', color: '#666' }}><strong>Amount:</strong> ${generatedInvoice.total}</p>
+        <p style={{ margin: '0', fontSize: '11px', color: '#666' }}><strong>Amount:</strong> {formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</p>
       </div>
 
       {/* Services - Clean List */}
@@ -2849,9 +3069,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           }}>
             <div>
               <p style={{ margin: '0 0 2px 0', fontSize: '11px', fontWeight: 'bold', color: '#666' }}>{item.description}</p>
-              <p style={{ margin: '0', fontSize: '10px', color: '#999' }}>{item.quantity} hours × ${item.rate}/hr</p>
+              <p style={{ margin: '0', fontSize: '10px', color: '#999' }}>{item.quantity} hours × {formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}/hr</p>
             </div>
-            <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold', color: '#333' }}>${item.amount}</p>
+            <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold', color: '#333' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</p>
           </div>
         ))}
       </div>
@@ -2869,7 +3089,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           color: '#666'
         }}>
           <span>Subtotal:</span>
-          <span>${generatedInvoice.subtotal}</span>
+          <span>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -2879,7 +3099,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           color: '#666'
         }}>
           <span>Discount ({generatedInvoice.discountRate}%):</span>
-          <span>-${generatedInvoice.discount}</span>
+          <span>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -2889,7 +3109,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           color: '#666'
         }}>
           <span>Tax ({generatedInvoice.taxRate}%):</span>
-          <span>${generatedInvoice.tax}</span>
+          <span>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
           display: 'flex', 
@@ -2901,7 +3121,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           color: '#666'
         }}>
           <span>TOTAL:</span>
-          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
         </div>
       </div>
 
@@ -3132,7 +3352,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
       <div style={{ display: 'grid', gap: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f3f4f6' }}>
           <span style={{ fontSize: '14px', color: '#6b7280' }}>Subtotal</span>
-          <span style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>${subtotal.toFixed(2)}</span>
+          <span style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>{formatInvoiceCurrency(subtotal)}</span>
         </div>
         
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f3f4f6' }}>
@@ -3157,7 +3377,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               }}
             />
             <span style={{ fontSize: '14px', color: '#6b7280' }}>%</span>
-            <span style={{ fontSize: '14px', color: '#ef4444', fontWeight: '500' }}>-${discountAmount.toFixed(2)}</span>
+            <span style={{ fontSize: '14px', color: '#ef4444', fontWeight: '500' }}>-{formatInvoiceCurrency(discountAmount)}</span>
           </div>
         </div>
         
@@ -3183,13 +3403,13 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               }}
             />
             <span style={{ fontSize: '14px', color: '#6b7280' }}>%</span>
-            <span style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>${taxAmount.toFixed(2)}</span>
+            <span style={{ fontSize: '14px', color: '#1f2937', fontWeight: '500' }}>{formatInvoiceCurrency(taxAmount)}</span>
           </div>
         </div>
         
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 0', borderTop: '2px solid #e5e7eb' }}>
           <span style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>Total</span>
-          <span style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>${total.toFixed(2)}</span>
+          <span style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>{formatInvoiceCurrency(total)}</span>
         </div>
       </div>
 
@@ -3273,8 +3493,16 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         }}>
           <div>
             <p style={{ margin: '0 0 6px 0', fontSize: '10px', fontWeight: 'bold', color: '#666' }}>FROM</p>
-            <p style={{ margin: '0 0 3px 0', fontSize: '10px', color: '#666' }}>{generatedInvoice.companyName}</p>
-            <p style={{ margin: '0 0 3px 0', fontSize: '10px', color: '#666' }}>{generatedInvoice.companyAddress}</p>
+            <p style={{ margin: '0 0 3px 0', fontSize: '10px', color: '#666' }}>{generatedInvoice.companyName || 'Your Company Name'}</p>
+            {generatedInvoice.companyAddress && generatedInvoice.companyAddress.trim() && (
+              <p style={{ margin: '0 0 3px 0', fontSize: '10px', color: '#666' }}>{generatedInvoice.companyAddress}</p>
+            )}
+            {generatedInvoice.companyEmail && generatedInvoice.companyEmail.trim() && (
+              <p style={{ margin: '0 0 3px 0', fontSize: '10px', color: '#666' }}>{generatedInvoice.companyEmail}</p>
+            )}
+            {generatedInvoice.companyPhone && generatedInvoice.companyPhone.trim() && (
+              <p style={{ margin: '0', fontSize: '10px', color: '#666' }}>{generatedInvoice.companyPhone}</p>
+            )}
           </div>
           <div>
             <p style={{ margin: '0 0 6px 0', fontSize: '10px', fontWeight: 'bold', color: '#666' }}>TO</p>
@@ -3297,7 +3525,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           </div>
           <div>
               <p style={{ margin: '0 0 3px 0', fontSize: '10px', color: '#666' }}><strong>Due Date:</strong> {generatedInvoice.dueDate}</p>
-              <p style={{ margin: '0', fontSize: '10px', color: '#666' }}><strong>Amount:</strong> ${generatedInvoice.total}</p>
+              <p style={{ margin: '0', fontSize: '10px', color: '#666' }}><strong>Amount:</strong> {formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</p>
             </div>
           </div>
         </div>
@@ -3313,9 +3541,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             }}>
               <div>
                 <p style={{ margin: '0 0 2px 0', fontSize: '10px', fontWeight: 'bold', color: '#666' }}>{item.description}</p>
-                <p style={{ margin: '0', fontSize: '9px', color: '#999' }}>{item.quantity} hours × ${item.rate}/hr</p>
+                <p style={{ margin: '0', fontSize: '9px', color: '#999' }}>{item.quantity} hours × {formatInvoiceCurrency(item.rate, generatedInvoice.currency)}/hr</p>
               </div>
-              <p style={{ margin: '0', fontSize: '10px', fontWeight: 'bold', color: '#666' }}>${item.amount}</p>
+              <p style={{ margin: '0', fontSize: '10px', fontWeight: 'bold', color: '#666' }}>{formatInvoiceCurrency(item.amount, generatedInvoice.currency)}</p>
             </div>
           ))}
         </div>
@@ -3333,7 +3561,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             color: '#666'
           }}>
             <span>Subtotal:</span>
-            <span>${generatedInvoice.subtotal}</span>
+            <span>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
           </div>
           <div style={{ 
             display: 'flex', 
@@ -3343,7 +3571,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             color: '#666'
           }}>
             <span>Discount ({generatedInvoice.discountRate}%):</span>
-            <span>-${generatedInvoice.discount}</span>
+            <span>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
           </div>
           <div style={{ 
             display: 'flex', 
@@ -3353,7 +3581,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             color: '#666'
           }}>
             <span>Tax ({generatedInvoice.taxRate}%):</span>
-            <span>${generatedInvoice.tax}</span>
+            <span>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
           </div>
           <div style={{ 
             display: 'flex', 
@@ -3365,7 +3593,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             color: '#666'
           }}>
             <span>TOTAL:</span>
-            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
           </div>
         </div>
 
@@ -3468,7 +3696,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           </div>
           <div>
             <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#666' }}><strong>Due Date:</strong> {generatedInvoice.dueDate}</p>
-            <p style={{ margin: '0', fontSize: '12px', color: '#666' }}><strong>Amount:</strong> ${generatedInvoice.total}</p>
+            <p style={{ margin: '0', fontSize: '12px', color: '#666' }}><strong>Amount:</strong> {formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</p>
           </div>
         </div>
 
@@ -3483,9 +3711,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             }}>
               <div>
                 <p style={{ margin: '0 0 4px 0', fontSize: '12px', fontWeight: 'bold', color: '#666' }}>{item.description}</p>
-                <p style={{ margin: '0', fontSize: '11px', color: '#999' }}>{item.quantity} hours × ${item.rate}/hr</p>
+                <p style={{ margin: '0', fontSize: '11px', color: '#999' }}>{item.quantity} hours × {formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}/hr</p>
               </div>
-              <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold', color: '#666' }}>${item.amount}</p>
+              <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold', color: '#666' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</p>
             </div>
           ))}
         </div>
@@ -3504,7 +3732,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             color: '#666'
           }}>
             <span>Subtotal:</span>
-            <span>${generatedInvoice.subtotal}</span>
+            <span>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
           </div>
           <div style={{ 
             display: 'flex', 
@@ -3514,7 +3742,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             color: '#666'
           }}>
             <span>Discount ({generatedInvoice.discountRate}%):</span>
-            <span>-${generatedInvoice.discount}</span>
+            <span>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
           </div>
           <div style={{ 
             display: 'flex', 
@@ -3524,7 +3752,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             color: '#666'
           }}>
             <span>Tax ({generatedInvoice.taxRate}%):</span>
-            <span>${generatedInvoice.tax}</span>
+            <span>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
           </div>
           <div style={{ 
             display: 'flex', 
@@ -3536,7 +3764,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             color: '#666'
           }}>
             <span>TOTAL:</span>
-            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
           </div>
         </div>
 
@@ -3655,7 +3883,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             </div>
             <div>
               <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#666' }}><strong>Due Date:</strong> {generatedInvoice.dueDate}</p>
-              <p style={{ margin: '0', fontSize: '11px', color: '#666' }}><strong>Amount:</strong> ${generatedInvoice.total}</p>
+              <p style={{ margin: '0', fontSize: '11px', color: '#666' }}><strong>Amount:</strong> {formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</p>
             </div>
           </div>
         </div>
@@ -3674,9 +3902,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             }}>
               <div>
                 <p style={{ margin: '0 0 2px 0', fontSize: '11px', fontWeight: 'bold', color: '#666' }}>{item.description}</p>
-                <p style={{ margin: '0', fontSize: '10px', color: '#999' }}>{item.quantity} hours × ${item.rate}/hr</p>
+                <p style={{ margin: '0', fontSize: '10px', color: '#999' }}>{item.quantity} hours × {formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}/hr</p>
               </div>
-              <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold', color: '#333' }}>${item.amount}</p>
+              <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold', color: '#333' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</p>
             </div>
           ))}
         </div>
@@ -3696,7 +3924,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             color: '#666'
           }}>
             <span>Subtotal:</span>
-            <span>${generatedInvoice.subtotal}</span>
+            <span>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
           </div>
           <div style={{ 
             display: 'flex', 
@@ -3706,7 +3934,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             color: '#666'
           }}>
             <span>Discount ({generatedInvoice.discountRate}%):</span>
-            <span>-${generatedInvoice.discount}</span>
+            <span>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
           </div>
           <div style={{ 
             display: 'flex', 
@@ -3716,7 +3944,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             color: '#666'
           }}>
             <span>Tax ({generatedInvoice.taxRate}%):</span>
-            <span>${generatedInvoice.tax}</span>
+            <span>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
           </div>
           <div style={{ 
             display: 'flex', 
@@ -3728,7 +3956,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             color: '#666'
           }}>
             <span>TOTAL:</span>
-            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
           </div>
         </div>
 
@@ -3858,8 +4086,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={{ padding: '12px', border: 'none', color: '#666' }}>{item.description}</td>
                 <td style={{ padding: '12px', textAlign: 'center', border: 'none', color: '#666' }}>{item.quantity}</td>
-                <td style={{ padding: '12px', textAlign: 'right', border: 'none', color: '#666' }}>${item.rate}</td>
-                <td style={{ padding: '12px', textAlign: 'right', border: 'none', color: '#333', fontWeight: 'bold' }}>${item.amount}</td>
+                <td style={{ padding: '12px', textAlign: 'right', border: 'none', color: '#666' }}>{formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}</td>
+                <td style={{ padding: '12px', textAlign: 'right', border: 'none', color: '#333', fontWeight: 'bold' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</td>
             </tr>
             ))}
           </tbody>
@@ -3879,7 +4107,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '11px', color: '#666' }}>Subtotal:</span>
-              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>${generatedInvoice.subtotal}</span>
+              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
           </div>
         <div style={{ 
               display: 'flex', 
@@ -3888,7 +4116,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '11px', color: '#666' }}>Discount ({generatedInvoice.discountRate}%):</span>
-              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>-${generatedInvoice.discount}</span>
+              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
           </div>
         <div style={{ 
               display: 'flex', 
@@ -3897,7 +4125,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '11px', color: '#666' }}>Tax (10%):</span>
-              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>${generatedInvoice.tax}</span>
+              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
               display: 'flex', 
@@ -3912,7 +4140,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               paddingRight: '15px'
             }}>
               <span>TOTAL:</span>
-              <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+              <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
           </div>
           </div>
         </div>
@@ -4041,8 +4269,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={{ padding: '12px', border: 'none', color: '#666' }}>{item.description}</td>
                 <td style={{ padding: '12px', textAlign: 'center', border: 'none', color: '#666' }}>{item.quantity}</td>
-                <td style={{ padding: '12px', textAlign: 'right', border: 'none', color: '#666' }}>${item.rate}</td>
-                <td style={{ padding: '12px', textAlign: 'right', border: 'none', color: '#333', fontWeight: 'bold' }}>${item.amount}</td>
+                <td style={{ padding: '12px', textAlign: 'right', border: 'none', color: '#666' }}>{formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}</td>
+                <td style={{ padding: '12px', textAlign: 'right', border: 'none', color: '#333', fontWeight: 'bold' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</td>
             </tr>
             ))}
           </tbody>
@@ -4062,7 +4290,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '11px', color: '#666' }}>Subtotal:</span>
-              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>${generatedInvoice.subtotal}</span>
+              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
           </div>
         <div style={{ 
               display: 'flex', 
@@ -4071,7 +4299,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '11px', color: '#666' }}>Discount ({generatedInvoice.discountRate}%):</span>
-              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>-${generatedInvoice.discount}</span>
+              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
           </div>
         <div style={{ 
               display: 'flex', 
@@ -4080,7 +4308,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '11px', color: '#666' }}>Tax (10%):</span>
-              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>${generatedInvoice.tax}</span>
+              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
               display: 'flex', 
@@ -4095,7 +4323,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               paddingRight: '15px'
             }}>
               <span>TOTAL:</span>
-              <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+              <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
           </div>
           </div>
         </div>
@@ -4226,8 +4454,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={{ padding: '8px', border: 'none', color: '#666' }}>{item.description}</td>
                 <td style={{ padding: '8px', textAlign: 'center', border: 'none', color: '#666' }}>{item.quantity}</td>
-                <td style={{ padding: '8px', textAlign: 'right', border: 'none', color: '#666' }}>${item.rate}</td>
-                <td style={{ padding: '8px', textAlign: 'right', border: 'none', color: '#666' }}>${item.amount}</td>
+                <td style={{ padding: '8px', textAlign: 'right', border: 'none', color: '#666' }}>{formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}</td>
+                <td style={{ padding: '8px', textAlign: 'right', border: 'none', color: '#666' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</td>
             </tr>
             ))}
           </tbody>
@@ -4247,7 +4475,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '10px', color: '#666' }}>Subtotal:</span>
-              <span style={{ fontSize: '10px', color: '#333', fontWeight: 'bold' }}>${generatedInvoice.subtotal}</span>
+              <span style={{ fontSize: '10px', color: '#333', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
           </div>
         <div style={{ 
               display: 'flex', 
@@ -4256,7 +4484,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '10px', color: '#666' }}>Discount ({generatedInvoice.discountRate}%):</span>
-              <span style={{ fontSize: '10px', color: '#333', fontWeight: 'bold' }}>-${generatedInvoice.discount}</span>
+              <span style={{ fontSize: '10px', color: '#333', fontWeight: 'bold' }}>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
           </div>
         <div style={{ 
               display: 'flex', 
@@ -4265,7 +4493,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '10px', color: '#666' }}>Tax (10%):</span>
-              <span style={{ fontSize: '10px', color: '#333', fontWeight: 'bold' }}>${generatedInvoice.tax}</span>
+              <span style={{ fontSize: '10px', color: '#333', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
               display: 'flex', 
@@ -4280,7 +4508,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               paddingRight: '10px'
             }}>
               <span>TOTAL:</span>
-              <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+              <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
           </div>
           </div>
         </div>
@@ -4411,8 +4639,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={{ padding: '15px', border: 'none', color: '#666' }}>{item.description}</td>
                 <td style={{ padding: '15px', textAlign: 'center', border: 'none', color: '#666' }}>{item.quantity}</td>
-                <td style={{ padding: '15px', textAlign: 'right', border: 'none', color: '#666' }}>${item.rate}</td>
-                <td style={{ padding: '15px', textAlign: 'right', border: 'none', color: '#666' }}>${item.amount}</td>
+                <td style={{ padding: '15px', textAlign: 'right', border: 'none', color: '#666' }}>{formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}</td>
+                <td style={{ padding: '15px', textAlign: 'right', border: 'none', color: '#666' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</td>
             </tr>
             ))}
           </tbody>
@@ -4432,7 +4660,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '12px', color: '#666' }}>Subtotal:</span>
-              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>${generatedInvoice.subtotal}</span>
+              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
           </div>
         <div style={{ 
               display: 'flex', 
@@ -4441,7 +4669,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '12px', color: '#666' }}>Discount ({generatedInvoice.discountRate}%):</span>
-              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>-${generatedInvoice.discount}</span>
+              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
           </div>
         <div style={{ 
               display: 'flex', 
@@ -4450,7 +4678,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '12px', color: '#666' }}>Tax (10%):</span>
-              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>${generatedInvoice.tax}</span>
+              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
               display: 'flex', 
@@ -4465,7 +4693,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               paddingRight: '20px'
             }}>
               <span>TOTAL:</span>
-              <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+              <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
           </div>
           </div>
         </div>
@@ -4615,8 +4843,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               <tr key={index} style={{ borderBottom: '1px solid #eee', backgroundColor: index % 2 === 0 ? '#fff' : '#f9f9f9' }}>
                 <td style={{ padding: '12px', border: 'none', color: '#666' }}>{item.description}</td>
                 <td style={{ padding: '12px', textAlign: 'center', border: 'none', color: '#666' }}>{item.quantity}</td>
-                <td style={{ padding: '12px', textAlign: 'right', border: 'none', color: '#666' }}>${item.rate}</td>
-                <td style={{ padding: '12px', textAlign: 'right', border: 'none', color: '#333', fontWeight: 'bold' }}>${item.amount}</td>
+                <td style={{ padding: '12px', textAlign: 'right', border: 'none', color: '#666' }}>{formatInvoiceCurrency(item.rate, generatedInvoice?.currency)}</td>
+                <td style={{ padding: '12px', textAlign: 'right', border: 'none', color: '#333', fontWeight: 'bold' }}>{formatInvoiceCurrency(item.amount, generatedInvoice?.currency)}</td>
             </tr>
             ))}
           </tbody>
@@ -4636,7 +4864,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '11px', color: '#666' }}>Subtotal:</span>
-              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>${generatedInvoice.subtotal}</span>
+              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.subtotal, generatedInvoice.currency)}</span>
           </div>
         <div style={{ 
               display: 'flex', 
@@ -4645,7 +4873,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '11px', color: '#666' }}>Discount ({generatedInvoice.discountRate}%):</span>
-              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>-${generatedInvoice.discount}</span>
+              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>-{formatInvoiceCurrency(generatedInvoice.discount, generatedInvoice.currency)}</span>
           </div>
         <div style={{ 
               display: 'flex', 
@@ -4654,7 +4882,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderBottom: '1px solid #eee'
             }}>
               <span style={{ fontSize: '11px', color: '#666' }}>Tax (10%):</span>
-              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>${generatedInvoice.tax}</span>
+              <span style={{ fontSize: '12px', color: '#333', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.tax, generatedInvoice.currency)}</span>
         </div>
         <div style={{ 
               display: 'flex', 
@@ -4670,7 +4898,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
               borderRadius: '4px'
             }}>
               <span>TOTAL:</span>
-              <span style={{ fontSize: '18px', fontWeight: 'bold' }}>${generatedInvoice.total}</span>
+              <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{formatInvoiceCurrency(generatedInvoice.total, generatedInvoice.currency)}</span>
           </div>
           </div>
         </div>
@@ -4783,16 +5011,17 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
   return (
     <div style={{
       position: 'fixed',
-      top: 0,
+      top: autoDownload ? '-9999px' : 0,
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: autoDownload ? 'transparent' : 'rgba(0, 0, 0, 0.5)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 1000,
-      padding: '20px'
+      zIndex: autoDownload ? -1 : 1000,
+      padding: '20px',
+      pointerEvents: autoDownload ? 'none' : 'auto'
     }}>
       <div style={{
         backgroundColor: 'white',
@@ -4899,26 +5128,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             }}
           >
             <Save size={16} />
-            {editingInvoice ? 'Update Invoice' : 'Generate'}
-          </button>
-          <button
-            onClick={handleDownload}
-            style={{
-              padding: '12px 24px',
-              borderRadius: '20px',
-              border: 'none',
-              backgroundColor: '#10b981',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <Download size={16} />
-            Download Invoice
+            {editingInvoice ? 'Update Invoice' : 'Save Invoice'}
           </button>
         </div>
       </div>
