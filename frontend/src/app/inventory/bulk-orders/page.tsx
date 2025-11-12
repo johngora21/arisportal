@@ -1160,19 +1160,18 @@ export default function BulkOrdersPage() {
 
               {paymentMethod === 'control' && (
                 <div style={{ display: 'grid', gap: 8, marginBottom: 8, color: '#374151', fontSize: 13 }}>
-                  <div style={{ fontSize: 12, color: '#6b7280' }}>A control number will be generated for you. Use it to pay.</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <button
-                      onClick={() => {
-                        const ref = `${paymentPool.id.toUpperCase()}-${Date.now().toString().slice(-6)}`;
-                        setControlNumber(ref);
-                      }}
-                      style={{ border: '1px solid #e5e7eb', background: '#fff', color: '#374151', borderRadius: 8, padding: '8px 12px', fontWeight: 600, cursor: 'pointer' }}
-                    >Generate Control Number</button>
-                    {controlNumber && <span style={{ fontWeight: 700, color: '#111827' }}>{controlNumber}</span>}
-                  </div>
+                  <label style={{ fontSize: 12, color: '#374151' }}>Mobile Number (Optional)
+                    <input value={mnoPhone} onChange={(e) => setMnoPhone(e.target.value)} placeholder="e.g. +2557xxxxxxx" style={{ display: 'block', marginTop: 4, width: '100%', height: 34, border: '1px solid #e5e7eb', borderRadius: 6, padding: '0 10px', fontSize: 13 }} />
+                  </label>
+                  <div style={{ fontSize: 12, color: '#6b7280' }}>A control number will be generated when you click Pay. Use it to complete payment.</div>
                   {controlNumber && (
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>Use the control number to complete payment via your preferred channel. We will confirm once payment is received.</div>
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px', background: '#f3f4f6', borderRadius: 8 }}>
+                        <span style={{ fontSize: 12, color: '#6b7280' }}>Control Number:</span>
+                        <span style={{ fontWeight: 700, color: '#111827', fontSize: 14 }}>{controlNumber}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: '#6b7280' }}>Use this control number to complete payment via your preferred channel (MNO, Bank, etc.). We will confirm once payment is received.</div>
+                    </>
                   )}
                 </div>
               )}
@@ -1186,6 +1185,8 @@ export default function BulkOrdersPage() {
                   onClick={async () => {
                     setPaymentError('');
                     setPaymentSuccess('');
+                    
+                    // Validate inputs
                     if (paymentMethod === 'mno') {
                       if (!mnoPhone || mnoPhone.length < 7) {
                         setPaymentError('Enter a valid mobile number.');
@@ -1198,24 +1199,67 @@ export default function BulkOrdersPage() {
                         return;
                       }
                     }
-                    if (paymentMethod === 'control') {
-                      if (!controlNumber) {
-                        setPaymentError('Generate a control number first.');
-                        return;
+                    
+                    try {
+                      // Create payment via API
+                      const paymentData = {
+                        poolId: paymentPool.id,
+                        quantity: paymentQty,
+                        paymentMethod: paymentMethod,
+                        mnoPhone: paymentMethod === 'mno' || paymentMethod === 'control' ? mnoPhone : null,
+                        cardName: paymentMethod === 'card' ? cardName : null,
+                        cardNumber: paymentMethod === 'card' ? cardNumber : null,
+                        cardExpiry: paymentMethod === 'card' ? cardExpiry : null,
+                        cardCvv: paymentMethod === 'card' ? cardCvv : null,
+                        controlNumber: paymentMethod === 'control' ? controlNumber : null
+                      };
+                      
+                      const paymentResult = await BulkOrdersService.createPayment(paymentPool.id, paymentData);
+                      
+                      if (paymentMethod === 'mno') {
+                        setPaymentSuccess(`USSD push sent to ${mnoPhone}. Please complete payment on your phone.`);
+                        // Auto-join pool after successful USSD push initiation
+                        await handleJoinPool(paymentPool, paymentQty);
+                      } else if (paymentMethod === 'card') {
+                        // Card payment returns a payment link
+                        const paymentLink = paymentResult.controlNumber; // This is actually the card payment link
+                        if (paymentLink) {
+                          setPaymentSuccess('Redirecting to secure payment page...');
+                          // Open payment link in new window
+                          window.open(paymentLink, '_blank');
+                          // Don't auto-join - wait for payment confirmation via webhook
+                        } else {
+                          setPaymentError('Failed to initiate card payment. Please try again.');
+                          return;
+                        }
+                      } else if (paymentMethod === 'control') {
+                        // Control number payment
+                        const generatedControlNumber = paymentResult.controlNumber;
+                        if (generatedControlNumber) {
+                          setControlNumber(generatedControlNumber);
+                          setPaymentSuccess(`Control number generated: ${generatedControlNumber}. Use it to complete payment.`);
+                        } else {
+                          setPaymentError('Failed to generate control number. Please try again.');
+                          return;
+                        }
+                        // For control number, don't auto-join - wait for payment confirmation
                       }
-                      // For control number, do not auto-join; rely on payment reconciliation
-                      setPaymentSuccess('Control number generated. Complete payment to finalize.');
-                      setShowPaymentModal(false);
-                      return;
+                      
+                      // Close modal after a delay for MNO, keep open for control number
+                      if (paymentMethod === 'mno') {
+                        setTimeout(() => {
+                          setShowPaymentModal(false);
+                        }, 2000);
+                      }
+                    } catch (error: any) {
+                      setPaymentError(error.message || 'Payment processing failed. Please try again.');
                     }
-                    await handleJoinPool(paymentPool, paymentQty);
-                    setShowPaymentModal(false);
                   }}
                   style={{ backgroundColor: 'var(--mc-sidebar-bg-hover)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 14px', fontWeight: 600, cursor: 'pointer' }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--mc-sidebar-bg-hover)'; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--mc-sidebar-bg-hover)'; }}
                 >
-                  {paymentMethod === 'control' ? 'Confirm Control Number' : 'Pay'}
+                  {paymentMethod === 'control' && controlNumber ? 'Payment Pending' : 'Pay'}
                 </button>
               </div>
             </div>
@@ -1636,4 +1680,3 @@ export default function BulkOrdersPage() {
     </div>
   );
 }
-

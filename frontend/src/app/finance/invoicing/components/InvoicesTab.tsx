@@ -822,4 +822,3 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
     </>
   );
 };
-

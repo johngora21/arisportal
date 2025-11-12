@@ -580,8 +580,8 @@ export default function TransferPage() {
         setError('International transfers are not yet implemented');
         setLoading(false);
         return;
-      }
-
+    }
+    
     } catch (err: any) {
       console.error('Transfer error:', err);
       setError(err.message || 'An error occurred. Please try again.');
@@ -665,8 +665,8 @@ export default function TransferPage() {
                   backgroundColor: (loading || loadingCards) ? '#f3f4f6' : 'white',
                   boxSizing: 'border-box',
                   cursor: (loading || loadingCards) ? 'not-allowed' : 'pointer'
-                }}
-              >
+              }}
+            >
                 <option value="card">Between Cards</option>
                 <option value="local">Local Transfer</option>
                 <option value="international">International Transfer</option>
@@ -696,8 +696,8 @@ export default function TransferPage() {
                     backgroundColor: (loading || loadingCards) ? '#f3f4f6' : 'white',
                     boxSizing: 'border-box',
                     cursor: (loading || loadingCards) ? 'not-allowed' : 'pointer'
-                  }}
-                >
+                }}
+              >
                   <option value="peer">Peer Transfer</option>
                   <option value="bulk">Bulk Transfer</option>
                 </select>
@@ -828,7 +828,7 @@ export default function TransferPage() {
                   }} 
                   disabled={loading}
                   style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loading ? '#f3f4f6' : 'white', boxSizing: 'border-box', cursor: loading ? 'not-allowed' : 'pointer' }}
-                >
+                  >
                   <option value="bank">Bank Transfer</option>
                   {showMnoOption && <option value="mno">Mobile Money</option>}
                   </select>
@@ -845,7 +845,7 @@ export default function TransferPage() {
                   </select>
                 ))
               );
-            }
+                      }
 
             // Select MNO - only if MNO method and (local or international with MNO-supporting country)
             if (transferMethod === 'mno' && showMnoOption) {
@@ -913,8 +913,8 @@ export default function TransferPage() {
                           backgroundColor: loading ? '#f3f4f6' : 'white',
                           boxSizing: 'border-box',
                           cursor: loading ? 'not-allowed' : 'pointer'
-                        }}
-                      >
+                    }}
+                  >
                         <option value="">Select Country</option>
                         {countries.map((country) => (
                           <option key={country.code} value={country.name}>{country.name}</option>
@@ -979,7 +979,7 @@ export default function TransferPage() {
                       }} 
                       disabled={loading}
                       style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loading ? '#f3f4f6' : 'white', boxSizing: 'border-box', cursor: loading ? 'not-allowed' : 'pointer' }}
-                    >
+                  >
                       <option value="bank">Bank Transfer</option>
                       {showMnoOption && <option value="mno">Mobile Money</option>}
                   </select>

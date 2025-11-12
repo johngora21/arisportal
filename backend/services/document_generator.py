@@ -1026,4 +1026,3 @@ class EscrowDocumentGenerator:
 
 # Create singleton instance
 document_generator = EscrowDocumentGenerator()
-

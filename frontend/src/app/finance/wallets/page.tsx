@@ -421,16 +421,16 @@ export default function WalletsPage() {
                   const isDefault = card.is_default;
                   const cardName = card.cardholder_name || `${card.card_type.charAt(0).toUpperCase() + card.card_type.slice(1)} Card`;
                 return (
-                  <div key={card.id} style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'space-between',
-                    padding: '12px 0',
-                    borderBottom: '1px solid #f3f4f6'
-                  }}>
+                <div key={card.id} style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  padding: '12px 0',
+                  borderBottom: '1px solid #f3f4f6'
+                }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>
+                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>
                             {cardName}
                           </div>
                           {isDefault && (
@@ -448,8 +448,8 @@ export default function WalletsPage() {
                       </div>
                       <div style={{ fontSize: '12px', color: '#6b7280' }}>
                           {formatCardNumber(card.card_number)}
-                      </div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
                         Balance: {formatCurrency(card.balance)}
                       </div>
                     </div>
@@ -473,24 +473,24 @@ export default function WalletsPage() {
                             {settingDefaultId === card.id ? 'Setting...' : 'Set as default'}
                           </button>
                         )}
-                        <button
+                  <button
                           onClick={() => handleDeleteCard(card.id)}
                           disabled={hasBalance || deletingCardId === card.id}
-                      style={{
-                        padding: '6px 16px',
+                    style={{
+                      padding: '6px 16px',
                             backgroundColor: hasBalance || deletingCardId === card.id ? '#d1d5db' : '#EF4444',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '20px',
-                        fontSize: '12px',
-                        fontWeight: '500',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: '500',
                             cursor: hasBalance || deletingCardId === card.id ? 'not-allowed' : 'pointer',
                             opacity: hasBalance || deletingCardId === card.id ? 0.6 : 1
-                      }}
-                    >
+                    }}
+                  >
                           {deletingCardId === card.id ? 'Deleting...' : 'Delete'}
-                    </button>
-                      </div>
+                  </button>
+                </div>
                   </div>
                 );
                 })

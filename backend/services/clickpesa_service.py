@@ -288,6 +288,105 @@ class ClickPesaService(PaymentProviderInterface):
         except Exception as e:
             raise Exception(f"ClickPesa USSD push preview error: {str(e)}")
     
+    def initiate_card_payment(self, amount: float, currency: str, order_reference: str, customer_id: Optional[str] = None, customer_details: Optional[Dict] = None, checksum: Optional[str] = None) -> Dict:
+        """
+        Initiate a card payment via ClickPesa
+        
+        Args:
+            amount: Payment amount
+            currency: Currency (USD or TZS)
+            order_reference: Unique order reference
+            customer_id: Optional customer ID if customer exists in ClickPesa
+            customer_details: Optional customer details if creating new customer
+            checksum: Optional checksum for security
+            
+        Returns:
+            Card payment details including payment link
+        """
+        try:
+            token = get_clickpesa_token()
+            
+            payload = {
+                "amount": str(amount),
+                "currency": currency,
+                "orderReference": order_reference
+            }
+            
+            # Add customer - either ID or details
+            if customer_id:
+                payload["customer"] = {"id": customer_id}
+            elif customer_details:
+                payload["customer"] = customer_details
+            else:
+                # Default customer if none provided
+                payload["customer"] = {"id": "default"}
+            
+            if checksum:
+                payload["checksum"] = checksum
+            
+            response = httpx.post(
+                f"{self.base_url}/third-parties/payments/initiate-card-payment",
+                headers={
+                    'Authorization': token,
+                    'Content-Type': 'application/json'
+                },
+                json=payload,
+                timeout=30.0
+            )
+            response.raise_for_status()
+            card_response = response.json()
+            
+            return {
+                'card_payment_link': card_response.get('cardPaymentLink'),
+                'client_id': card_response.get('clientId'),
+                'order_reference': order_reference,
+                'amount': amount,
+                'currency': currency,
+                'provider': 'CLICKPESA',
+                'type': 'CARD_PAYMENT'
+            }
+        except Exception as e:
+            raise Exception(f"ClickPesa card payment error: {str(e)}")
+    
+    def preview_card_payment(self, amount: float, currency: str, order_reference: str, checksum: Optional[str] = None) -> Dict:
+        """
+        Preview card payment to see available payment methods
+        
+        Args:
+            amount: Payment amount
+            currency: Currency (USD or TZS)
+            order_reference: Unique order reference
+            checksum: Optional checksum for security
+            
+        Returns:
+            Preview response with available card payment methods
+        """
+        try:
+            token = get_clickpesa_token()
+            
+            payload = {
+                "amount": str(amount),
+                "currency": currency,
+                "orderReference": order_reference
+            }
+            
+            if checksum:
+                payload["checksum"] = checksum
+            
+            response = httpx.post(
+                f"{self.base_url}/third-parties/payments/preview-card-payment",
+                headers={
+                    'Authorization': token,
+                    'Content-Type': 'application/json'
+                },
+                json=payload,
+                timeout=30.0
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            raise Exception(f"ClickPesa card payment preview error: {str(e)}")
+    
     def get_transfer_status(self, transfer_id: str) -> Dict:
         """Get status of a ClickPesa transaction"""
         # ClickPesa status is typically handled via webhook

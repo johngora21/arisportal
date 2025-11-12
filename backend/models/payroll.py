@@ -316,4 +316,3 @@ class PayrollPayment(Base):
     
     # Relationships
     branch = relationship("Branch")
-    payroll_record = relationship("PayrollRecord", foreign_keys=[payroll_record_id])

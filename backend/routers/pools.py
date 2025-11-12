@@ -9,6 +9,7 @@ import os
 import shutil
 from pathlib import Path
 from models.pools import BulkOrderPool as PoolModel, BulkOrderParticipant as ParticipantModel, PoolPayment as PaymentModel
+from services.clickpesa_service import ClickPesaService
 
 router = APIRouter()
 
@@ -426,35 +427,125 @@ async def get_pool_payments(pool_id: str, db: Session = Depends(get_db)):
 
 @router.post("/pools/{pool_id}/payments", response_model=PoolPayment)
 async def create_payment(pool_id: str, payment_data: PaymentData, db: Session = Depends(get_db)):
-    """Create a payment for a pool"""
-    pool = next((p for p in mock_pools if p.get('id') == pool_id), None)
+    """Create a payment for a pool and process via ClickPesa"""
+    # Get pool from database
+    pool = db.query(PoolModel).filter(PoolModel.id == pool_id).first()
     if not pool:
         raise HTTPException(status_code=404, detail="Pool not found")
     
     # Calculate amount
-    amount = payment_data.quantity * pool["pricePerUnit"]
+    amount = payment_data.quantity * pool.price_per_unit
+    payment_id = str(uuid.uuid4())
+    order_reference = f"POOL-{pool_id[:8].upper()}-{payment_id[:8].upper()}"
     
-    new_payment = {
-        "id": str(uuid.uuid4()),
-        "poolId": pool_id,
-        "amount": amount,
-        "quantity": payment_data.quantity,
-        "paymentMethod": payment_data.paymentMethod,
-        "paymentStatus": "pending",
-        "mnoPhone": payment_data.mnoPhone,
-        "cardName": payment_data.cardName,
-        "cardNumber": payment_data.cardNumber,
-        "cardExpiry": payment_data.cardExpiry,
-        "cardCvv": payment_data.cardCvv,
-        "controlNumber": payment_data.controlNumber,
-        "transactionId": None,
-        "paymentReference": None,
-        "createdAt": datetime.utcnow().isoformat(),
-        "paidAt": None
-    }
+    clickpesa_service = ClickPesaService()
+    control_number = None
+    transaction_id = None
+    payment_reference = None
+    payment_status = "pending"
     
-    mock_payments.append(new_payment)
-    return new_payment
+    try:
+        if payment_data.paymentMethod == 'mno':
+            # Mobile Money payment - initiate USSD push
+            if not payment_data.mnoPhone:
+                raise HTTPException(status_code=400, detail="Mobile number is required for MNO payment")
+            
+            normalized_phone = clickpesa_service.normalize_msisdn(payment_data.mnoPhone)
+            ussd_result = clickpesa_service.initiate_ussd_push(
+                amount=amount,
+                currency="TZS",
+                phone_number=normalized_phone,
+                order_reference=order_reference
+            )
+            transaction_id = ussd_result.get('id')
+            payment_reference = ussd_result.get('order_reference')
+            payment_status = "processing"  # USSD push is processing
+            
+        elif payment_data.paymentMethod == 'card':
+            # Card payment - initiate direct card payment via ClickPesa
+            if not payment_data.cardName:
+                raise HTTPException(status_code=400, detail="Cardholder name is required for card payment")
+            
+            card_result = clickpesa_service.initiate_card_payment(
+                amount=amount,
+                currency="TZS",
+                order_reference=order_reference,
+                customer_details={
+                    'name': payment_data.cardName,
+                    'email': payment_data.mnoPhone,  # Using phone as identifier if no email
+                    'phone': payment_data.mnoPhone
+                }
+            )
+            # Card payment returns a payment link, not a transaction ID
+            payment_reference = card_result.get('order_reference')
+            # Store card payment link - user will be redirected to complete payment
+            control_number = card_result.get('card_payment_link')  # This is the payment URL
+            transaction_id = None  # No transaction ID until payment is completed
+            payment_status = "pending"  # Waiting for user to complete payment on card payment page
+            
+        elif payment_data.paymentMethod == 'control':
+            # Control number payment - generate BillPay control number
+            billpay_result = clickpesa_service.create_transfer(
+                amount=amount,
+                currency="TZS",
+                recipient={
+                    'name': 'Pool Participant',
+                    'phone': payment_data.mnoPhone,
+                    'description': f"Pool payment for {pool.title}"
+                },
+                reference=order_reference
+            )
+            control_number = billpay_result.get('control_number')
+            payment_reference = billpay_result.get('bill_reference')
+            payment_status = "pending"  # Waiting for payment via control number
+            
+        # Create payment record in database
+        new_payment = PaymentModel(
+            id=payment_id,
+            pool_id=pool_id,
+            amount=amount,
+            quantity=payment_data.quantity,
+            payment_method=payment_data.paymentMethod,
+            payment_status=payment_status,
+            mno_phone=payment_data.mnoPhone,
+            card_name=payment_data.cardName,
+            card_number=payment_data.cardNumber,
+            card_expiry=payment_data.cardExpiry,
+            card_cvv=payment_data.cardCvv,
+            control_number=control_number,
+            transaction_id=transaction_id,
+            payment_reference=payment_reference
+        )
+        
+        db.add(new_payment)
+        db.commit()
+        db.refresh(new_payment)
+        
+        # Convert to response format
+        return {
+            "id": new_payment.id,
+            "poolId": new_payment.pool_id,
+            "amount": new_payment.amount,
+            "quantity": new_payment.quantity,
+            "paymentMethod": new_payment.payment_method,
+            "paymentStatus": new_payment.payment_status,
+            "mnoPhone": new_payment.mno_phone,
+            "cardName": new_payment.card_name,
+            "cardNumber": new_payment.card_number,
+            "cardExpiry": new_payment.card_expiry,
+            "cardCvv": new_payment.card_cvv,
+            "controlNumber": new_payment.control_number,
+            "transactionId": new_payment.transaction_id,
+            "paymentReference": new_payment.payment_reference,
+            "createdAt": new_payment.created_at.isoformat() if new_payment.created_at else None,
+            "paidAt": new_payment.paid_at.isoformat() if new_payment.paid_at else None
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Payment processing failed: {str(e)}")
 
 @router.post("/payments/{payment_id}/confirm")
 async def confirm_payment(payment_id: str, db: Session = Depends(get_db)):
@@ -485,3 +576,172 @@ async def get_analytics_stats(db: Session = Depends(get_db)):
         "totalParticipants": total_participants,
         "totalRevenue": total_revenue
     }
+                    'description': f"Pool payment for {pool.title}"
+                },
+                reference=order_reference
+            )
+            control_number = billpay_result.get('control_number')
+            payment_reference = billpay_result.get('bill_reference')
+            payment_status = "pending"  # Waiting for payment via control number
+            
+        # Create payment record in database
+        new_payment = PaymentModel(
+            id=payment_id,
+            pool_id=pool_id,
+            amount=amount,
+            quantity=payment_data.quantity,
+            payment_method=payment_data.paymentMethod,
+            payment_status=payment_status,
+            mno_phone=payment_data.mnoPhone,
+            card_name=payment_data.cardName,
+            card_number=payment_data.cardNumber,
+            card_expiry=payment_data.cardExpiry,
+            card_cvv=payment_data.cardCvv,
+            control_number=control_number,
+            transaction_id=transaction_id,
+            payment_reference=payment_reference
+        )
+        
+        db.add(new_payment)
+        db.commit()
+        db.refresh(new_payment)
+        
+        # Convert to response format
+        return {
+            "id": new_payment.id,
+            "poolId": new_payment.pool_id,
+            "amount": new_payment.amount,
+            "quantity": new_payment.quantity,
+            "paymentMethod": new_payment.payment_method,
+            "paymentStatus": new_payment.payment_status,
+            "mnoPhone": new_payment.mno_phone,
+            "cardName": new_payment.card_name,
+            "cardNumber": new_payment.card_number,
+            "cardExpiry": new_payment.card_expiry,
+            "cardCvv": new_payment.card_cvv,
+            "controlNumber": new_payment.control_number,
+            "transactionId": new_payment.transaction_id,
+            "paymentReference": new_payment.payment_reference,
+            "createdAt": new_payment.created_at.isoformat() if new_payment.created_at else None,
+            "paidAt": new_payment.paid_at.isoformat() if new_payment.paid_at else None
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Payment processing failed: {str(e)}")
+
+@router.post("/payments/{payment_id}/confirm")
+async def confirm_payment(payment_id: str, db: Session = Depends(get_db)):
+    """Confirm a payment"""
+    payment_index = next((i for i, p in enumerate(mock_payments) if p.get('id') == payment_id), None)
+    if payment_index is None:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    
+    payment = mock_payments[payment_index]
+    payment["paymentStatus"] = "completed"
+    payment["paidAt"] = datetime.utcnow().isoformat()
+    payment["transactionId"] = f"TXN_{uuid.uuid4().hex[:8].upper()}"
+    payment["paymentReference"] = f"REF_{uuid.uuid4().hex[:8].upper()}"
+    
+    return {"message": "Payment confirmed", "payment": payment}
+
+@router.get("/analytics/stats")
+async def get_analytics_stats(db: Session = Depends(get_db)):
+    """Get analytics statistics"""
+    total_pools = db.query(PoolModel).count()
+    active_pools = db.query(PoolModel).filter(PoolModel.status == 'active').count()
+    total_participants = db.query(ParticipantModel).count()
+    total_revenue = 0  # TODO: Calculate from payments table
+    
+    return {
+        "totalPools": total_pools,
+        "activePools": active_pools,
+        "totalParticipants": total_participants,
+        "totalRevenue": total_revenue
+    }
+                    'description': f"Pool payment for {pool.title}"
+                },
+                reference=order_reference
+            )
+            control_number = billpay_result.get('control_number')
+            payment_reference = billpay_result.get('bill_reference')
+            payment_status = "pending"  # Waiting for payment via control number
+            
+        # Create payment record in database
+        new_payment = PaymentModel(
+            id=payment_id,
+            pool_id=pool_id,
+            amount=amount,
+            quantity=payment_data.quantity,
+            payment_method=payment_data.paymentMethod,
+            payment_status=payment_status,
+            mno_phone=payment_data.mnoPhone,
+            card_name=payment_data.cardName,
+            card_number=payment_data.cardNumber,
+            card_expiry=payment_data.cardExpiry,
+            card_cvv=payment_data.cardCvv,
+            control_number=control_number,
+            transaction_id=transaction_id,
+            payment_reference=payment_reference
+        )
+        
+        db.add(new_payment)
+        db.commit()
+        db.refresh(new_payment)
+        
+        # Convert to response format
+        return {
+            "id": new_payment.id,
+            "poolId": new_payment.pool_id,
+            "amount": new_payment.amount,
+            "quantity": new_payment.quantity,
+            "paymentMethod": new_payment.payment_method,
+            "paymentStatus": new_payment.payment_status,
+            "mnoPhone": new_payment.mno_phone,
+            "cardName": new_payment.card_name,
+            "cardNumber": new_payment.card_number,
+            "cardExpiry": new_payment.card_expiry,
+            "cardCvv": new_payment.card_cvv,
+            "controlNumber": new_payment.control_number,
+            "transactionId": new_payment.transaction_id,
+            "paymentReference": new_payment.payment_reference,
+            "createdAt": new_payment.created_at.isoformat() if new_payment.created_at else None,
+            "paidAt": new_payment.paid_at.isoformat() if new_payment.paid_at else None
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Payment processing failed: {str(e)}")
+
+@router.post("/payments/{payment_id}/confirm")
+async def confirm_payment(payment_id: str, db: Session = Depends(get_db)):
+    """Confirm a payment"""
+    payment_index = next((i for i, p in enumerate(mock_payments) if p.get('id') == payment_id), None)
+    if payment_index is None:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    
+    payment = mock_payments[payment_index]
+    payment["paymentStatus"] = "completed"
+    payment["paidAt"] = datetime.utcnow().isoformat()
+    payment["transactionId"] = f"TXN_{uuid.uuid4().hex[:8].upper()}"
+    payment["paymentReference"] = f"REF_{uuid.uuid4().hex[:8].upper()}"
+    
+    return {"message": "Payment confirmed", "payment": payment}
+
+@router.get("/analytics/stats")
+async def get_analytics_stats(db: Session = Depends(get_db)):
+    """Get analytics statistics"""
+    total_pools = db.query(PoolModel).count()
+    active_pools = db.query(PoolModel).filter(PoolModel.status == 'active').count()
+    total_participants = db.query(ParticipantModel).count()
+    total_revenue = 0  # TODO: Calculate from payments table
+    
+    return {
+        "totalPools": total_pools,
+        "activePools": active_pools,
+        "totalParticipants": total_participants,
+        "totalRevenue": total_revenue
