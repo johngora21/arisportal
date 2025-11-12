@@ -31,7 +31,7 @@ def get_clickpesa_token():
         print(f"📡 Token response status: {response.status_code}")
         
         try:
-        response.raise_for_status()
+            response.raise_for_status()
         except httpx.HTTPStatusError as e:
             error_body = {}
             try:

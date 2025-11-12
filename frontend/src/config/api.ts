@@ -75,10 +75,6 @@ export const buildApiUrl = (endpoint: string): string => {
   // This ensures it works regardless of environment variables
   if (typeof window !== 'undefined') {
     const url = `/api/v1${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-    // Debug: Log to verify correct URL (remove in production)
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[buildApiUrl] Building URL:', { endpoint, result: url });
-    }
     return url;
   }
   // Server-side: check environment

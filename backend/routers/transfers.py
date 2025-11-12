@@ -389,7 +389,7 @@ async def create_local_peer_transfer(
         # For clickpesa_balance mode, no card or balance check needed - ClickPesa API handles it
 
         try:
-        clickpesa_service = ClickPesaService()
+            clickpesa_service = ClickPesaService()
             reference = f"TRF{transfer.id}{uuid.uuid4().hex[:8].upper()}"
             # Ensure phone format (no +, no spaces)
             phone = transfer_data.recipient_account.replace('+', '').replace(' ', '').replace('-', '')
@@ -508,7 +508,7 @@ async def create_local_peer_transfer(
             elif provider_status in {"REVERSED", "FAILED"}:
                 transfer.status = TransferStatus.FAILED
             else:
-        transfer.status = TransferStatus.PROCESSING
+                transfer.status = TransferStatus.PROCESSING
 
             if from_card and transfer.status != TransferStatus.FAILED:
                 _create_ledger_entry(
@@ -524,14 +524,14 @@ async def create_local_peer_transfer(
                 )
                 _recalculate_and_update_card_balance(from_card, db)
 
-        db.commit()
-        db.refresh(transfer)
-        return transfer
+            db.commit()
+            db.refresh(transfer)
+            return transfer
         except HTTPException:
             db.rollback()
             raise
-    except Exception as e:
-        db.rollback()
+        except Exception as e:
+            db.rollback()
             transfer.status = TransferStatus.FAILED
             transfer.clickpesa_response = json.dumps({"error": str(e)})
             db.add(transfer)
@@ -539,8 +539,8 @@ async def create_local_peer_transfer(
             raise HTTPException(status_code=500, detail=f"ClickPesa bank payout failed: {str(e)}")
 
     # Default fallback (should not be reached)
-        transfer.status = TransferStatus.FAILED
-        db.commit()
+    transfer.status = TransferStatus.FAILED
+    db.commit()
     raise HTTPException(status_code=400, detail="Unsupported transfer method")
 
 @router.post("/local-bulk", response_model=TransferResponse)

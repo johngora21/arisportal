@@ -56,15 +56,15 @@ class ClickPesaService(PaymentProviderInterface):
             print(f"⏱️ [ClickPesa] Starting API call at {time.time()}")
             
             try:
-            response = httpx.post(
-                f"{self.base_url}/third-parties/billpay/create-customer-control-number",
-                headers={
+                response = httpx.post(
+                    f"{self.base_url}/third-parties/billpay/create-customer-control-number",
+                    headers={
                         'Authorization': token,  # ClickPesa uses token directly, not Bearer token
-                    'Content-Type': 'application/json'
-                },
-                json=billpay_request,
+                        'Content-Type': 'application/json'
+                    },
+                    json=billpay_request,
                     timeout=15.0  # 15 second timeout - fail fast if ClickPesa is slow
-            )
+                )
                 print(f"⏱️ [ClickPesa] API call completed at {time.time()}")
             except httpx.TimeoutException as timeout_error:
                 print(f"❌ [ClickPesa] API call TIMED OUT after 15 seconds")
@@ -81,8 +81,8 @@ class ClickPesaService(PaymentProviderInterface):
             print(f"📡 ClickPesa API Response Headers: {dict(response.headers)}")
             
             try:
-            response.raise_for_status()
-            billpay_response = response.json()
+                response.raise_for_status()
+                billpay_response = response.json()
                 print(f"📦 ClickPesa API Response Body: {billpay_response}")
             except httpx.HTTPStatusError as e:
                 # Try to get error details from response

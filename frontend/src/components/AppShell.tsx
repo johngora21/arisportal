@@ -53,7 +53,7 @@ type CurrentUser = { id: number; email: string; full_name: string; role?: string
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
-  const { user: authUser, isAuthenticated, logout } = useAuth();
+  const { user: authUser, isAuthenticated, logout, loading } = useAuth();
   const { selectedCurrency, setSelectedCurrency, currencies } = useCurrency();
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
   const currencyDropdownRef = useRef<HTMLDivElement>(null);
@@ -150,8 +150,36 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
     return [{ id: 'main', items: base }];
   }, []);
 
+  React.useEffect(() => {
+    if (loading) {
+      return;
+    }
+
+    if (!isAuthPage && !isAuthenticated) {
+      router.replace('/authentication/login');
+    }
+  }, [isAuthPage, isAuthenticated, loading, router]);
+
   if (isAuthPage) {
     return <>{children}</>;
+  }
+
+  if (!isAuthPage && (loading || !isAuthenticated)) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f9fafb',
+          color: '#6b7280',
+          fontSize: '16px',
+        }}
+      >
+        Authenticating...
+      </div>
+    );
   }
 
   if (isMobile) {
@@ -177,7 +205,14 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       initialCollapsed={false}
       onNavigate={(href) => { if (href !== pathname) router.push(href); }}
       currentPath={pathname || ''}
-      footerCta={{ label: 'Logout', icon: <FaSignOutAlt size={18} />, onClick: () => { logout(); router.replace('/authentication/login'); } }}
+      footerCta={{
+        label: 'Logout',
+        icon: <FaSignOutAlt size={18} />,
+        onClick: () => {
+          logout();
+          router.replace('/authentication/login');
+        },
+      }}
       header={{
         actions: (
           <>

@@ -62,10 +62,8 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login form submitted');
     
     if (!validateForm()) {
-      console.log('Form validation failed');
       return;
     }
     
@@ -73,7 +71,6 @@ export default function LoginPage() {
     setLoginError('');
     
     try {
-      console.log('Attempting login...', buildApiUrl('/auth/login'));
       const response = await fetch(buildApiUrl('/auth/login'), {
         method: 'POST',
         headers: {
@@ -85,12 +82,9 @@ export default function LoginPage() {
         }),
       });
       
-      console.log('Response status:', response.status);
       const data = await response.json();
-      console.log('Response data:', data);
       
       if (response.ok) {
-        console.log('Login successful, fetching user profile...');
         
         // Store token temporarily to fetch user profile
         login(data.access_token, {
@@ -131,11 +125,9 @@ export default function LoginPage() {
         // Redirect to home page
         router.push('/');
       } else {
-        console.log('Login failed:', data.detail);
         setLoginError(data.detail || 'Login failed. Please check your credentials.');
       }
     } catch (err) {
-      console.error('Login error:', err);
       setLoginError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
