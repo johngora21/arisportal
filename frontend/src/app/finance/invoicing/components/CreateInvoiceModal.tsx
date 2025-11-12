@@ -6,6 +6,7 @@ import {
   Plus,
   Minus,
   Save,
+  Send,
   FileText,
   User,
   Building,
@@ -78,14 +79,14 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
       }).format(amount);
-    } catch (error) {
+      } catch (error) {
       return `${currencyCode} ${amount.toLocaleString('en-US', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
       })}`;
     }
   };
-  
+
   // Generate auto invoice number
   const generateInvoiceNumber = () => {
     const now = new Date();
@@ -128,34 +129,72 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
       // If we have companyInfo or editingInvoice data, generate immediately
       // Otherwise, wait for companyInfo to load (handled by the other useEffect)
       if (companyInfo.companyName || editingInvoice?.invoiceData) {
-        generateInvoicePreview();
-      }
+      generateInvoicePreview();
+    }
     }
   }, [initialTab, selectedTemplateId, companyInfo.companyName, editingInvoice]);
 
-  // Populate form when editing an invoice
+  // Reset form when modal opens for NEW invoice, or populate when EDITING
   useEffect(() => {
+    if (!isOpen) {
+      // Modal is closed, don't do anything
+      return;
+    }
+
     if (editingInvoice && editingInvoice.invoiceData) {
+      // EDITING MODE: Populate form with invoice data
       const data = editingInvoice.invoiceData;
+      // Handle both snake_case (from backend) and camelCase (from form) formats
+      const invoiceNumber = data.invoice_number || data.invoiceNumber || '';
+      const issueDate = data.issue_date 
+        ? new Date(data.issue_date).toISOString().split('T')[0] 
+        : (data.date || data.issueDate || '');
+      const dueDate = data.due_date 
+        ? new Date(data.due_date).toISOString().split('T')[0] 
+        : (data.dueDate || '');
+      const clientName = data.client_name || data.clientName || '';
+      const clientEmail = data.client_email || data.clientEmail || '';
+      const clientPhone = data.client_phone || data.clientPhone || '';
+      const clientAddress = data.client_address || data.clientAddress || '';
+      // Handle tax_rate - convert to string, handling 0, null, and undefined
+      const taxRate = (data.tax_rate !== undefined && data.tax_rate !== null) 
+        ? String(data.tax_rate) 
+        : (data.taxRate !== undefined && data.taxRate !== null ? String(data.taxRate) : '');
+      const discount = (data.discount !== undefined && data.discount !== null) 
+        ? String(data.discount) 
+        : '';
+      const notes = data.notes || '';
+      const currency = data.currency || selectedCurrency;
+      
       setFormData({
-        invoiceNumber: data.invoiceNumber || '',
-        issueDate: data.date || '',
-        dueDate: data.dueDate || '',
-        clientName: data.clientName || '',
-        clientEmail: data.clientEmail || '',
-        clientPhone: data.clientPhone || '',
-        clientAddress: data.clientAddress || '',
-        taxRate: data.taxRate || '',
-        discount: data.discount || '',
-        notes: data.notes || ''
+        invoiceNumber: invoiceNumber,
+        issueDate: issueDate,
+        dueDate: dueDate,
+        clientName: clientName,
+        clientEmail: clientEmail,
+        clientPhone: clientPhone,
+        clientAddress: clientAddress,
+        taxRate: taxRate,
+        discount: discount,
+        notes: notes
       });
+      
+      // Set currency if available
+      if (currency && currency !== selectedCurrency) {
+        // Currency is handled by useCurrency hook, but we can log it
+        console.log('Invoice currency:', currency);
+      }
       
       if (data.items && data.items.length > 0) {
         setItems(data.items);
+      } else {
+        setItems([{ id: '1', type: 'item', description: '', quantity: 0, unit: '', rate: 0, amount: 0 }]);
       }
       
       if (data.services && data.services.length > 0) {
         setServices(data.services);
+      } else {
+        setServices([{ id: '1', description: '', quantity: 0, unit: 'hours', rate: 0, amount: 0 }]);
       }
       
       // If invoice has company info, use it (preserves original invoice data)
@@ -167,8 +206,29 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           companyAddress: data.companyAddress || ''
         });
       }
+    } else {
+      // NEW INVOICE MODE: Reset form to default values
+      setFormData({
+        invoiceNumber: generateInvoiceNumber(),
+        issueDate: new Date().toISOString().split('T')[0],
+        dueDate: '',
+        clientName: '',
+        clientEmail: '',
+        clientPhone: '',
+        clientAddress: '',
+        notes: '',
+        taxRate: '',
+        discount: ''
+      });
+      
+      // Reset items and services
+      setItems([{ id: '1', type: 'item', description: '', quantity: 0, unit: '', rate: 0, amount: 0 }]);
+      setServices([{ id: '1', description: '', quantity: 0, unit: 'hours', rate: 0, amount: 0 }]);
+      
+      // Reset generated invoice preview
+      setGeneratedInvoice(null);
     }
-  }, [editingInvoice]);
+  }, [isOpen, editingInvoice, selectedCurrency]);
 
   // Update current template when selectedTemplateId changes
   useEffect(() => {
@@ -239,7 +299,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           if (activeTab === 'invoice' && generatedInvoice) {
             console.log('Regenerating invoice with new company info...');
             setTimeout(() => {
-              generateInvoicePreview();
+      generateInvoicePreview();
             }, 100);
           }
         }
@@ -404,14 +464,14 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     
     setGeneratedInvoice(invoiceData);
     if (activeTab !== 'invoice') {
-      setActiveTab('invoice');
+    setActiveTab('invoice');
     }
   };
 
   const handleSave = () => {
     // Generate invoice preview if not already generated
     if (!generatedInvoice) {
-      generateInvoicePreview();
+    generateInvoicePreview();
       // Wait a bit for state to update, then save
       setTimeout(() => {
         if (onSave) {
@@ -445,6 +505,47 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
       // If preview already exists, save immediately
       if (onSave) {
         onSave(generatedInvoice);
+      }
+    }
+  };
+
+  const handleSend = () => {
+    // Generate invoice preview if not already generated
+    if (!generatedInvoice) {
+      generateInvoicePreview();
+      // Wait a bit for state to update, then send
+      setTimeout(() => {
+        if (onSend) {
+          const invoiceData = {
+            invoiceNumber: formData.invoiceNumber,
+            date: formData.issueDate,
+            dueDate: formData.dueDate,
+            clientName: formData.clientName,
+            clientEmail: formData.clientEmail,
+            clientPhone: formData.clientPhone,
+            clientAddress: formData.clientAddress,
+            companyName: companyInfo.companyName || 'Your Company Name',
+            companyEmail: companyInfo.companyEmail || 'info@yourcompany.com',
+            companyPhone: companyInfo.companyPhone || '+1 (555) 987-6543',
+            companyAddress: companyInfo.companyAddress || '456 Office Ave, Business City, BC 67890',
+            items: items.filter(item => item.description && item.amount > 0),
+            subtotal: subtotal,
+            discount: discountAmount,
+            discountRate: formData.discount,
+            tax: taxAmount,
+            taxRate: formData.taxRate,
+            total: total,
+            notes: formData.notes,
+            currency: selectedCurrency,
+            templateId: currentTemplateId
+          };
+          onSend(invoiceData);
+        }
+      }, 100);
+    } else {
+      // If preview already exists, send immediately
+      if (onSend) {
+        onSend(generatedInvoice);
       }
     }
   };
@@ -970,10 +1071,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.clientAddress}</p>
           )}
           {generatedInvoice.clientEmail && generatedInvoice.clientEmail.trim() && (
-            <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.clientEmail}</p>
+          <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.clientEmail}</p>
           )}
           {generatedInvoice.clientPhone && generatedInvoice.clientPhone.trim() && (
-            <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.clientPhone}</p>
+          <p style={{ margin: '0 0 4px 0', fontSize: '11px' }}>{generatedInvoice.clientPhone}</p>
           )}
         </div>
       </div>
@@ -3495,7 +3596,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             <p style={{ margin: '0 0 6px 0', fontSize: '10px', fontWeight: 'bold', color: '#666' }}>FROM</p>
             <p style={{ margin: '0 0 3px 0', fontSize: '10px', color: '#666' }}>{generatedInvoice.companyName || 'Your Company Name'}</p>
             {generatedInvoice.companyAddress && generatedInvoice.companyAddress.trim() && (
-              <p style={{ margin: '0 0 3px 0', fontSize: '10px', color: '#666' }}>{generatedInvoice.companyAddress}</p>
+            <p style={{ margin: '0 0 3px 0', fontSize: '10px', color: '#666' }}>{generatedInvoice.companyAddress}</p>
             )}
             {generatedInvoice.companyEmail && generatedInvoice.companyEmail.trim() && (
               <p style={{ margin: '0 0 3px 0', fontSize: '10px', color: '#666' }}>{generatedInvoice.companyEmail}</p>
@@ -5130,6 +5231,27 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             <Save size={16} />
             {editingInvoice ? 'Update Invoice' : 'Save Invoice'}
           </button>
+          {onSend && (
+          <button
+              onClick={handleSend}
+            style={{
+              padding: '12px 24px',
+              borderRadius: '20px',
+              border: 'none',
+              backgroundColor: '#10b981',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+              <Send size={16} />
+              Send Invoice
+          </button>
+          )}
         </div>
       </div>
     </div>
