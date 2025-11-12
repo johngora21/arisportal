@@ -29,6 +29,13 @@ interface EscrowAccount {
   completed_at?: string;
   cancelled_at?: string;
   cancelled_reason?: string;
+  payout_details?: string | object;
+  control_number?: string;
+  payout_status?: string;
+  payout_method?: string;
+  payout_reference?: string;
+  released_via_web3?: boolean;
+  release_transaction_hash?: string;
 }
 
 interface ViewEscrowModalProps {
@@ -52,6 +59,19 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
       default: return '#6b7280';
     }
   };
+
+  let payoutDetails: any = null;
+  if (escrow.payout_details) {
+    if (typeof escrow.payout_details === 'string') {
+      try {
+        payoutDetails = JSON.parse(escrow.payout_details);
+      } catch (parseError) {
+        payoutDetails = escrow.payout_details;
+      }
+    } else {
+      payoutDetails = escrow.payout_details;
+    }
+  }
 
   const handleDownload = async (doc: any, event: React.MouseEvent) => {
     event.preventDefault();
@@ -416,6 +436,100 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
             </div>
           </div>
         </div>
+
+        {/* Payout & Release Status */}
+        {(escrow.control_number || escrow.payout_status || payoutDetails || escrow.release_transaction_hash) && (
+          <div style={{ marginBottom: '32px' }}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#1f2937',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              Release & Payout Status
+            </h3>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '16px',
+              fontSize: '14px',
+              color: '#1f2937'
+            }}>
+              {escrow.control_number && (
+                <div>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Control Number</div>
+                  <div>{escrow.control_number}</div>
+                </div>
+              )}
+
+              {escrow.payout_status && (
+                <div>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Payout Status</div>
+                  <div>
+                    {escrow.payout_status}
+                    {escrow.payout_method ? ` · ${escrow.payout_method.toUpperCase()}` : ''}
+                  </div>
+                </div>
+              )}
+
+              {escrow.payout_reference && (
+                <div>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Payout Reference</div>
+                  <div>{escrow.payout_reference}</div>
+                </div>
+              )}
+
+              {escrow.released_via_web3 !== undefined && (
+                <div>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '6px' }}>Blockchain Release</div>
+                  <div>
+                    {escrow.released_via_web3 ? 'Recorded on-chain' : 'Not recorded'}
+                    {escrow.release_transaction_hash ? ` (${escrow.release_transaction_hash})` : ''}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {payoutDetails && typeof payoutDetails === 'object' && (
+              <div style={{
+                marginTop: '20px',
+                padding: '16px',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                backgroundColor: '#f8fafc'
+              }}>
+                <div style={{ fontSize: '13px', color: '#6b7280', fontWeight: 600, marginBottom: '10px' }}>
+                  Payout Details
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#1f2937' }}>
+                  {'mno' === payoutDetails.method && (
+                    <>
+                      <span><strong>Network:</strong> {payoutDetails.mno?.toUpperCase()}</span>
+                      <span><strong>Phone:</strong> {payoutDetails.phone}</span>
+                    </>
+                  )}
+                  {'bank' === payoutDetails.method && (
+                    <>
+                      <span><strong>Bank:</strong> {payoutDetails.bankKey?.toUpperCase()}</span>
+                      <span><strong>Account Name:</strong> {payoutDetails.accountName}</span>
+                      <span><strong>Account Number:</strong> {payoutDetails.accountNumber}</span>
+                      {payoutDetails.branchCode && (
+                        <span><strong>Branch:</strong> {payoutDetails.branchCode}</span>
+                      )}
+                    </>
+                  )}
+                  {payoutDetails.walletAddress && (
+                    <span><strong>Wallet Address:</strong> {payoutDetails.walletAddress}</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Transaction Details */}
         <div style={{ marginBottom: '32px' }}>
