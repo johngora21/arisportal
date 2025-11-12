@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   Eye,
@@ -14,6 +14,8 @@ import {
   X,
   Trash2
 } from 'lucide-react';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { buildApiUrl } from '../../../../config/api';
 
 interface Invoice {
   id: string;
@@ -40,6 +42,8 @@ interface InvoicesTabProps {
   onDownloadInvoice: (invoice: Invoice) => void;
   onDeleteInvoice: (invoiceId: string) => void;
   onUpdateInvoiceStatus: (invoiceId: string, status: 'paid' | 'pending' | 'overdue') => void;
+  sendingInvoice?: Invoice | null;
+  onSendingInvoiceComplete?: () => void;
 }
 
 export const InvoicesTab: React.FC<InvoicesTabProps> = ({
@@ -53,19 +57,147 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
   onEditInvoice,
   onDownloadInvoice,
   onDeleteInvoice,
-  onUpdateInvoiceStatus
+  onUpdateInvoiceStatus,
+  sendingInvoice,
+  onSendingInvoiceComplete
 }) => {
+  const { token } = useAuth();
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<'email' | 'sms' | 'whatsapp'>('email');
+  const [initiatingUSSD, setInitiatingUSSD] = useState(false);
+  
+  // Generate payment message with control number and payment link
+  const generatePaymentMessage = (invoice: Invoice): string => {
+    // Get control number from various possible locations
+    console.log('🔍 Generating message for invoice:', {
+      invoiceId: invoice.id,
+      invoiceData: invoice.invoiceData,
+      control_number: invoice.invoiceData?.control_number,
+      clickpesa_control_number: invoice.invoiceData?.clickpesa_control_number,
+      controlNumber: (invoice.invoiceData as any)?.controlNumber
+    });
+    
+    const controlNumber = invoice.invoiceData?.control_number 
+      || invoice.invoiceData?.clickpesa_control_number 
+      || (invoice.invoiceData as any)?.controlNumber
+      || 'N/A';
+    
+    console.log('🔍 Final controlNumber for message:', controlNumber);
+    
+    const invoiceNumber = invoice.number || invoice.invoiceData?.invoice_number || 'N/A';
+    const amount = invoice.amount || (invoice.invoiceData?.total ? `${invoice.invoiceData.currency || 'TZS'} ${invoice.invoiceData.total}` : 'N/A');
+    const clientName = invoice.client || invoice.invoiceData?.client_name || 'Customer';
+    const invoiceId = invoice.invoiceData?.id || invoice.id;
+    const phone = invoice.phone 
+      || invoice.invoiceData?.client_phone 
+      || invoice.invoiceData?.clientPhone 
+      || (invoice.invoiceData as any)?.phone
+      || '';
+    
+    // Create USSD push payment link - frontend route that triggers USSD push
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const ussdPushLink = invoiceId
+      ? `${baseUrl}/payment/ussd/${invoiceId}`
+      : '';
+    
+    // Web payment link using ClickPesa control number (only if valid control number)
+    const hasValidControlNumber = controlNumber 
+      && controlNumber !== 'N/A' 
+      && !controlNumber.startsWith('NOCTRL')
+      && controlNumber.trim() !== '';
+    
+    const webPaymentLink = hasValidControlNumber
+      ? `https://pay.clickpesa.com/pay/${controlNumber}`
+      : '';
+
+    // Build message - ALWAYS include control number and payment instructions
+    let message = `Dear ${clientName},\n\n`;
+    message += `Invoice: ${invoiceNumber}\n`;
+    message += `Amount: ${amount}\n`;
+    
+    // Check if control number is a placeholder (NOCTRL)
+    if (controlNumber && controlNumber.startsWith('NOCTRL')) {
+      message += `\n⚠️ WARNING: This invoice has an invalid control number (${controlNumber}).\n`;
+      message += `Please contact the merchant to regenerate a valid payment control number.\n\n`;
+      message += `This invoice cannot be paid until a valid control number is generated.\n`;
+      message += `Please contact the merchant to resolve this issue.\n\n`;
+    } else {
+      message += `Control Number: ${controlNumber}\n\n`;
+      message += `Payment Instructions:\n\n`;
+      
+      // USSD Push Payment Link - always show if we have invoice ID
+      if (ussdPushLink) {
+        message += `Pay via USSD Push (Recommended):\n`;
+        message += `Click this link to receive a payment request on your phone:\n`;
+        message += `${ussdPushLink}\n`;
+        if (phone) {
+          message += `(Payment request will be sent to ${phone})\n`;
+        }
+        message += `\n`;
+      }
+      
+      // Web Payment Link - only show if we have a valid control number
+      if (webPaymentLink) {
+        message += `${ussdPushLink ? 'OR pay online:\n' : 'Pay online:\n'}`;
+        message += `${webPaymentLink}\n\n`;
+      }
+      
+   
+    }
+    
+    message += `Thank you for your business!\n\n`;
+    message += `Best regards`;
+    
+    return message;
+  };
+
   const [messageContent, setMessageContent] = useState('');
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
+
+  // Update message content when sendingInvoice or selectedInvoice changes
+  useEffect(() => {
+    if (showMessageModal && selectedInvoice) {
+      // Always generate the full payment message with control number and links
+      setMessageContent(generatePaymentMessage(selectedInvoice));
+    }
+  }, [selectedInvoice, showMessageModal]);
+
+  // Auto-open message modal when sendingInvoice is set (moved from earlier useEffect)
+  useEffect(() => {
+    if (sendingInvoice) {
+      setSelectedInvoice(sendingInvoice);
+      setShowMessageModal(true);
+      // Set default channel based on available contact info
+      if (sendingInvoice.email) {
+        setSelectedChannel('email');
+      } else if (sendingInvoice.phone) {
+        setSelectedChannel('sms');
+      }
+      // Message content will be set by the other useEffect
+    }
+  }, [sendingInvoice]);
 
   const handleMessageInvoice = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
     setShowMessageModal(true);
-    // Set default message content
-    setMessageContent(`Dear ${invoice.client},\n\nPlease find attached your invoice ${invoice.number} for ${invoice.amount}.\n\nThank you for your business!\n\nBest regards,`);
+    // Set default channel based on available contact info
+    if (invoice.email) {
+      setSelectedChannel('email');
+    } else if (invoice.phone) {
+      setSelectedChannel('sms');
+    }
+    // Message content will be set by the useEffect above
+  };
+
+  const handleCloseMessageModal = () => {
+    setShowMessageModal(false);
+    setSelectedInvoice(null);
+    setMessageContent('');
+    setAttachedFile(null);
+    if (onSendingInvoiceComplete) {
+      onSendingInvoiceComplete();
+    }
   };
 
   const handleSendMessage = () => {
@@ -75,10 +207,8 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
         file: attachedFile,
         channel: selectedChannel
       });
-      setMessageContent('');
-      setAttachedFile(null);
-      setShowMessageModal(false);
-      setSelectedInvoice(null);
+      alert(`Message sent to ${selectedInvoice.client} via ${selectedChannel}!`);
+      handleCloseMessageModal();
     }
   };
 
@@ -280,7 +410,7 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
                 Send Invoice to {selectedInvoice.client}
               </h3>
               <button
-                onClick={() => setShowMessageModal(false)}
+                onClick={handleCloseMessageModal}
                 style={{ padding: '8px', backgroundColor: '#f3f4f6', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
               >
                 <X size={16} color="#6b7280" />
@@ -354,9 +484,173 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
                   {selectedChannel === 'whatsapp' && `WhatsApp: ${selectedInvoice.phone}`}
                 </span>
               </div>
-              <div style={{ fontSize: '12px', color: '#6b7280' }}>
+              <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
                 Invoice: {selectedInvoice.number} • Amount: {selectedInvoice.amount}
               </div>
+              
+              {/* Control Number Display */}
+              {selectedInvoice.invoiceData?.control_number && selectedInvoice.invoiceData.control_number !== 'N/A' && (
+                <div style={{ 
+                  backgroundColor: selectedInvoice.invoiceData.control_number.startsWith('NOCTRL') ? '#fef3c7' : '#eff6ff', 
+                  padding: '12px', 
+                  borderRadius: '8px', 
+                  marginTop: '8px',
+                  border: `1px solid ${selectedInvoice.invoiceData.control_number.startsWith('NOCTRL') ? '#fcd34d' : '#bfdbfe'}`
+                }}>
+                  {selectedInvoice.invoiceData.control_number.startsWith('NOCTRL') ? (
+                    <>
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: '#92400e', marginBottom: '6px' }}>
+                        ⚠️ Invalid Control Number (Placeholder)
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#78350f', marginBottom: '12px' }}>
+                        This invoice was created with a placeholder control number and cannot be used for payment. 
+                        Please regenerate a real control number from ClickPesa.
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#78350f', marginBottom: '8px', fontFamily: 'monospace' }}>
+                        Current: {selectedInvoice.invoiceData.control_number}
+                      </div>
+                      <button
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          if (!token || !selectedInvoice.invoiceData?.id) {
+                            alert('Unable to regenerate control number. Please ensure you are logged in.');
+                            return;
+                          }
+                          
+                          if (!confirm('Regenerate control number from ClickPesa? This will create a real payment control number.')) {
+                            return;
+                          }
+                          
+                          try {
+                            const response = await fetch(
+                              buildApiUrl(`/invoices/${selectedInvoice.invoiceData.id}/regenerate-control-number`),
+                              {
+                                method: 'POST',
+                                headers: {
+                                  'Authorization': `Bearer ${token}`,
+                                  'Content-Type': 'application/json'
+                                }
+                              }
+                            );
+                            
+                            if (!response.ok) {
+                              const error = await response.json().catch(() => ({ detail: 'Failed to regenerate control number' }));
+                              throw new Error(error.detail || 'Failed to regenerate control number');
+                            }
+                            
+                            const updatedInvoice = await response.json();
+                            alert(`✅ Control number regenerated successfully!\nNew Control Number: ${updatedInvoice.control_number}`);
+                            
+                            // Reload the invoice data
+                            if (onSendingInvoiceComplete) {
+                              onSendingInvoiceComplete();
+                            }
+                            handleCloseMessageModal();
+                            window.location.reload(); // Reload to refresh invoice list
+                          } catch (error: any) {
+                            alert(`Failed to regenerate control number: ${error.message}`);
+                          }
+                        }}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#f59e0b',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          fontWeight: '600'
+                        }}
+                      >
+                        Regenerate Control Number
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: '#1e40af', marginBottom: '6px' }}>
+                        Payment Control Number
+                      </div>
+                      <div style={{ fontSize: '18px', fontWeight: '700', color: '#1e3a8a', fontFamily: 'monospace', marginBottom: '8px' }}>
+                        {selectedInvoice.invoiceData.control_number}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '8px' }}>
+                        Control Number: <span style={{ fontFamily: 'monospace', fontWeight: '600', color: '#1e40af' }}>{selectedInvoice.invoiceData.control_number}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {selectedInvoice.phone && (
+                          <button
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              if (!token || !selectedInvoice.invoiceData?.id) {
+                                alert('Unable to initiate USSD push. Please ensure you are logged in.');
+                                return;
+                              }
+                              
+                              setInitiatingUSSD(true);
+                              try {
+                                const response = await fetch(
+                                  buildApiUrl(`/invoices/${selectedInvoice.invoiceData.id}/initiate-ussd-push`),
+                                  {
+                                    method: 'POST',
+                                    headers: {
+                                      'Authorization': `Bearer ${token}`,
+                                      'Content-Type': 'application/json'
+                                    }
+                                  }
+                                );
+                                
+                                if (!response.ok) {
+                                  const error = await response.json().catch(() => ({ detail: 'Failed to initiate USSD push' }));
+                                  throw new Error(error.detail || 'Failed to initiate USSD push');
+                                }
+                                
+                                const result = await response.json();
+                            alert(`✅ USSD push payment request sent to ${selectedInvoice.phone}!\n\nPlease check your phone and approve the payment request.`);
+                          } catch (error) {
+                            console.error('Error initiating USSD push:', error);
+                            alert(`Failed to send USSD push: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                          } finally {
+                            setInitiatingUSSD(false);
+                          }
+                        }}
+                        disabled={initiatingUSSD || !selectedInvoice.phone || !token}
+                        style={{
+                          fontSize: '12px',
+                          color: 'white',
+                          backgroundColor: initiatingUSSD ? '#9ca3af' : '#10b981',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          textAlign: 'center',
+                          fontWeight: '600',
+                          border: 'none',
+                          cursor: initiatingUSSD ? 'not-allowed' : 'pointer',
+                          display: 'block'
+                        }}
+                      >
+                        {initiatingUSSD ? '⏳ Sending USSD Push...' : '📱 Send USSD Push Payment Request'}
+                      </button>
+                    )}
+                    {selectedInvoice.invoiceData.control_number && !selectedInvoice.invoiceData.control_number.startsWith('NOCTRL') && (
+                      <a 
+                        href={`https://pay.clickpesa.com/pay/${selectedInvoice.invoiceData.control_number}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          fontSize: '11px',
+                          color: '#3b82f6',
+                          textDecoration: 'underline',
+                          textAlign: 'center',
+                          display: 'block'
+                        }}
+                      >
+                        🌐 Or pay online: https://pay.clickpesa.com/pay/{selectedInvoice.invoiceData.control_number}
+                      </a>
+                    )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* File Attachment */}
@@ -423,7 +717,7 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
             {/* Action Buttons */}
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
               <button
-                onClick={() => setShowMessageModal(false)}
+                onClick={handleCloseMessageModal}
                 style={{
                   padding: '12px 24px',
                   backgroundColor: 'white',

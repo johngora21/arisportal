@@ -10,6 +10,7 @@ from typing import Optional, List
 from datetime import datetime
 import jwt
 from routers.clickpesa import get_clickpesa_token
+from services.clickpesa_service import ClickPesaService
 import httpx
 import json
 import random
@@ -99,7 +100,14 @@ async def create_invoice(
 ):
     """
     Create a new invoice and generate a ClickPesa BillPay control number.
-    The control number becomes the invoice number.
+    
+    The invoice number is kept as provided by the user (or auto-generated).
+    A separate ClickPesa control number is generated for payment processing.
+    Customers can use the control number to pay the invoice via ClickPesa.
+    
+    IMPORTANT: If ClickPesa API fails, invoice creation will FAIL. 
+    No placeholder control numbers are generated. A real control number from 
+    ClickPesa is REQUIRED for invoice creation.
     """
     try:
         # Get user profile for business info
@@ -149,8 +157,11 @@ async def create_invoice(
             else:
                 issue_date = datetime.strptime(invoice_data.issue_date, '%Y-%m-%d')
         except Exception:
-            raise HTTPException(status_code=400, detail=f"Invalid issue_date format: {invoice_data.issue_date}. Use YYYY-MM-DD or ISO format.")
-        
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid issue_date format: {invoice_data.issue_date}. Use YYYY-MM-DD or ISO format."
+            )
+
         due_date = None
         if invoice_data.due_date:
             try:
@@ -159,12 +170,154 @@ async def create_invoice(
                 else:
                     due_date = datetime.strptime(invoice_data.due_date, '%Y-%m-%d')
             except Exception:
-                raise HTTPException(status_code=400, detail=f"Invalid due_date format: {invoice_data.due_date}. Use YYYY-MM-DD or ISO format.")
-        
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid due_date format: {invoice_data.due_date}. Use YYYY-MM-DD or ISO format."
+                )
+            
         # Keep the provided invoice number; do NOT replace it with control number
         invoice_number = invoice_data.invoice_number or f"INV-{datetime.utcnow().strftime('%Y%m%d')}-{random.randint(100,999)}"
-        # Generate a placeholder unique control number to satisfy DB constraint (not displayed)
-        control_number = f"NOCTRL-{user_id}-{int(time.time())}-{random.randint(1000,9999)}"
+        
+        # Generate ClickPesa control number for payment - REQUIRED, no placeholders!
+        control_number = None
+        clickpesa_customer_name = None
+        clickpesa_bill_description = None
+        clickpesa_bill_reference = None
+        
+        # Format client phone number for ClickPesa (must be 255XXXXXXXXX format, no +, no spaces)
+        formatted_client_phone = None
+        if invoice_data.client_phone:
+            formatted_client_phone = (
+                invoice_data.client_phone.replace('+', '')
+                .replace(' ', '')
+                .replace('-', '')
+                .replace('(', '')
+                .replace(')', '')
+            )
+            # If it doesn't start with country code (255 for Tanzania), add it
+            if not formatted_client_phone.startswith('255'):
+                # If it starts with 0, replace with 255 (Tanzanian format: 0xxx -> 255xxx)
+                if formatted_client_phone.startswith('0'):
+                    formatted_client_phone = '255' + formatted_client_phone[1:]
+                # If it's just digits without country code, assume Tanzania and add 255
+                elif formatted_client_phone.isdigit() and len(formatted_client_phone) == 9:
+                    formatted_client_phone = '255' + formatted_client_phone
+        
+        # ClickPesa requires at least phone OR email for the customer
+        if not formatted_client_phone and not invoice_data.client_email:
+            raise HTTPException(
+                status_code=400,
+                detail="Client phone number or email is required to generate payment control number. ClickPesa requires customer contact information."
+            )
+        
+        try:
+            # Create ClickPesa BillPay control number
+            print(f"⏱️ Starting ClickPesa API call at {time.time()}")
+            clickpesa_service = ClickPesaService()
+            
+            # Prepare recipient info for ClickPesa
+            recipient = {
+                'name': invoice_data.client_name or 'Customer',
+                'phone': formatted_client_phone,
+                'email': invoice_data.client_email,
+                'description': f"Invoice {invoice_number} - {invoice_data.client_name}"
+            }
+            
+            # Generate reference (max 20 chars for ClickPesa API requirement)
+            # Use short format: INV + last 6 digits of timestamp + 4 digit random = 13 chars
+            timestamp_suffix = str(int(time.time()))[-6:]  # Last 6 digits of timestamp
+            random_suffix = str(random.randint(1000, 9999))  # 4 digit random
+            bill_reference = f"INV{timestamp_suffix}{random_suffix}"  # Total: 3 + 6 + 4 = 13 chars (well under 20)
+            
+            print(f"📞 Calling ClickPesa API to create control number for invoice {invoice_number}")
+            print(f"   Recipient: {recipient.get('name')}, Phone: {recipient.get('phone')}, Email: {recipient.get('email')}")
+            print(f"   Amount: {invoice_data.total} {invoice_data.currency or 'TZS'}")
+            print(f"   Reference: {bill_reference}")
+            
+            # Create BillPay control number
+            clickpesa_response = clickpesa_service.create_transfer(
+                amount=invoice_data.total,
+                currency=invoice_data.currency or "TZS",
+                recipient=recipient,
+                reference=bill_reference
+            )
+            
+            print(f"📦 ClickPesa Service Response: {clickpesa_response}")
+            print(f"📦 ClickPesa Service Response Keys: {list(clickpesa_response.keys()) if isinstance(clickpesa_response, dict) else 'Not a dict'}")
+            
+            # Extract control number from response (check multiple possible fields)
+            # The service returns a dict with 'control_number' and 'billPayNumber' keys
+            control_number = (
+                clickpesa_response.get('control_number') or 
+                clickpesa_response.get('billPayNumber') or 
+                clickpesa_response.get('transfer_id') or
+                clickpesa_response.get('response', {}).get('billPayNumber') or
+                clickpesa_response.get('data', {}).get('billPayNumber') or
+                clickpesa_response.get('data', {}).get('control_number')
+            )
+            
+            print(f"🔍 Extracted control_number: {control_number}")
+            
+            clickpesa_customer_name = invoice_data.client_name
+            clickpesa_bill_description = recipient.get('description', f"Invoice {invoice_number}")
+            clickpesa_bill_reference = bill_reference
+            
+            if not control_number:
+                error_msg = f"ClickPesa API did not return a control number. Full response: {clickpesa_response}"
+                print(f"❌ {error_msg}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to generate payment control number: {error_msg}"
+                )
+            
+            print(f"✅ ClickPesa control number generated successfully: {control_number} for invoice {invoice_number}")
+            print(f"✅ Control number will be saved to database: {control_number}")
+                
+        except HTTPException:
+            # Re-raise HTTP exceptions (like 400, 500, etc.)
+            raise
+        except Exception as clickpesa_error:
+            # ClickPesa API call failed - log detailed error and fail invoice creation
+            import traceback
+            error_trace = traceback.format_exc()
+            error_msg = f"Failed to create ClickPesa control number: {str(clickpesa_error)}"
+            print(f"❌ {error_msg}")
+            print(f"❌ Error trace: {error_trace}")
+            
+            # FAIL the invoice creation - don't create invoices with fake control numbers
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to generate payment control number from ClickPesa. Please check your ClickPesa API credentials and try again. Error: {str(clickpesa_error)}"
+            )
+        
+        # CRITICAL VALIDATION: Ensure control_number is valid before creating invoice
+        print(f"🔒 VALIDATING control_number before creating invoice: {control_number} (type: {type(control_number)})")
+        
+        if control_number is None:
+            raise HTTPException(
+                status_code=500,
+                detail="CRITICAL ERROR: Control number is None. Invoice creation aborted. ClickPesa API did not return a control number."
+            )
+        
+        if isinstance(control_number, str) and control_number.startswith('NOCTRL'):
+            raise HTTPException(
+                status_code=500,
+                detail=f"CRITICAL ERROR: Invalid placeholder control number detected: {control_number}. Invoice creation aborted."
+            )
+        
+        if not isinstance(control_number, str):
+            raise HTTPException(
+                status_code=500,
+                detail=f"CRITICAL ERROR: Control number is not a string: {type(control_number)} = {control_number}. Invoice creation aborted."
+            )
+        
+        if len(control_number.strip()) == 0:
+            raise HTTPException(
+                status_code=500,
+                detail=f"CRITICAL ERROR: Control number is empty string. Invoice creation aborted."
+            )
+        
+        print(f"🔒 VALIDATION PASSED: Control number is valid: '{control_number}' (length: {len(control_number)})")
         
         # Parse invoice status
         invoice_status = InvoiceStatus.PENDING
@@ -174,11 +327,12 @@ async def create_invoice(
             except KeyError:
                 invoice_status = InvoiceStatus.PENDING
         
-        # Create invoice record
+        # Create invoice record - control_number is guaranteed to be valid at this point
+        print(f"🔒 Creating Invoice object with control_number: '{control_number}'")
         invoice = Invoice(
             user_id=user_id,
             invoice_number=invoice_number,
-            control_number=control_number,
+            control_number=str(control_number).strip(),  # Ensure it's a string and trimmed
             issue_date=issue_date,
             due_date=due_date,
             client_name=invoice_data.client_name,
@@ -195,14 +349,19 @@ async def create_invoice(
             currency=invoice_data.currency or "TZS",  # Use currency from request
             status=invoice_status,
             notes=invoice_data.notes,
-            clickpesa_customer_name=None,
-            clickpesa_bill_description=None,
-            clickpesa_bill_reference=None
+            clickpesa_customer_name=clickpesa_customer_name,
+            clickpesa_bill_description=clickpesa_bill_description,
+            clickpesa_bill_reference=clickpesa_bill_reference
         )
         
         db.add(invoice)
         db.commit()
         db.refresh(invoice)
+        
+        # DEBUG: Verify control_number was saved to database
+        print(f"🔍 After commit - invoice.control_number: {invoice.control_number}")
+        print(f"🔍 After commit - invoice.control_number type: {type(invoice.control_number)}")
+        print(f"🔍 After commit - invoice.control_number is None: {invoice.control_number is None}")
         
         # Parse items for response
         invoice_items = []
@@ -211,10 +370,15 @@ async def create_invoice(
         except:
             invoice_items = []
         
+        # DEBUG: Verify what we're returning
+        response_control_number = invoice.control_number
+        print(f"🔍 Returning control_number in response: {response_control_number}")
+        print(f"🔍 Response control_number type: {type(response_control_number)}")
+        
         return {
             'id': invoice.id,
             'invoice_number': invoice.invoice_number,
-            'control_number': invoice.control_number,
+            'control_number': response_control_number,
             'issue_date': invoice.issue_date.isoformat() if invoice.issue_date else None,
             'due_date': invoice.due_date.isoformat() if invoice.due_date else None,
             'client_name': invoice.client_name,
@@ -489,3 +653,193 @@ async def delete_invoice(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to delete invoice: {str(e)}")
+
+@router.post("/{invoice_id}/regenerate-control-number", response_model=InvoiceResponse)
+async def regenerate_control_number(
+    invoice_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Regenerate ClickPesa control number for an existing invoice.
+    Useful for fixing invoices that were created with placeholder control numbers.
+    """
+    try:
+        # Get the invoice
+        invoice = db.query(Invoice).filter(
+            Invoice.id == invoice_id,
+            Invoice.user_id == user_id
+        ).first()
+        
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        
+        # Check if invoice already has a valid control number
+        if invoice.control_number and not invoice.control_number.startswith('NOCTRL'):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invoice already has a valid control number: {invoice.control_number}. Cannot regenerate."
+            )
+        
+        # Format client phone number for ClickPesa
+        formatted_client_phone = None
+        if invoice.client_phone:
+            formatted_client_phone = invoice.client_phone.replace('+', '').replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+            if not formatted_client_phone.startswith('255'):
+                if formatted_client_phone.startswith('0'):
+                    formatted_client_phone = '255' + formatted_client_phone[1:]
+                elif formatted_client_phone.isdigit() and len(formatted_client_phone) == 9:
+                    formatted_client_phone = '255' + formatted_client_phone
+        
+        # ClickPesa requires at least phone OR email
+        if not formatted_client_phone and not invoice.client_email:
+            raise HTTPException(
+                status_code=400,
+                detail="Client phone number or email is required to generate payment control number."
+            )
+        
+        # Generate new control number via ClickPesa
+        clickpesa_service = ClickPesaService()
+        
+        recipient = {
+            'name': invoice.client_name or 'Customer',
+            'phone': formatted_client_phone,
+            'email': invoice.client_email,
+            'description': f"Invoice {invoice.invoice_number} - {invoice.client_name}"
+        }
+        
+        # Generate short reference (max 20 chars for ClickPesa API requirement)
+        # Use short format: INV + last 6 digits of timestamp + 4 digit random = 13 chars
+        timestamp_suffix = str(int(time.time()))[-6:]  # Last 6 digits of timestamp
+        random_suffix = str(random.randint(1000, 9999))  # 4 digit random
+        bill_reference = f"INV{timestamp_suffix}{random_suffix}"  # Total: 13 chars (well under 20)
+        
+        print(f"🔄 Regenerating control number for invoice {invoice.invoice_number} (ID: {invoice_id})")
+        
+        clickpesa_response = clickpesa_service.create_transfer(
+            amount=invoice.total,
+            currency=invoice.currency or "TZS",
+            recipient=recipient,
+            reference=bill_reference
+        )
+        
+        control_number = (
+            clickpesa_response.get('control_number') or 
+            clickpesa_response.get('billPayNumber') or 
+            clickpesa_response.get('transfer_id')
+        )
+        
+        if not control_number:
+            raise HTTPException(
+                status_code=500,
+                detail=f"ClickPesa API did not return a control number. Response: {clickpesa_response}"
+            )
+        
+        # Update invoice with new control number
+        invoice.control_number = control_number
+        db.commit()
+        db.refresh(invoice)
+        
+        print(f"✅ Control number regenerated: {control_number} for invoice {invoice.invoice_number}")
+        
+        # Build response
+        items = []
+        try:
+            items = json.loads(invoice.items) if invoice.items else []
+        except:
+            items = []
+        
+        return {
+            'id': invoice.id,
+            'invoice_number': invoice.invoice_number,
+            'control_number': invoice.control_number,
+            'issue_date': invoice.issue_date.isoformat() if invoice.issue_date else None,
+            'due_date': invoice.due_date.isoformat() if invoice.due_date else None,
+            'client_name': invoice.client_name,
+            'client_email': invoice.client_email,
+            'client_phone': invoice.client_phone,
+            'client_address': invoice.client_address,
+            'items': items,
+            'subtotal': invoice.subtotal,
+            'tax_rate': invoice.tax_rate,
+            'tax_amount': invoice.tax_amount,
+            'discount': invoice.discount,
+            'discount_rate': invoice.discount_rate,
+            'total': invoice.total,
+            'amount_paid': invoice.amount_paid,
+            'currency': invoice.currency,
+            'status': invoice.status.value if hasattr(invoice.status, 'value') else str(invoice.status),
+            'notes': invoice.notes,
+            'created_at': invoice.created_at.isoformat() if invoice.created_at else None,
+            'updated_at': invoice.updated_at.isoformat() if invoice.updated_at else None,
+            'paid_at': invoice.paid_at.isoformat() if invoice.paid_at else None
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"❌ Error regenerating control number: {str(e)}")
+        print(f"❌ Error trace: {error_trace}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to regenerate control number: {str(e)}"
+        )
+
+@router.post("/{invoice_id}/initiate-ussd-push", response_model=dict)
+async def initiate_invoice_ussd_push(
+    invoice_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Initiate a USSD push payment request for an invoice.
+    This sends a payment request directly to the customer's phone.
+    """
+    try:
+        # Get the invoice
+        invoice = db.query(Invoice).filter(
+            Invoice.id == invoice_id,
+            Invoice.user_id == user_id
+        ).first()
+        
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        
+        if not invoice.client_phone:
+            raise HTTPException(status_code=400, detail="Customer phone number is required for USSD push")
+        
+        # Format phone number for ClickPesa (255XXXXXXXXX, no +, no spaces)
+        phone_number = invoice.client_phone.replace('+', '').replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+        if not phone_number.startswith('255'):
+            if phone_number.startswith('0'):
+                phone_number = '255' + phone_number[1:]
+            elif phone_number.isdigit() and len(phone_number) == 9:
+                phone_number = '255' + phone_number
+        
+        # Generate order reference
+        order_reference = f"INV-{invoice.invoice_number}-{invoice_id}"
+        
+        # Initiate USSD push via ClickPesa
+        clickpesa_service = ClickPesaService()
+        ussd_response = clickpesa_service.initiate_ussd_push(
+            amount=invoice.total,
+            currency=invoice.currency or "TZS",
+            phone_number=phone_number,
+            order_reference=order_reference
+        )
+        
+        return {
+            'success': True,
+            'message': 'USSD push payment request sent to customer',
+            'ussd_push': ussd_response,
+            'invoice_id': invoice_id,
+            'phone_number': phone_number
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to initiate USSD push: {str(e)}")

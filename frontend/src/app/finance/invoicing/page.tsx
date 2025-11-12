@@ -38,6 +38,7 @@ export default function InvoicingPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [downloadingInvoice, setDownloadingInvoice] = useState<Invoice | null>(null);
+  const [sendingInvoice, setSendingInvoice] = useState<Invoice | null>(null);
   const { token } = useAuth();
 
   const formatAmountWithCurrency = (amount: number, currencyCode: string) => {
@@ -111,7 +112,7 @@ export default function InvoicingPage() {
     setShowCreateModal(true);
   };
 
-  const handleSaveInvoice = async (invoiceData: any) => {
+  const handleSaveInvoice = async (invoiceData: any, skipCloseModal: boolean = false) => {
     if (!token) {
       // Fallback to local save if no token
       const currency = invoiceData.currency || 'TZS';
@@ -133,62 +134,86 @@ export default function InvoicingPage() {
           : inv
       ));
     } else {
-        const newInvoice: Invoice = {
-          id: Date.now().toString(),
-          number: invoiceData.invoiceNumber || `INV-${Date.now()}`,
-          client: invoiceData.clientName || 'Unknown Client',
+      const newInvoice: Invoice = {
+        id: Date.now().toString(),
+        number: invoiceData.invoiceNumber || `INV-${Date.now()}`,
+        client: invoiceData.clientName || 'Unknown Client',
           amount: formattedAmount,
           date: invoiceData.date || new Date().toISOString().split('T')[0],
-          status: 'pending',
-          email: invoiceData.clientEmail,
-          phone: invoiceData.clientPhone,
-          invoiceData: invoiceData
-        };
-        setInvoices(prev => [newInvoice, ...prev]);
-      }
+        status: 'pending',
+        email: invoiceData.clientEmail,
+        phone: invoiceData.clientPhone,
+        invoiceData: invoiceData
+      };
+      setInvoices(prev => [newInvoice, ...prev]);
+    }
 
-      setShowCreateModal(false);
-      setOpenOnInvoiceTab(false);
-      setSelectedTemplateId(null);
-      setDownloadingInvoice(null);
+      if (!skipCloseModal) {
+    setShowCreateModal(false);
+    setOpenOnInvoiceTab(false);
+    setSelectedTemplateId(null);
+        setDownloadingInvoice(null);
+      }
       return;
     }
 
     try {
-      // Map items to backend format
-      const items = (invoiceData.items || []).map((item: any) => ({
-        description: item.description || '',
-        quantity: item.quantity || 0,
-        unit: item.unit || '',
-        rate: item.rate || 0,
-        amount: item.amount || 0
-      }));
+      // Map items to backend format - ensure we have at least one item
+      const items = (invoiceData.items || []).filter((item: any) => item && (item.description || item.quantity > 0 || item.rate > 0))
+        .map((item: any, index: number) => ({
+          id: item.id || `item-${index + 1}`, // Backend requires id field
+          type: item.type || 'item',
+          description: item.description || '',
+          quantity: parseFloat(String(item.quantity)) || 0,
+          unit: item.unit || '',
+          rate: parseFloat(String(item.rate)) || 0,
+          amount: parseFloat(String(item.amount)) || 0
+        }));
+      
+      // Backend requires at least one item
+      if (items.length === 0) {
+        throw new Error('Please add at least one item to the invoice');
+      }
+
+      // Validate required fields
+      const clientName = invoiceData.clientName || invoiceData.client_name;
+      if (!clientName || clientName.trim() === '') {
+        throw new Error('Client name is required');
+      }
 
       // Calculate tax_rate from tax_amount and subtotal if not provided
-      const subtotal = invoiceData.subtotal || 0;
-      const taxAmount = invoiceData.tax || invoiceData.tax_amount || 0;
+      const subtotal = parseFloat(String(invoiceData.subtotal)) || 0;
+      const taxAmount = parseFloat(String(invoiceData.tax || invoiceData.tax_amount || 0)) || 0;
       const calculatedTaxRate = subtotal > 0 ? (taxAmount / subtotal) * 100 : 0;
-      const taxRate = invoiceData.taxRate || invoiceData.tax_rate || calculatedTaxRate;
+      const taxRate = parseFloat(String(invoiceData.taxRate || invoiceData.tax_rate || calculatedTaxRate)) || 0;
+      
+      const total = parseFloat(String(invoiceData.total)) || 0;
+      if (total <= 0) {
+        throw new Error('Invoice total must be greater than 0');
+      }
 
       // Prepare create payload - map from modal format to backend format
       const createPayload = {
-        invoice_number: invoiceData.invoiceNumber || invoiceData.invoice_number,
+        invoice_number: invoiceData.invoiceNumber || invoiceData.invoice_number || null,
         issue_date: invoiceData.date || invoiceData.issue_date || new Date().toISOString().split('T')[0],
         due_date: invoiceData.dueDate || invoiceData.due_date || null,
-        client_name: invoiceData.clientName || invoiceData.client_name,
-        client_email: invoiceData.clientEmail || invoiceData.client_email || '',
-        client_phone: invoiceData.clientPhone || invoiceData.client_phone || '',
-        client_address: invoiceData.clientAddress || invoiceData.client_address || '',
+        client_name: clientName.trim(),
+        client_email: (invoiceData.clientEmail || invoiceData.client_email || '').trim() || null,
+        client_phone: (invoiceData.clientPhone || invoiceData.client_phone || '').trim() || null,
+        client_address: (invoiceData.clientAddress || invoiceData.client_address || '').trim() || null,
         items: items,
         subtotal: subtotal,
-        tax_rate: parseFloat(String(taxRate)) || 0,
+        tax_rate: taxRate,
         tax_amount: taxAmount,
-        discount: invoiceData.discount || invoiceData.discountAmount || 0,
+        discount: parseFloat(String(invoiceData.discount || invoiceData.discountAmount || 0)) || 0,
         discount_rate: parseFloat(String(invoiceData.discountRate || invoiceData.discount_rate || '0')) || 0,
-        total: invoiceData.total || 0,
+        total: total,
         currency: invoiceData.currency || 'TZS',
-        notes: invoiceData.notes || ''
+        notes: (invoiceData.notes || '').trim() || null,
+        status: invoiceData.status || 'PENDING'
       };
+
+      console.log('Creating invoice with payload:', JSON.stringify(createPayload, null, 2));
 
       const response = await fetch(buildApiUrl('/invoices'), {
         method: 'POST',
@@ -200,11 +225,41 @@ export default function InvoicingPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Failed to create invoice: ${errorData.detail || response.statusText}`);
+        let errorMessage = `Failed to create invoice (${response.status}): `;
+        try {
+          const errorData = await response.json();
+          // Handle different error response formats
+          if (typeof errorData === 'string') {
+            errorMessage += errorData;
+          } else if (errorData.detail) {
+            errorMessage += typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+          } else if (errorData.message) {
+            errorMessage += errorData.message;
+          } else if (errorData.error) {
+            errorMessage += typeof errorData.error === 'string' ? errorData.error : JSON.stringify(errorData.error);
+          } else {
+            errorMessage += JSON.stringify(errorData);
+          }
+        } catch (e) {
+          // If JSON parsing fails, try to get text
+          const errorText = await response.text().catch(() => response.statusText);
+          errorMessage += errorText || response.statusText;
+        }
+        console.error('Invoice creation error:', errorMessage);
+        throw new Error(errorMessage);
       }
 
       const savedInvoice = await response.json();
+      
+      // DEBUG: Log the control number from backend
+      console.log('🔍 Backend returned invoice:', {
+        id: savedInvoice.id,
+        invoice_number: savedInvoice.invoice_number,
+        control_number: savedInvoice.control_number,
+        has_control_number: !!savedInvoice.control_number,
+        control_number_type: typeof savedInvoice.control_number,
+        control_number_starts_with_noctrl: savedInvoice.control_number?.startsWith('NOCTRL')
+      });
       
       // Update local state with the response
       const currency = savedInvoice.currency || 'TZS';
@@ -238,37 +293,39 @@ export default function InvoicingPage() {
         setInvoices(prev => [newInvoice, ...prev]);
       }
 
-      alert('Invoice saved successfully!');
+      if (!skipCloseModal) {
+        alert('Invoice saved successfully!');
+      }
       
-      // Reload invoices to get the latest data
-      await loadInvoices();
+      // Reload invoices to get the latest data (but don't wait if sending)
+      if (!skipCloseModal) {
+        await loadInvoices();
+      } else {
+        // If sending, reload in background without blocking
+        loadInvoices().catch(console.error);
+      }
+      
+      // Return the saved invoice for Send functionality
+      return savedInvoice;
     } catch (error) {
       console.error('Error saving invoice:', error);
-      alert(`Failed to save invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : (typeof error === 'string' ? error : JSON.stringify(error));
       
-      // Fallback to local save on error
-      const currency = invoiceData.currency || 'TZS';
-      const formattedAmount = formatAmountWithCurrency(invoiceData.total || 0, currency);
+      // DO NOT create local invoice - backend MUST create it with control number
+      // If backend fails, show error and DO NOT proceed
+      if (!skipCloseModal) {
+        alert(`Failed to save invoice: ${errorMessage}\n\nInvoice was NOT created. Please check your ClickPesa API credentials and try again.`);
+      } else {
+        // Still show error even if not closing modal (e.g., when sending)
+        alert(`Failed to save invoice: ${errorMessage}\n\nCannot send invoice - it was not created. Please try again.`);
+        console.error('Invoice save error (modal stays open):', errorMessage);
+      }
       
-      const newInvoice: Invoice = {
-        id: Date.now().toString(),
-        number: invoiceData.invoiceNumber || `INV-${Date.now()}`,
-        client: invoiceData.clientName || 'Unknown Client',
-        amount: formattedAmount,
-        date: invoiceData.date || new Date().toISOString().split('T')[0],
-        status: 'pending',
-        email: invoiceData.clientEmail,
-        phone: invoiceData.clientPhone,
-        invoiceData: invoiceData
-      };
-      
-      setInvoices(prev => [newInvoice, ...prev]);
+      // DO NOT create fake invoice - throw error instead
+      throw error;
     }
-
-    setShowCreateModal(false);
-    setOpenOnInvoiceTab(false);
-    setSelectedTemplateId(null);
-    setDownloadingInvoice(null);
   };
 
   const handleEditInvoice = (invoice: Invoice) => {
@@ -317,20 +374,39 @@ export default function InvoicingPage() {
       // Get invoice ID - might be in invoiceData or use the id directly
       const invoiceId = editingInvoice.invoiceData?.id || editingInvoice.id;
       
-      // Map items to backend format
-      const items = (updatedData.items || []).map((item: any) => ({
-        description: item.description || '',
-        quantity: item.quantity || 0,
-        unit: item.unit || '',
-        rate: item.rate || 0,
-        amount: item.amount || 0
-      }));
+      // Map items to backend format - include id field
+      const items = (updatedData.items || []).filter((item: any) => item && (item.description || item.quantity > 0 || item.rate > 0))
+        .map((item: any, index: number) => ({
+          id: item.id || `item-${index + 1}`, // Backend requires id field
+          type: item.type || 'item',
+          description: item.description || '',
+          quantity: parseFloat(String(item.quantity)) || 0,
+          unit: item.unit || '',
+          rate: parseFloat(String(item.rate)) || 0,
+          amount: parseFloat(String(item.amount)) || 0
+        }));
+      
+      // Backend requires at least one item
+      if (items.length === 0) {
+        throw new Error('Please add at least one item to the invoice');
+      }
+
+      // Validate required fields
+      const clientName = updatedData.clientName || updatedData.client_name;
+      if (!clientName || clientName.trim() === '') {
+        throw new Error('Client name is required');
+      }
 
       // Calculate tax_rate from tax_amount and subtotal if not provided
-      const subtotal = updatedData.subtotal || 0;
-      const taxAmount = updatedData.tax || updatedData.tax_amount || 0;
+      const subtotal = parseFloat(String(updatedData.subtotal)) || 0;
+      const taxAmount = parseFloat(String(updatedData.tax || updatedData.tax_amount || 0)) || 0;
       const calculatedTaxRate = subtotal > 0 ? (taxAmount / subtotal) * 100 : 0;
-      const taxRate = updatedData.taxRate || updatedData.tax_rate || calculatedTaxRate;
+      const taxRate = parseFloat(String(updatedData.taxRate || updatedData.tax_rate || calculatedTaxRate)) || 0;
+      
+      const total = parseFloat(String(updatedData.total)) || 0;
+      if (total <= 0) {
+        throw new Error('Invoice total must be greater than 0');
+      }
       
       // Prepare update payload - map from modal format to backend format
       const updatePayload = {
@@ -362,7 +438,26 @@ export default function InvoicingPage() {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to update invoice: ${response.statusText}`);
+        let errorMessage = `Failed to update invoice (${response.status}): `;
+        try {
+          const errorData = await response.json();
+          if (typeof errorData === 'string') {
+            errorMessage += errorData;
+          } else if (errorData.detail) {
+            errorMessage += typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+          } else if (errorData.message) {
+            errorMessage += errorData.message;
+          } else if (errorData.error) {
+            errorMessage += typeof errorData.error === 'string' ? errorData.error : JSON.stringify(errorData.error);
+          } else {
+            errorMessage += JSON.stringify(errorData);
+          }
+        } catch (e) {
+          const errorText = await response.text().catch(() => response.statusText);
+          errorMessage += errorText || response.statusText;
+        }
+        console.error('Invoice update error:', errorMessage);
+        throw new Error(errorMessage);
       }
 
       const updatedInvoice = await response.json();
@@ -416,10 +511,61 @@ export default function InvoicingPage() {
     setDownloadingInvoice(null);
   };
 
+  const handleSendInvoice = async (invoiceData: any) => {
+    try {
+      // First, save the invoice if not already saved (skip closing modal)
+      const savedInvoice = await handleSaveInvoice(invoiceData, true);
+      
+      if (savedInvoice && savedInvoice.id) {
+        // Create Invoice object for the message modal
+        const invoiceForSend: Invoice = {
+          id: savedInvoice.id.toString(),
+          number: savedInvoice.invoice_number,
+          client: savedInvoice.client_name || 'Unknown Client',
+          amount: formatAmountWithCurrency(savedInvoice.total || 0, savedInvoice.currency || 'TZS'),
+          date: savedInvoice.issue_date ? new Date(savedInvoice.issue_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          status: (savedInvoice.status?.toLowerCase() || 'pending') as 'paid' | 'pending' | 'overdue',
+          email: savedInvoice.client_email,
+          phone: savedInvoice.client_phone,
+          invoiceData: savedInvoice // Include full data with control_number
+        };
+        
+        // Close create modal and set sending invoice to trigger message modal
+        setShowCreateModal(false);
+        setOpenOnInvoiceTab(false);
+        setSelectedTemplateId(null);
+        setEditingInvoice(null);
+        setDownloadingInvoice(null);
+        
+        // Set the invoice to send - this will trigger the message modal in InvoicesTab
+        setSendingInvoice(invoiceForSend);
+      } else {
+        // If save failed, show error and close modal
+        setShowCreateModal(false);
+        setOpenOnInvoiceTab(false);
+        setSelectedTemplateId(null);
+        setDownloadingInvoice(null);
+      }
+    } catch (error) {
+      console.error('Error sending invoice:', error);
+      alert(`Failed to prepare invoice for sending: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // Close modal on error
+      setShowCreateModal(false);
+      setOpenOnInvoiceTab(false);
+      setSelectedTemplateId(null);
+      setDownloadingInvoice(null);
+    }
+  };
+
   const handleDeleteInvoice = async (invoiceId: string) => {
     if (!token) {
       // Fallback to local delete if no token
-      setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+    setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+      return;
+    }
+
+    // Confirm deletion
+    if (!confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
       return;
     }
 
@@ -442,15 +588,13 @@ export default function InvoicingPage() {
         throw new Error(`Failed to delete invoice: ${errorText || response.statusText}`);
       }
 
-      // Remove from local state
-      setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+      // Reload invoices from backend to ensure UI is in sync with database
+      await loadInvoices();
       alert('Invoice deleted successfully!');
     } catch (error) {
       console.error('Error deleting invoice:', error);
       alert(`Failed to delete invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      
-      // Still remove from local state on error for better UX
-    setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+      // Do NOT remove from local state on error - keep it visible so user knows it wasn't deleted
     }
   };
 
@@ -487,6 +631,8 @@ export default function InvoicingPage() {
           onDownloadInvoice={handleDownloadInvoice}
           onDeleteInvoice={handleDeleteInvoice}
           onUpdateInvoiceStatus={handleUpdateInvoiceStatus}
+          sendingInvoice={sendingInvoice}
+          onSendingInvoiceComplete={() => setSendingInvoice(null)}
         />
       );
     }
@@ -512,7 +658,14 @@ export default function InvoicingPage() {
             </p>
           </div>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => {
+              // Clear all editing state when creating a new invoice
+              setEditingInvoice(null);
+              setDownloadingInvoice(null);
+              setSelectedTemplateId(null);
+              setOpenOnInvoiceTab(false);
+              setShowCreateModal(true);
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -634,6 +787,7 @@ export default function InvoicingPage() {
 
       {/* Create Invoice Modal */}
       <CreateInvoiceModal
+        key={editingInvoice?.id || 'new-invoice'} // Force remount when switching between new/edit
         isOpen={showCreateModal}
         onClose={() => {
           setShowCreateModal(false);
@@ -643,7 +797,7 @@ export default function InvoicingPage() {
           setDownloadingInvoice(null);
         }}
         onSave={editingInvoice ? handleUpdateInvoice : handleSaveInvoice}
-        onSend={() => {}}
+        onSend={handleSendInvoice}
         initialTab={downloadingInvoice ? 'invoice' : (openOnInvoiceTab ? 'invoice' : 'details')}
         autoDownload={Boolean(downloadingInvoice)}
         selectedTemplateId={selectedTemplateId}

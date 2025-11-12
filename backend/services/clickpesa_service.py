@@ -32,7 +32,9 @@ class ClickPesaService(PaymentProviderInterface):
             Payment details including control number
         """
         try:
+            print(f"⏱️ [ClickPesa] Starting token request at {time.time()}")
             token = get_clickpesa_token()
+            print(f"⏱️ [ClickPesa] Token received at {time.time()}")
             
             billpay_request = {
                 "customerName": recipient.get('name'),
@@ -47,30 +49,192 @@ class ClickPesaService(PaymentProviderInterface):
             if recipient.get('email'):
                 billpay_request["customerEmail"] = recipient['email']
             
+            # ClickPesa API uses the token directly (no Bearer prefix based on other usage in codebase)
+            print(f"🔐 Calling ClickPesa API: {self.base_url}/third-parties/billpay/create-customer-control-number")
+            print(f"📋 Request payload: {billpay_request}")
+            print(f"🔑 Using token: {token[:20]}..." if token else "❌ No token!")
+            print(f"⏱️ [ClickPesa] Starting API call at {time.time()}")
+            
+            try:
             response = httpx.post(
                 f"{self.base_url}/third-parties/billpay/create-customer-control-number",
                 headers={
-                    'Authorization': token,
+                        'Authorization': token,  # ClickPesa uses token directly, not Bearer token
                     'Content-Type': 'application/json'
                 },
                 json=billpay_request,
-                timeout=10.0
+                    timeout=15.0  # 15 second timeout - fail fast if ClickPesa is slow
             )
+                print(f"⏱️ [ClickPesa] API call completed at {time.time()}")
+            except httpx.TimeoutException as timeout_error:
+                print(f"❌ [ClickPesa] API call TIMED OUT after 15 seconds")
+                raise Exception(f"ClickPesa API request timed out after 15 seconds. The API may be slow or unavailable. Please try again later.")
+            except httpx.ConnectError as connect_error:
+                print(f"❌ [ClickPesa] Connection error: {connect_error}")
+                raise Exception(f"Failed to connect to ClickPesa API. Please check your internet connection and try again.")
+            except httpx.RequestError as request_error:
+                print(f"❌ [ClickPesa] Request error: {request_error}")
+                raise Exception(f"ClickPesa API request failed: {str(request_error)}")
+            
+            # Log response status and body for debugging
+            print(f"📡 ClickPesa API Response Status: {response.status_code}")
+            print(f"📡 ClickPesa API Response Headers: {dict(response.headers)}")
+            
+            try:
             response.raise_for_status()
             billpay_response = response.json()
+                print(f"📦 ClickPesa API Response Body: {billpay_response}")
+            except httpx.HTTPStatusError as e:
+                # Try to get error details from response
+                error_body = {}
+                try:
+                    error_body = e.response.json()
+                except:
+                    error_body = {'text': e.response.text}
+                
+                error_msg = f"ClickPesa API returned {e.response.status_code}: {error_body}"
+                print(f"❌ {error_msg}")
+                raise Exception(error_msg)
+            
+            # Extract control number from response - check various possible field names
+            # IMPORTANT: Print the FULL response to see what ClickPesa actually returns
+            print(f"🔍 FULL ClickPesa Response Keys: {list(billpay_response.keys())}")
+            print(f"🔍 FULL ClickPesa Response: {billpay_response}")
+            
+            control_number = (
+                billpay_response.get('billPayNumber') or
+                billpay_response.get('controlNumber') or
+                billpay_response.get('billPayControlNumber') or
+                billpay_response.get('control_number') or
+                billpay_response.get('orderControlNumber') or
+                billpay_response.get('data', {}).get('billPayNumber') or
+                billpay_response.get('data', {}).get('controlNumber') or
+                billpay_response.get('data', {}).get('control_number') or
+                billpay_response.get('result', {}).get('billPayNumber') or
+                billpay_response.get('result', {}).get('controlNumber') or
+                billpay_response.get('response', {}).get('billPayNumber')
+            )
+            
+            if not control_number:
+                error_msg = f"ClickPesa API response did not contain a control number. Full response: {billpay_response}"
+                print(f"❌ {error_msg}")
+                print(f"❌ Available keys in response: {list(billpay_response.keys())}")
+                raise Exception(error_msg)
+            
+            print(f"✅ ClickPesa control number extracted: {control_number}")
             
             return {
-                'transfer_id': billpay_response.get('billPayNumber'),
+                'transfer_id': control_number,
                 'status': 'pending',
                 'reference': reference,
                 'amount': amount,
                 'currency': currency,
                 'recipient': recipient.get('name'),
                 'provider': 'CLICKPESA',
-                'control_number': billpay_response.get('billPayNumber')
+                'control_number': control_number,
+                'billPayNumber': control_number  # Also include this for backward compatibility
             }
         except Exception as e:
-            raise Exception(f"ClickPesa error: {str(e)}")
+            error_msg = f"ClickPesa API error: {str(e)}"
+            print(f"❌ {error_msg}")
+            raise Exception(error_msg)
+    
+    def initiate_ussd_push(self, amount: float, currency: str, phone_number: str, order_reference: str, checksum: Optional[str] = None) -> Dict:
+        """
+        Initiate a USSD push payment request via ClickPesa.
+        This sends a payment request directly to the customer's phone.
+        
+        Args:
+            amount: Payment amount
+            currency: Currency (TZS for Tanzania)
+            phone_number: Customer phone number (format: 255712345678, no + sign)
+            order_reference: Unique order reference
+            checksum: Optional checksum for security
+            
+        Returns:
+            USSD push transaction details including id and status
+        """
+        try:
+            token = get_clickpesa_token()
+            
+            payload = {
+                "amount": str(amount),
+                "currency": currency,
+                "orderReference": order_reference,
+                "phoneNumber": phone_number
+            }
+            
+            if checksum:
+                payload["checksum"] = checksum
+            
+            response = httpx.post(
+                f"{self.base_url}/third-parties/payments/initiate-ussd-push-request",
+                headers={
+                    'Authorization': token,
+                    'Content-Type': 'application/json'
+                },
+                json=payload,
+                timeout=10.0
+            )
+            response.raise_for_status()
+            ussd_response = response.json()
+            
+            return {
+                'id': ussd_response.get('id'),
+                'status': ussd_response.get('status', 'PROCESSING'),
+                'channel': ussd_response.get('channel'),
+                'order_reference': ussd_response.get('orderReference'),
+                'collected_amount': ussd_response.get('collectedAmount'),
+                'collected_currency': ussd_response.get('collectedCurrency'),
+                'created_at': ussd_response.get('createdAt'),
+                'provider': 'CLICKPESA',
+                'type': 'USSD_PUSH'
+            }
+        except Exception as e:
+            raise Exception(f"ClickPesa USSD push error: {str(e)}")
+    
+    def preview_ussd_push(self, amount: float, currency: str, phone_number: str, order_reference: str, fetch_sender_details: bool = False, checksum: Optional[str] = None) -> Dict:
+        """
+        Preview USSD push payment request to see available payment methods.
+        
+        Args:
+            amount: Payment amount
+            currency: Currency (TZS for Tanzania)
+            phone_number: Customer phone number (format: 255712345678, no + sign)
+            order_reference: Unique order reference
+            fetch_sender_details: If true, fetch sender details
+            checksum: Optional checksum for security
+            
+        Returns:
+            Preview response with available payment methods
+        """
+        try:
+            token = get_clickpesa_token()
+            
+            payload = {
+                "amount": str(amount),
+                "currency": currency,
+                "orderReference": order_reference,
+                "phoneNumber": phone_number,
+                "fetchSenderDetails": fetch_sender_details
+            }
+            
+            if checksum:
+                payload["checksum"] = checksum
+            
+            response = httpx.post(
+                f"{self.base_url}/third-parties/payments/preview-ussd-push-request",
+                headers={
+                    'Authorization': token,
+                    'Content-Type': 'application/json'
+                },
+                json=payload,
+                timeout=10.0
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            raise Exception(f"ClickPesa USSD push preview error: {str(e)}")
     
     def get_transfer_status(self, transfer_id: str) -> Dict:
         """Get status of a ClickPesa transaction"""

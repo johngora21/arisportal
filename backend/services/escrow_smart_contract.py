@@ -5,32 +5,36 @@ Handles blockchain smart contract deployment for escrow accounts
 
 import os
 from typing import Dict
+
+from dotenv import load_dotenv
+
 try:
     from web3 import Web3
+
     WEB3_AVAILABLE = True
 except ImportError:
     WEB3_AVAILABLE = False
     Web3 = None
     print("⚠️ web3 not available - running in mock mode")
-from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class EscrowSmartContract:
     """
-    Manages smart contract deployment and interaction for escrow accounts
+    Manages smart contract deployment and interaction for escrow accounts.
     """
-    
+
     def __init__(self):
-        """Initialize the smart contract service"""
+        """Initialize the smart contract service."""
         if not WEB3_AVAILABLE:
-            print("⚠️  web3 not available - running in mock mode")
+            print("⚠️ web3 not available - running in mock mode")
             self.web3 = None
             self.contract_address = None
-                else:
+        else:
             # Initialize Web3 connection
             # TODO: Configure with actual blockchain RPC endpoint
-            self.web3 = None
+            self.web3 = Web3(Web3.HTTPProvider(os.getenv("BLOCKCHAIN_RPC_URL", "")))
             self.contract_address = None
     
     def deploy_escrow_contract(self, escrow_id: str, total_amount: float, currency: str = "TZS") -> Dict:
