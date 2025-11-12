@@ -11,8 +11,7 @@ import json
 from pathlib import Path
 
 try:
-from web3 import Web3
-
+    from web3 import Web3
     WEB3_AVAILABLE = True
 except ImportError:
     WEB3_AVAILABLE = False
@@ -94,9 +93,9 @@ class EscrowSmartContract:
                     self.web3 = None
                     self.is_configured = False
                 else:
-                print("⚠️ BLOCKCHAIN_RPC_URL not set - running in mock mode")
-            self.web3 = None
-                self.is_configured = False
+                    print("⚠️ BLOCKCHAIN_RPC_URL not set - running in mock mode")
+                    self.web3 = None
+                    self.is_configured = False
     
     def deploy_escrow_contract(self, escrow_id: str, total_amount: float, currency: str = "TZS") -> Dict:
         """
@@ -427,10 +426,10 @@ class EscrowSmartContract:
                     "error": f"Contract execution reverted: {error_msg}. Check escrow status and contract conditions."
                 }
             else:
-            return {
-                "success": False,
+                return {
+                    "success": False,
                     "error": f"Blockchain transaction failed: {error_msg}"
-            }
+                }
     
     def cancel_escrow(self, escrow_id: str) -> Dict:
         """
