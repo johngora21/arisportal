@@ -378,6 +378,64 @@ class ClickPesaService(PaymentProviderInterface):
             print(f"[ClickPesa PAYOUT][ERROR] {err}")
             raise Exception(f"ClickPesa payout failed: {err}")
 
+    def create_bank_payout(
+        self,
+        *,
+        amount: float,
+        account_number: str,
+        account_name: str,
+        currency: str,
+        order_reference: str,
+        bic: str,
+        transfer_type: str = "ACH",
+        account_currency: str = "TZS",
+        checksum: Optional[str] = None,
+    ) -> Dict:
+        """
+        Create a bank payout via ClickPesa payouts API.
+        Mirrors docs: POST /third-parties/payouts/create-bank-payout
+        """
+        token = get_clickpesa_token()
+        payload = {
+            "amount": amount,
+            "accountNumber": account_number,
+            "accountName": account_name,
+            "currency": currency,
+            "accountCurrency": account_currency,
+            "orderReference": order_reference,
+            "bic": bic,
+            "transferType": transfer_type,
+        }
+        if checksum:
+            payload["checksum"] = checksum
+
+        try:
+            print(f"[ClickPesa BANK PAYOUT] POST payload={payload}")
+            auth_header = token if isinstance(token, str) and token.lower().startswith('bearer ') else f"Bearer {token}"
+            res = httpx.post(
+                f"{self.base_url}/third-parties/payouts/create-bank-payout",
+                headers={
+                    'Authorization': auth_header,
+                    'Content-Type': 'application/json'
+                },
+                json=payload,
+                timeout=20.0
+            )
+            res.raise_for_status()
+            try:
+                body = res.json()
+            except Exception:
+                body = {"raw": res.text}
+            print(f"[ClickPesa BANK PAYOUT] status_code={res.status_code} body={body}")
+            return body
+        except httpx.HTTPStatusError as e:
+            try:
+                err = e.response.json()
+            except Exception:
+                err = {'message': str(e)}
+            print(f"[ClickPesa BANK PAYOUT][ERROR] {err}")
+            raise Exception(f"ClickPesa bank payout failed: {err}")
+
     def get_mobile_money_payout(self, payout_id: str, *, timeout_seconds: float = 20.0) -> Dict:
         """Fetch payout details by ClickPesa payout ID"""
         token = get_clickpesa_token()
@@ -405,6 +463,37 @@ class ClickPesaService(PaymentProviderInterface):
                 err = {'message': str(e)}
             print(f"[ClickPesa PAYOUT STATUS][ERROR] {err}")
             raise Exception(f"ClickPesa payout status failed: {err}")
+
+    def get_banks_list(self) -> Dict:
+        """
+        Fetch the list of supported banks from ClickPesa.
+        Returns list of banks with their BIC codes and other details.
+        """
+        token = get_clickpesa_token()
+        auth_header = token if isinstance(token, str) and token.lower().startswith('bearer ') else f"Bearer {token}"
+        try:
+            res = httpx.get(
+                f"{self.base_url}/third-parties/list/banks",
+                headers={
+                    'Authorization': auth_header,
+                    'Content-Type': 'application/json'
+                },
+                timeout=20.0
+            )
+            res.raise_for_status()
+            try:
+                body = res.json()
+            except Exception:
+                body = {"raw": res.text}
+            print(f"[ClickPesa BANKS] status_code={res.status_code} body={body}")
+            return body
+        except httpx.HTTPStatusError as e:
+            try:
+                err = e.response.json()
+            except Exception:
+                err = {'message': str(e)}
+            print(f"[ClickPesa BANKS][ERROR] {err}")
+            raise Exception(f"ClickPesa banks list failed: {err}")
 
     def poll_mobile_money_payout_success(self, payout_id: str, *, max_attempts: int = 5, interval_seconds: float = 2.0) -> Dict:
         """

@@ -114,6 +114,10 @@ const PayrollTab: React.FC<PayrollTabProps> = ({
   const [selectedPaymentRecord, setSelectedPaymentRecord] = useState<PayrollRecord | null>(null);
   const [staffData, setStaffData] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
+  const [controlNumber, setControlNumber] = useState('');
+  const [paymentDetails, setPaymentDetails] = useState<any>(null);
+  const [paymentError, setPaymentError] = useState('');
 
   // Fetch staff data on component mount
   useEffect(() => {
@@ -329,6 +333,55 @@ const PayrollTab: React.FC<PayrollTabProps> = ({
   const handleIndividualPayment = (record: PayrollRecord) => {
     setSelectedPaymentRecord(record);
     setShowPaymentModal(true);
+    setControlNumber('');
+    setPaymentDetails(null);
+    setPaymentError('');
+  };
+
+  const handleGeneratePayment = async () => {
+    if (!selectedPaymentRecord) return;
+    
+    setIsGeneratingPayment(true);
+    setPaymentError('');
+    
+    try {
+      // Fetch actual payroll records to get the real payroll record ID
+      // The selectedPaymentRecord.id is actually the staff ID, not payroll record ID
+      const staffMember = staffData.find(s => s.id.toString() === selectedPaymentRecord.id);
+      if (!staffMember) {
+        throw new Error('Staff member not found');
+      }
+      
+      // Fetch payroll records for this staff member to get the actual payroll record ID
+      const payrollRecords = await PayrollService.fetchPayrollRecords(
+        monthFilter !== 'all' ? monthFilter : undefined,
+        staffMember.id
+      );
+      
+      // Find the most recent unpaid payroll record for this staff member
+      const unpaidRecord = payrollRecords
+        .filter((pr: any) => pr.status !== 'paid')
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+      
+      if (!unpaidRecord) {
+        throw new Error('No unpaid payroll record found for this employee');
+      }
+      
+      // Use the actual payroll record ID
+      const response = await PayrollService.generateIndividualPayrollPayment(unpaidRecord.id);
+      
+      if (response.success) {
+        setControlNumber(response.billpay_control_number);
+        setPaymentDetails(response);
+      } else {
+        setPaymentError(response.message || 'Failed to generate payment control number.');
+      }
+    } catch (error: any) {
+      console.error('Error generating payment:', error);
+      setPaymentError(error.message || 'Failed to generate payment control number. Please try again.');
+    } finally {
+      setIsGeneratingPayment(false);
+    }
   };
 
   return (
@@ -1103,38 +1156,135 @@ const PayrollTab: React.FC<PayrollTabProps> = ({
               </div>
 
 
+            {/* Payment Control Number Display */}
+            {controlNumber && paymentDetails && (
+              <div style={{
+                border: '2px solid #10b981',
+                borderRadius: '16px',
+                padding: '24px',
+                marginBottom: '24px',
+                backgroundColor: '#f0fdf4'
+              }}>
+                <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
+                  Payment Control Number Generated
+                </h4>
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Control Number:</div>
+                  <div style={{ fontSize: '24px', fontWeight: '700', color: '#059669', fontFamily: 'monospace' }}>
+                    {controlNumber}
+                  </div>
+                </div>
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Merchant Number:</div>
+                  <div style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', fontFamily: 'monospace' }}>
+                    {paymentDetails.billpay_namba}
+                  </div>
+                </div>
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Total Amount to Pay:</div>
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937' }}>
+                    {paymentDetails.total_amount.toLocaleString()} TZS
+                  </div>
+                </div>
+                <div style={{ 
+                  backgroundColor: 'white', 
+                  padding: '12px', 
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  color: '#374151',
+                  marginTop: '12px'
+                }}>
+                  <strong>Breakdown:</strong><br />
+                  Net Salary: {paymentDetails.net_salary.toLocaleString()} TZS<br />
+                  ClickPesa Fee: {paymentDetails.clickpesa_fee.toLocaleString()} TZS<br />
+                  Platform Fee (1%): {paymentDetails.platform_fee.toLocaleString()} TZS<br />
+                  Settlement Fee (1%): {paymentDetails.settlement_fee.toLocaleString()} TZS<br />
+                  <strong>Total: {paymentDetails.total_amount.toLocaleString()} TZS</strong>
+                </div>
+                <div style={{ 
+                  marginTop: '16px',
+                  padding: '12px',
+                  backgroundColor: '#dbeafe',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  color: '#1e40af'
+                }}>
+                  <strong>Instructions:</strong> Use the control number {controlNumber} and merchant number {paymentDetails.billpay_namba} to pay via your preferred payment method. Once paid, the salary will be automatically sent to {selectedPaymentRecord.employeeName}'s bank account.
+                </div>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {paymentError && (
+              <div style={{
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '16px',
+                color: '#dc2626',
+                fontSize: '14px'
+              }}>
+                {paymentError}
+              </div>
+            )}
+
             {/* Action Buttons */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
               <button
                 onClick={() => {
-                  alert(`Payment of ${formatCurrency(selectedPaymentRecord.netSalary)} processed successfully for ${selectedPaymentRecord.employeeName}`);
                   setShowPaymentModal(false);
+                  setControlNumber('');
+                  setPaymentDetails(null);
+                  setPaymentError('');
                 }}
                 style={{
                   padding: '12px 24px',
-                  border: 'none',
+                  border: '1px solid #d1d5db',
                   borderRadius: '25px',
-                  backgroundColor: '#10b981',
-                  color: 'white',
+                  backgroundColor: 'transparent',
+                  color: '#6b7280',
                   fontSize: '14px',
                   fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = '#059669';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.4)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = '#10b981';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+                  cursor: 'pointer'
                 }}
               >
-                Process Payment
+                {controlNumber ? 'Close' : 'Cancel'}
               </button>
+              {!controlNumber && (
+                <button
+                  onClick={handleGeneratePayment}
+                  disabled={isGeneratingPayment}
+                  style={{
+                    padding: '12px 24px',
+                    border: 'none',
+                    borderRadius: '25px',
+                    backgroundColor: isGeneratingPayment ? '#d1d5db' : '#10b981',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: isGeneratingPayment ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                  }}
+                  onMouseOver={(e) => {
+                    if (!isGeneratingPayment) {
+                      e.currentTarget.style.backgroundColor = '#059669';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.4)';
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (!isGeneratingPayment) {
+                      e.currentTarget.style.backgroundColor = '#10b981';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+                    }
+                  }}
+                >
+                  {isGeneratingPayment ? 'Generating Control Number...' : 'Pay'}
+                </button>
+              )}
             </div>
           </div>
         </div>

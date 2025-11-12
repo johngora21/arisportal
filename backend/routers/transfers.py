@@ -10,11 +10,26 @@ from typing import Optional, List
 from datetime import datetime
 import uuid
 import jwt
+import json
 from services.clickpesa_service import ClickPesaService
 from sqlalchemy import func
 
 router = APIRouter()
 security = HTTPBearer()
+
+# ClickPesa bank metadata (BIC codes and defaults)
+BANKS_METADATA = {
+    "crdb": {"bic": "CORUTZTZ", "name": "CRDB Bank", "transfer_type": "ACH"},
+    "nmb": {"bic": "NMBBTZTZ", "name": "NMB Bank", "transfer_type": "ACH"},
+    "equity": {"bic": "EQBLTZTZ", "name": "Equity Bank Tanzania", "transfer_type": "ACH"},
+    "absa": {"bic": "BARCTZTZ", "name": "Absa Bank Tanzania", "transfer_type": "ACH"},
+    "stanbic": {"bic": "SBICTZTX", "name": "Stanbic Bank Tanzania", "transfer_type": "ACH"},
+    "exim": {"bic": "EXIMTZTZ", "name": "Exim Bank Tanzania", "transfer_type": "ACH"},
+    "diamond": {"bic": "DTKETZTZ", "name": "Diamond Trust Bank", "transfer_type": "ACH"},
+    "kcb": {"bic": "KCBLTZTZ", "name": "KCB Bank Tanzania", "transfer_type": "ACH"},
+    "national": {"bic": "NCBKTZTZ", "name": "National Bank of Commerce", "transfer_type": "ACH"},
+    "barclays": {"bic": "BARCTZTZ", "name": "Barclays Bank Tanzania", "transfer_type": "ACH"},
+}
 
 # JWT Configuration
 JWT_SECRET_KEY = "jwt-secret-string"
@@ -40,7 +55,7 @@ class CardTransferRequest(BaseModel):
 
 class PeerTransferRequest(BaseModel):
     from_card_id: Optional[int] = None
-    transfer_mode: str  # 'card' or 'external'
+    transfer_mode: str  # 'card', 'clickpesa_balance', or 'external'
     transfer_method: str  # 'bank' or 'mno'
     recipient_name: str
     recipient_account: str  # Bank account or phone number
@@ -58,7 +73,7 @@ class BulkTransferRecipientRequest(BaseModel):
 
 class BulkTransferRequest(BaseModel):
     from_card_id: Optional[int] = None
-    transfer_mode: str  # 'card' or 'external'
+    transfer_mode: str  # 'card', 'clickpesa_balance', or 'external'
     transfer_method: str  # 'bank' or 'mno'
     recipients: List[BulkTransferRecipientRequest]
     description: Optional[str] = None
@@ -71,6 +86,7 @@ class TransferResponse(BaseModel):
     currency: str
     created_at: datetime
     clickpesa_reference: Optional[str] = None
+    transfer_summary: Optional[dict] = None
     
     class Config:
         from_attributes = True
@@ -134,6 +150,79 @@ def _create_ledger_entry(
     db.add(entry)
     db.flush()
     return entry
+
+
+def _normalize_phone_number(phone: str) -> str:
+    """Normalize phone numbers to MSISDN format (e.g., 2557XXXXXXXX)."""
+    digits = "".join(ch for ch in phone if ch.isdigit())
+    if not digits:
+        return digits
+
+    if digits.startswith("255"):
+        # Ensure standard length for Tanzanian MSISDN (12 digits)
+        return digits[:12]
+
+    if digits.startswith("0") and len(digits) >= 10:
+        return "255" + digits[1:]
+
+    if len(digits) == 9:
+        # Assume missing leading zero but already without 255
+        return "255" + digits
+
+    return digits
+
+
+def _resolve_bank_details(bank_identifier: Optional[str]) -> Optional[dict]:
+    """
+    Attempt to resolve bank metadata (primarily BIC and transfer type) from the identifier
+    provided by the client. The identifier can be:
+      - A known short code (e.g., 'crdb') mapped in BANKS_METADATA
+      - A raw BIC (e.g., 'CORUTZTZ')
+      - A string formatted as '<BIC>|<Name>'
+    """
+    if not bank_identifier:
+        return None
+
+    raw_value = bank_identifier.strip()
+    if not raw_value:
+        return None
+
+    # Allow a composite value "BIC|Name"
+    composite_parts = raw_value.split("|", 1)
+    if len(composite_parts) == 2:
+        bic_candidate = composite_parts[0].strip().upper()
+        name_candidate = composite_parts[1].strip()
+        if bic_candidate:
+            return {
+                "bic": bic_candidate,
+                "transfer_type": "ACH",
+                "name": name_candidate or raw_value,
+            }
+
+    normalized_key = raw_value.lower()
+    metadata = BANKS_METADATA.get(normalized_key)
+    if metadata:
+        return {
+            "bic": metadata.get("bic", raw_value.upper()),
+            "transfer_type": metadata.get("transfer_type", "ACH"),
+            "name": metadata.get("name") or raw_value,
+        }
+
+    # Treat raw value as BIC if it looks like one (8 or 11 characters, alphanumeric)
+    bic_candidate = raw_value.replace(" ", "").upper()
+    if len(bic_candidate) in (8, 11):
+        return {
+            "bic": bic_candidate,
+            "transfer_type": "ACH",
+            "name": raw_value,
+        }
+
+    # Fallback – still return something but require caller to validate BIC presence
+    return {
+        "bic": bic_candidate,
+        "transfer_type": "ACH",
+        "name": raw_value,
+    }
 
 
 @router.post("/card-to-card", response_model=TransferResponse)
@@ -284,14 +373,20 @@ async def create_local_peer_transfer(
     
     # If MNO payout, process via ClickPesa and ledger
     if transfer_data.transfer_method == 'mno':
-        # Only allow card-backed payouts for now
-        if transfer_data.transfer_mode != 'card' or not from_card:
-            raise HTTPException(status_code=400, detail="MNO payouts must use a source card")
-
-        # Balance check (ledger)
-        current_balance = _get_card_balance(from_card.id, db)
-        if current_balance < transfer_data.amount:
-            raise HTTPException(status_code=400, detail="Insufficient balance")
+        # MNO payouts can use card balance or ClickPesa balance
+        # External mode (control number) not supported for MNO yet
+        if transfer_data.transfer_mode == 'external':
+            raise HTTPException(status_code=400, detail="External source mode (control number) not yet implemented for MNO transfers")
+        
+        # For card mode, require a card and check balance
+        if transfer_data.transfer_mode == 'card':
+            if not from_card:
+                raise HTTPException(status_code=400, detail="MNO payouts with card mode require a source card")
+            # Balance check (ledger)
+            current_balance = _get_card_balance(from_card.id, db)
+            if current_balance < transfer_data.amount:
+                raise HTTPException(status_code=400, detail="Insufficient balance")
+        # For clickpesa_balance mode, no card or balance check needed - ClickPesa API handles it
 
         try:
         clickpesa_service = ClickPesaService()
@@ -328,19 +423,21 @@ async def create_local_peer_transfer(
                     print(f"[MNO PAYOUT] post-poll status={provider_status} ref={transfer.clickpesa_reference}")
 
             if provider_status in ["SUCCESS"]:
-                # Confirmed success — perform DEBIT and mark completed
-                _create_ledger_entry(
-                    card_id=from_card.id,
-                    user_id=user_id,
-                    entry_type=LedgerEntryType.DEBIT,
-                    entry_source=LedgerEntrySource.WITHDRAWAL,
-                    amount=transfer_data.amount,
-                    description=transfer_data.description or f"MNO payout to {transfer_data.recipient_name}",
-                    related_card_id=None,
-                    reference=transfer.clickpesa_reference,
-                    db=db
-                )
-                _recalculate_and_update_card_balance(from_card, db)
+                # Confirmed success — debit from card only if using card mode
+                # For clickpesa_balance mode, ClickPesa API already debited from ClickPesa balance
+                if transfer_data.transfer_mode == 'card' and from_card:
+                    _create_ledger_entry(
+                        card_id=from_card.id,
+                        user_id=user_id,
+                        entry_type=LedgerEntryType.DEBIT,
+                        entry_source=LedgerEntrySource.WITHDRAWAL,
+                        amount=transfer_data.amount,
+                        description=transfer_data.description or f"MNO payout to {transfer_data.recipient_name}",
+                        related_card_id=None,
+                        reference=transfer.clickpesa_reference,
+                        db=db
+                    )
+                    _recalculate_and_update_card_balance(from_card, db)
                 transfer.status = TransferStatus.COMPLETED
             elif provider_status in ["REVERSED"]:
                 transfer.status = TransferStatus.FAILED
@@ -363,17 +460,88 @@ async def create_local_peer_transfer(
             db.commit()
             raise HTTPException(status_code=500, detail=f"ClickPesa MNO payout failed: {str(e)}")
 
-    # Bank flow remains placeholder
-    try:
+    elif transfer_data.transfer_method == 'bank':
+        # Bank payouts can use:
+        # - transfer_mode='card': Debit from card balance, then ClickPesa routes to bank
+        # - transfer_mode='clickpesa_balance': Direct payout from ClickPesa balance to bank
+        # - transfer_mode='external': Generate control number for external payment
+        bank_details = _resolve_bank_details(transfer_data.recipient_bank)
+        if not bank_details or not bank_details.get("bic"):
+            raise HTTPException(status_code=400, detail="A valid bank selection (with BIC) is required for bank payouts")
+
+        # For external mode, generate control number (different flow)
+        if transfer_data.transfer_mode == 'external':
+            # TODO: Implement control number generation for external payments
+            raise HTTPException(status_code=400, detail="External source mode (control number) not yet implemented for bank transfers")
+
+        try:
+            clickpesa_service = ClickPesaService()
+            reference = f"TRF{transfer.id}{uuid.uuid4().hex[:8].upper()}"
+
+            # Create bank payout via ClickPesa
+            # - If transfer_mode='clickpesa_balance': Directly debits from ClickPesa balance
+            # - If transfer_mode='card': We'll debit from card balance below
+            payout = clickpesa_service.create_bank_payout(
+                amount=transfer_data.amount,
+                account_number=transfer_data.recipient_account,
+                account_name=transfer_data.recipient_name or transfer_data.recipient_account,
+                currency="TZS",
+                order_reference=reference,
+                bic=bank_details["bic"],
+                transfer_type=bank_details.get("transfer_type", "ACH"),
+            )
+
+            transfer.clickpesa_response = json.dumps(payout)
+            transfer.clickpesa_reference = (
+                payout.get("id")
+                or payout.get("orderReference")
+                or payout.get("reference")
+                or reference
+            )
+
+            provider_status = (payout.get("status") or "").upper()
+
+            if provider_status == "SUCCESS":
+                transfer.status = TransferStatus.COMPLETED
+            elif provider_status in {"AUTHORIZED", "PROCESSING"}:
+                transfer.status = TransferStatus.PROCESSING
+            elif provider_status in {"REVERSED", "FAILED"}:
+                transfer.status = TransferStatus.FAILED
+            else:
         transfer.status = TransferStatus.PROCESSING
+
+            if from_card and transfer.status != TransferStatus.FAILED:
+                _create_ledger_entry(
+                    card_id=from_card.id,
+                    user_id=user_id,
+                    entry_type=LedgerEntryType.DEBIT,
+                    entry_source=LedgerEntrySource.TRANSFER_OUT,
+                    amount=transfer_data.amount,
+                    description=transfer_data.description or f"Bank payout to {transfer_data.recipient_name}",
+                    related_card_id=None,
+                    reference=transfer.clickpesa_reference,
+                    db=db,
+                )
+                _recalculate_and_update_card_balance(from_card, db)
+
         db.commit()
         db.refresh(transfer)
         return transfer
+        except HTTPException:
+            db.rollback()
+            raise
     except Exception as e:
         db.rollback()
+            transfer.status = TransferStatus.FAILED
+            transfer.clickpesa_response = json.dumps({"error": str(e)})
+            db.add(transfer)
+            db.commit()
+            raise HTTPException(status_code=500, detail=f"ClickPesa bank payout failed: {str(e)}")
+
+    # Default fallback (should not be reached)
         transfer.status = TransferStatus.FAILED
         db.commit()
-        raise HTTPException(status_code=500, detail=f"Transfer failed: {str(e)}")
+    raise HTTPException(status_code=400, detail="Unsupported transfer method")
 
 @router.post("/local-bulk", response_model=TransferResponse)
 async def create_local_bulk_transfer(
@@ -441,32 +609,156 @@ async def create_local_bulk_transfer(
     db.commit()
     db.refresh(transfer)
     
+    clickpesa_service = ClickPesaService()
+    batch_reference = f"BULK{transfer.id}{uuid.uuid4().hex[:8].upper()}"
+    transfer.clickpesa_reference = batch_reference
+
+    summary_recipients = []
+    any_failed = False
+    all_completed = True
+    any_processing = False
+
     try:
-        # Process each recipient via ClickPesa
-        # TODO: Integrate with ClickPesa bulk payout API when available
-        reference = f"BULK{transfer.id}{uuid.uuid4().hex[:8].upper()}"
-        
-        transfer.clickpesa_reference = reference
-        transfer.status = TransferStatus.PROCESSING
-        
-        # If using card, deduct balance
+        for idx, recipient in enumerate(recipients, start=1):
+            recipient_reference = f"{batch_reference}-R{idx:02d}"
+            provider_payload = None
+
+            try:
+                if transfer.transfer_method == TransferMethod.MNO:
+                    normalized_phone = _normalize_phone_number(recipient.recipient_account)
+                    if not normalized_phone:
+                        raise Exception("Invalid mobile phone number")
+
+                    provider_payload = clickpesa_service.create_mobile_money_payout(
+                        amount=recipient.amount,
+                        currency="TZS",
+                        phone_number=normalized_phone,
+                        order_reference=recipient_reference,
+                    )
+                else:
+                    # Bank payout
+                    # - transfer_mode='clickpesa_balance': Direct payout from ClickPesa balance
+                    # - transfer_mode='card': Debit from card balance
+                    # - transfer_mode='external': Generate control number (not implemented yet)
+                    bank_details = _resolve_bank_details(recipient.bank_id)
+                    if not bank_details or not bank_details.get("bic"):
+                        raise Exception(f"Unsupported or missing bank mapping for '{recipient.bank_id}'")
+
+                    # Create bank payout via ClickPesa
+                    # - If transfer_mode='clickpesa_balance': Directly debits from ClickPesa balance
+                    # - If transfer_mode='card': We'll debit from card balance below
+                    provider_payload = clickpesa_service.create_bank_payout(
+                        amount=recipient.amount,
+                        account_number=recipient.recipient_account,
+                        account_name=recipient.recipient_name or recipient.recipient_account,
+                        currency="TZS",
+                        order_reference=recipient_reference,
+                        bic=bank_details["bic"],
+                        transfer_type=bank_details.get("transfer_type", "ACH"),
+                    )
+            except Exception as recipient_error:
+                recipient.status = TransferStatus.FAILED
+                recipient.clickpesa_reference = recipient_reference
+                recipient.clickpesa_response = json.dumps({"error": str(recipient_error)})
+
+                summary_recipients.append({
+                    "recipientId": recipient.id,
+                    "recipientName": recipient.recipient_name,
+                    "account": recipient.recipient_account,
+                    "amount": recipient.amount,
+                    "status": TransferStatus.FAILED.value,
+                    "error": str(recipient_error),
+                })
+
+                any_failed = True
+                all_completed = False
+                continue
+
+            provider_status = (provider_payload.get("status") or "").upper()
+            provider_reference = (
+                provider_payload.get("id")
+                or provider_payload.get("orderReference")
+                or provider_payload.get("reference")
+                or recipient_reference
+            )
+
+            if provider_status == "SUCCESS":
+                recipient.status = TransferStatus.COMPLETED
+            elif provider_status in {"AUTHORIZED", "PROCESSING"}:
+                recipient.status = TransferStatus.PROCESSING
+                all_completed = False
+                any_processing = True
+            else:
+                recipient.status = TransferStatus.PROCESSING
+                all_completed = False
+                any_processing = True
+
+            recipient.clickpesa_reference = provider_reference
+            recipient.clickpesa_response = json.dumps(provider_payload)
+
+            summary_recipients.append({
+                "recipientId": recipient.id,
+                "recipientName": recipient.recipient_name,
+                "account": recipient.recipient_account,
+                "amount": recipient.amount,
+                "status": recipient.status.value,
+                "providerStatus": provider_status or "PROCESSING",
+                "providerReference": provider_reference,
+            })
+
+            # Debit from card balance if transfer_mode='card', otherwise ClickPesa balance is used directly
+            if from_card and recipient.status != TransferStatus.FAILED:
+                _create_ledger_entry(
+                    card_id=from_card.id,
+                    user_id=user_id,
+                    entry_type=LedgerEntryType.DEBIT,
+                    entry_source=LedgerEntrySource.TRANSFER_OUT,
+                    amount=recipient.amount,
+                    description=transfer_data.description or f"Bulk payout to {recipient.recipient_name}",
+                    related_card_id=None,
+                    reference=provider_reference,
+                    db=db,
+                )
+
         if from_card:
-            from_card.balance -= total_amount
-        
-        # Update recipient statuses
-        for recipient in recipients:
-            recipient.status = TransferStatus.PROCESSING
-            recipient.clickpesa_reference = f"{reference}-{recipient.id}"
+            _recalculate_and_update_card_balance(from_card, db)
+
+        if any_failed and not any_processing and not all_completed:
+            transfer.status = TransferStatus.FAILED
+        elif all_completed and not any_failed:
+            transfer.status = TransferStatus.COMPLETED
+        else:
+            transfer.status = TransferStatus.PROCESSING
+
+        summary_payload = {
+            "batch_reference": batch_reference,
+            "currency": "TZS",
+            "counts": {
+                "total": len(summary_recipients),
+                "completed": sum(1 for item in summary_recipients if item["status"] == TransferStatus.COMPLETED.value),
+                "processing": sum(1 for item in summary_recipients if item["status"] == TransferStatus.PROCESSING.value),
+                "failed": sum(1 for item in summary_recipients if item["status"] == TransferStatus.FAILED.value),
+            },
+            "recipients": summary_recipients,
+        }
+
+        transfer.clickpesa_response = json.dumps(summary_payload)
+        setattr(transfer, "transfer_summary", summary_payload)
         
         db.commit()
         db.refresh(transfer)
-        
         return transfer
         
     except Exception as e:
         db.rollback()
         transfer.status = TransferStatus.FAILED
+        transfer.clickpesa_response = json.dumps({
+            "batch_reference": batch_reference,
+            "error": str(e),
+        })
+        db.add(transfer)
         db.commit()
+        db.refresh(transfer)
         raise HTTPException(status_code=500, detail=f"Bulk transfer failed: {str(e)}")
 
 @router.get("/", response_model=List[TransferResponse])
@@ -497,4 +789,16 @@ async def get_transfer(
         raise HTTPException(status_code=404, detail="Transfer not found")
     
     return transfer
+
+@router.get("/banks/list")
+async def get_clickpesa_banks(
+    user_id: int = Depends(get_current_user_id)
+):
+    """Get list of banks supported by ClickPesa for payouts"""
+    try:
+        clickpesa_service = ClickPesaService()
+        banks = clickpesa_service.get_banks_list()
+        return banks
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch banks: {str(e)}")
 

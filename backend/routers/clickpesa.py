@@ -25,7 +25,7 @@ def get_clickpesa_token():
                 'api-key': CLICKPESA_API_KEY,
                 'client-id': CLICKPESA_CLIENT_ID
             },
-            timeout=10.0
+            timeout=30.0
         )
         
         print(f"📡 Token response status: {response.status_code}")

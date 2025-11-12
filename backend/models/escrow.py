@@ -142,3 +142,29 @@ class EscrowMilestone(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }
+
+    id = Column(Integer, primary_key=True, index=True)
+    escrow_id = Column(Integer, nullable=False)  # Foreign key to escrows table
+    milestone_number = Column(Integer, nullable=False)
+    description = Column(String(500), nullable=False)
+    amount = Column(Float, nullable=False)
+    completion_date = Column(DateTime, nullable=False)
+    status = Column(String(50), default="pending")  # pending, completed, overdue
+    completed_at = Column(DateTime)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    def to_dict(self):
+        """Convert the milestone object to a dictionary"""
+        return {
+            "id": self.id,
+            "escrow_id": self.escrow_id,
+            "milestone_number": self.milestone_number,
+            "description": self.description,
+            "amount": self.amount,
+            "completion_date": self.completion_date.isoformat() if self.completion_date else None,
+            "status": self.status,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+        }

@@ -563,4 +563,52 @@ export class PayrollService {
       throw error;
     }
   }
+
+  static async generatePayrollPayment(
+    payrollPeriod: string,
+    branchId?: number
+  ): Promise<any> {
+    try {
+      const url = new URL(getApiUrl('PAYROLL.PROCESS') + '/generate-payment');
+      url.searchParams.append('payroll_period', payrollPeriod);
+      if (branchId) url.searchParams.append('branch_id', branchId.toString());
+      
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to generate payroll payment');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error generating payroll payment:', error);
+      throw error;
+    }
+  }
+
+  static async generateIndividualPayrollPayment(
+    payrollRecordId: number
+  ): Promise<any> {
+    try {
+      const url = new URL(getApiUrl('PAYROLL.PROCESS') + '/generate-individual-payment');
+      url.searchParams.append('payroll_record_id', payrollRecordId.toString());
+      
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to generate individual payroll payment');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error generating individual payroll payment:', error);
+      throw error;
+    }
+  }
 }

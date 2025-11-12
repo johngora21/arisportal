@@ -1,8 +1,5 @@
 // Centralized API configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.NODE_ENV === 'production' 
-    ? 'https://your-production-api.com/api/v1'
-    : 'http://localhost:8000/api/v1',
   VERSION: '1.0.0', // Cache busting
   
   ENDPOINTS: {
@@ -72,8 +69,23 @@ export const API_CONFIG = {
 };
 
 // Helper function to build full API URLs
+// Always use relative URLs in browser to go through Next.js proxy
 export const buildApiUrl = (endpoint: string): string => {
-  return `${API_CONFIG.BASE_URL}${endpoint}`;
+  // Always use relative URL in client-side to go through Next.js proxy
+  // This ensures it works regardless of environment variables
+  if (typeof window !== 'undefined') {
+    const url = `/api/v1${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+    // Debug: Log to verify correct URL (remove in production)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[buildApiUrl] Building URL:', { endpoint, result: url });
+    }
+    return url;
+  }
+  // Server-side: check environment
+  const baseUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://your-production-api.com/api/v1'
+    : '/api/v1';
+  return `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 };
 
 // Helper function to get endpoint by path

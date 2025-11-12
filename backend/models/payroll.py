@@ -282,3 +282,38 @@ class PayrollCalculation(Base):
     
     # Relationships
     branch = relationship("Branch")
+
+class PayrollPayment(Base):
+    __tablename__ = "payroll_payments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    payroll_period = Column(String(20), nullable=False)
+    branch_id = Column(Integer, ForeignKey("branches.id"), nullable=True)
+    payroll_record_id = Column(Integer, ForeignKey("payroll_records.id"), nullable=True)  # For individual payments
+    
+    # Payment Details
+    total_net_salary = Column(Float, nullable=False)  # Sum of all net salaries (or single employee net salary)
+    total_clickpesa_fees = Column(Float, default=0)  # Total ClickPesa fees for all payouts
+    total_platform_fees = Column(Float, default=0)  # 1% per payout (our fee)
+    total_settlement_fees = Column(Float, default=0)  # 1% settlement fees
+    total_amount = Column(Float, nullable=False)  # Total amount for control number
+    
+    # BillPay Control Number
+    billpay_control_number = Column(String(50), unique=True, nullable=True)
+    billpay_reference = Column(String(100), nullable=True)
+    
+    # Payment Status
+    status = Column(String(20), default="pending")  # pending, paid, processing, completed, failed
+    paid_at = Column(DateTime, nullable=True)
+    processed_at = Column(DateTime, nullable=True)
+    
+    # ClickPesa Response
+    clickpesa_response = Column(JSON, nullable=True)
+    
+    # System Information
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    branch = relationship("Branch")
+    payroll_record = relationship("PayrollRecord", foreign_keys=[payroll_record_id])

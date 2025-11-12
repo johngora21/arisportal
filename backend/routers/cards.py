@@ -103,6 +103,7 @@ def calculate_card_balance(card_id: int, db: Session) -> float:
         balance = float(fallback_result[0]) if fallback_result and fallback_result[0] is not None else 0.0
     
     # Update the card's balance field (for backward compatibility and quick access)
+    # Note: Don't commit or rollback here - let the caller handle transactions
     try:
         update_query = text("""
             UPDATE cards 
@@ -110,10 +111,9 @@ def calculate_card_balance(card_id: int, db: Session) -> float:
             WHERE id = :card_id
         """)
         db.execute(update_query, {"balance": balance, "card_id": card_id})
-        db.commit()
     except Exception as e:
         print(f"⚠️ Error updating card balance: {str(e)}")
-        db.rollback()
+        # Don't rollback here - let caller handle it
     
     return balance
 
@@ -265,11 +265,17 @@ async def get_user_cards(
         
         # Convert to dict format for response
         result = []
+        
+        # Calculate balances for each card (reliable approach)
         for row in rows:
             control_number = row.topup_control_number if hasattr(row, 'topup_control_number') else None
             
-            # Recalculate balance from ledger entries
-            card_balance = calculate_card_balance(row.id, db)
+            # Calculate balance from ledger entries
+            try:
+                card_balance = calculate_card_balance(row.id, db)
+            except Exception as e:
+                print(f"⚠️ Error calculating balance for card {row.id}: {str(e)}, using 0")
+                card_balance = 0.0
             
             result.append({
                 'id': row.id,
@@ -284,6 +290,13 @@ async def get_user_cards(
                 'balance': card_balance,  # Calculate from ledger entries (not from cards.balance)
                 'created_at': row.created_at.isoformat() if row.created_at else None
             })
+        
+        # Commit balance updates once at the end
+        try:
+            db.commit()
+        except Exception as e:
+            print(f"⚠️ Error committing balance updates: {str(e)}")
+            db.rollback()
         
         return result
     except Exception as e:
@@ -304,13 +317,13 @@ async def create_card(
     - ClickPesa BillPay control number is auto-generated for top-ups (no expiry, no fixed amount)
     """
     try:
-    # Check if this is the first card, make it default
+        # Check if this is the first card, make it default
         # Use raw SQL to avoid loading non-existent columns
         from sqlalchemy import text
         count_query = text("SELECT COUNT(*) as count FROM cards WHERE user_id = :user_id")
         result = db.execute(count_query, {"user_id": user_id}).fetchone()
         existing_cards = result[0] if result else 0
-    is_default = existing_cards == 0
+        is_default = existing_cards == 0
     
         # Calculate expiry date (3 years from now)
         from datetime import datetime, timedelta
@@ -490,19 +503,19 @@ async def create_card(
             )
         
         # Create card with control number and expiry date
-    card = Card(
-        user_id=user_id,
-        card_type=card_data.card_type,
-        cardholder_name=card_data.cardholder_name,
-        is_default=is_default,
+        card = Card(
+            user_id=user_id,
+            card_type=card_data.card_type,
+            cardholder_name=card_data.cardholder_name,
+            is_default=is_default,
             balance=0.0,
             topup_control_number=topup_control_number,  # Store the control number for top-ups
             expiry_month=expiry_month,  # MM format (e.g., "12")
             expiry_year=expiry_year     # YYYY format (e.g., "2027")
-    )
-    
-    db.add(card)
-    db.commit()
+        )
+        
+        db.add(card)
+        db.commit()
         # Don't use db.refresh() - it might try to load non-existent columns
         # Instead, get the card ID from the committed object
         card_id = card.id  # Get ID before we lose the object reference
@@ -773,6 +786,56 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
             # Don't fail the webhook, just log the error
         
         return {"status": "success", "type": "remittance", "remittance_id": matched_remittance.remittance_id}
+    
+    # Check if this is a payroll payment
+    from models.payroll import PayrollPayment
+    from routers.payroll import process_payroll_payment
+    
+    payroll_payment_query = text("""
+        SELECT id, payroll_period, billpay_control_number, status, payroll_record_id
+        FROM payroll_payments
+        WHERE billpay_control_number IS NOT NULL
+    """)
+    all_payroll_payments = db.execute(payroll_payment_query).fetchall()
+    
+    matched_payroll_payment = None
+    for pp_row in all_payroll_payments:
+        pp_control_number = normalize_control_number(pp_row.billpay_control_number)
+        if pp_control_number == normalized_control_number:
+            matched_payroll_payment = pp_row
+            print(f"✅ Matched payroll payment {pp_row.id} for period {pp_row.payroll_period} with control number {pp_control_number}")
+            break
+    
+    if matched_payroll_payment and status in ['completed', 'SUCCESS', 'SETTLED']:
+        # This is a payroll payment - process it
+        try:
+            # Check if it's an individual payment (has payroll_record_id) or bulk payment
+            from routers.payroll import process_individual_payroll_payment
+            
+            if matched_payroll_payment.payroll_record_id:
+                # Individual payment
+                result = process_individual_payroll_payment(matched_payroll_payment.id, db)
+                print(f"💰 Processed individual payroll payment {matched_payroll_payment.id} for employee")
+            else:
+                # Bulk payment
+                result = process_payroll_payment(matched_payroll_payment.id, db)
+                print(f"💰 Processed bulk payroll payment {matched_payroll_payment.id} for period {matched_payroll_payment.payroll_period}")
+            
+            return {
+                "status": "success",
+                "type": "payroll_payment",
+                "payroll_payment_id": matched_payroll_payment.id,
+                "payroll_period": matched_payroll_payment.payroll_period,
+                "result": result
+            }
+        except Exception as e:
+            print(f"❌ Error processing payroll payment: {str(e)}")
+            # Don't fail the webhook, just log the error
+            return {
+                "status": "error",
+                "type": "payroll_payment",
+                "error": str(e)
+            }
     
     # Check if this is an invoice payment
     from models.invoice import Invoice, InvoiceStatus

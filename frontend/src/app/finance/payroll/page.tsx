@@ -567,6 +567,8 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
   const [isMakingPayment, setIsMakingPayment] = useState(false);
   const [payrollSummary, setPayrollSummary] = useState<any>(null);
   const [error, setError] = useState<string>('');
+  const [controlNumber, setControlNumber] = useState('');
+  const [paymentDetails, setPaymentDetails] = useState<any>(null);
 
   const currentYear = new Date().getFullYear();
   const months = [
@@ -619,20 +621,22 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
     
     setIsMakingPayment(true);
     setError('');
+    setControlNumber('');
+    setPaymentDetails(null);
     
     try {
       const branchId = selectedBranch ? parseInt(selectedBranch) : undefined;
-      const response = await PayrollService.markPayrollPaid(selectedMonth, branchId);
+      const response = await PayrollService.generatePayrollPayment(selectedMonth, branchId);
       
-      if (response.status === 'success') {
-        alert(`Payment processing completed! ${response.paid_records} payroll records marked as paid.`);
-        onClose();
+      if (response.success) {
+        setControlNumber(response.billpay_control_number);
+        setPaymentDetails(response);
       } else {
-        setError(response.message || 'Failed to process payment.');
+        setError(response.message || 'Failed to generate payment control number.');
       }
     } catch (error: any) {
-      console.error('Error making payment:', error);
-      setError(error.message || 'Failed to process payment. Please try again.');
+      console.error('Error generating payment:', error);
+      setError(error.message || 'Failed to generate payment control number. Please try again.');
     } finally {
       setIsMakingPayment(false);
     }
@@ -858,6 +862,64 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
               </div>
             </div>
 
+            {/* Payment Control Number Display */}
+            {controlNumber && paymentDetails && (
+              <div style={{
+                border: '2px solid #10b981',
+                borderRadius: '16px',
+                padding: '24px',
+                marginBottom: '24px',
+                backgroundColor: '#f0fdf4'
+              }}>
+                <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
+                  Payment Control Number Generated
+                </h4>
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Control Number:</div>
+                  <div style={{ fontSize: '24px', fontWeight: '700', color: '#059669', fontFamily: 'monospace' }}>
+                    {controlNumber}
+                  </div>
+                </div>
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Merchant Number:</div>
+                  <div style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', fontFamily: 'monospace' }}>
+                    {paymentDetails.billpay_namba}
+                  </div>
+                </div>
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Total Amount to Pay:</div>
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937' }}>
+                    {paymentDetails.total_amount.toLocaleString()} TZS
+                  </div>
+                </div>
+                <div style={{ 
+                  backgroundColor: 'white', 
+                  padding: '12px', 
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  color: '#374151',
+                  marginTop: '12px'
+                }}>
+                  <strong>Breakdown:</strong><br />
+                  Net Salaries: {paymentDetails.total_net_salary.toLocaleString()} TZS<br />
+                  ClickPesa Fees: {paymentDetails.total_clickpesa_fees.toLocaleString()} TZS<br />
+                  Platform Fees (1%): {paymentDetails.total_platform_fees.toLocaleString()} TZS<br />
+                  Settlement Fees (1%): {paymentDetails.total_settlement_fees.toLocaleString()} TZS<br />
+                  <strong>Total: {paymentDetails.total_amount.toLocaleString()} TZS</strong>
+                </div>
+                <div style={{ 
+                  marginTop: '16px',
+                  padding: '12px',
+                  backgroundColor: '#dbeafe',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  color: '#1e40af'
+                }}>
+                  <strong>Instructions:</strong> Use the control number {controlNumber} and merchant number {paymentDetails.billpay_namba} to pay via your preferred payment method (MNO, Bank, etc.). Once paid, employee salaries will be automatically distributed to their bank accounts.
+                </div>
+              </div>
+            )}
+
             {/* Make Payment Button */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
               <button
@@ -873,28 +935,30 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
                   cursor: 'pointer'
                 }}
               >
-                Cancel
+                {controlNumber ? 'Close' : 'Cancel'}
               </button>
-              <button
-                onClick={handleMakePayment}
-                disabled={isMakingPayment}
-                style={{
-                  padding: '12px 24px',
-                  backgroundColor: isMakingPayment ? '#d1d5db' : '#10b981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '20px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: isMakingPayment ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <DollarSign size={16} />
-                {isMakingPayment ? 'Processing Payment...' : 'Make Payment'}
-              </button>
+              {!controlNumber && (
+                <button
+                  onClick={handleMakePayment}
+                  disabled={isMakingPayment}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: isMakingPayment ? '#d1d5db' : '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: isMakingPayment ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <DollarSign size={16} />
+                  {isMakingPayment ? 'Generating Control Number...' : 'Pay'}
+                </button>
+              )}
             </div>
           </div>
         )}

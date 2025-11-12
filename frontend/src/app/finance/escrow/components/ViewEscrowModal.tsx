@@ -56,7 +56,16 @@ const ViewEscrowModal: React.FC<ViewEscrowModalProps> = ({ isOpen, onClose, escr
   const handleDownload = async (doc: any, event: React.MouseEvent) => {
     event.preventDefault();
     try {
-      const url = `http://localhost:8000${doc.url}`;
+      // Extract path from URL if it's a full URL, otherwise use as-is
+      let url = doc.url;
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        try {
+          const urlObj = new URL(url);
+          url = urlObj.pathname + urlObj.search;
+        } catch (e) {
+          // If URL parsing fails, use as-is
+        }
+      }
       const filename = doc.name || doc.filename || `document-${Date.now()}`;
       
       // Fetch the file

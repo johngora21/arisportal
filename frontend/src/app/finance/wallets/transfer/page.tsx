@@ -32,7 +32,7 @@ export default function TransferPage() {
   const [selectedBank, setSelectedBank] = useState('');
   const [selectedMno, setSelectedMno] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
-  const [transferMode, setTransferMode] = useState<'card' | 'external'>('card');
+  const [transferMode, setTransferMode] = useState<'card' | 'external' | 'clickpesa_balance'>('card');
   const [fromCard, setFromCard] = useState('');
   const [toCard, setToCard] = useState('');
   const [bulkRecipients, setBulkRecipients] = useState<Array<{ id: string; recipientName: string; account: string; amount: string; bank: string; mno: string; country?: string }>>([
@@ -44,6 +44,8 @@ export default function TransferPage() {
   const [loadingCards, setLoadingCards] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [clickpesaBanks, setClickpesaBanks] = useState<Array<{id: string; name: string; bic?: string; code?: string}>>([]);
+  const [loadingBanks, setLoadingBanks] = useState(false);
   
   // African countries that support MNO
   const africanMnoCountries = [
@@ -128,19 +130,73 @@ export default function TransferPage() {
     return card.is_default ? `${base} (Default)` : base;
   };
 
-  // Tanzanian Banks
-  const banks = [
-    { id: 'crdb', name: 'CRDB Bank', code: 'CRDB' },
-    { id: 'nmb', name: 'NMB Bank', code: 'NMB' },
-    { id: 'equity', name: 'Equity Bank', code: 'EQUITY' },
-    { id: 'absa', name: 'Absa Bank', code: 'ABSA' },
-    { id: 'stanbic', name: 'Stanbic Bank', code: 'STANBIC' },
-    { id: 'exim', name: 'Exim Bank', code: 'EXIM' },
-    { id: 'diamond', name: 'Diamond Trust Bank', code: 'DTB' },
-    { id: 'kcb', name: 'KCB Bank', code: 'KCB' },
-    { id: 'national', name: 'National Bank of Commerce', code: 'NBC' },
-    { id: 'barclays', name: 'Barclays Bank', code: 'BARCLAYS' }
-  ];
+  // Fetch ClickPesa banks list
+  useEffect(() => {
+    const fetchBanks = async () => {
+      if (!token || clickpesaBanks.length > 0) return;
+
+      try {
+        setLoadingBanks(true);
+        const response = await fetch(buildApiUrl('/transfers/banks/list'), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.status === 401) {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user_data');
+          router.push('/authentication/login');
+          return;
+        }
+
+        if (response.ok) {
+          const data = await response.json();
+          // Handle different response formats from ClickPesa
+          let banksList = [];
+          if (Array.isArray(data)) {
+            banksList = data;
+          } else if (data.banks && Array.isArray(data.banks)) {
+            banksList = data.banks;
+          } else if (data.data && Array.isArray(data.data)) {
+            banksList = data.data;
+          }
+          
+          // Map ClickPesa bank format to our format
+          const mappedBanks = banksList
+            .map((bank: any, index: number) => {
+              const bic = bank?.bic || bank?.BIC || bank?.bicCode || bank?.code || bank?.bankCode || bank?.bank_code;
+              if (!bic) {
+                return null;
+              }
+
+              return {
+                id: (bic as string).toUpperCase(),
+                name: bank.name || bank.bankName || bank.bank_name || 'Unknown Bank',
+                bic: (bic as string).toUpperCase(),
+                transferType: (bank.transferType || bank.transfer_type || '').toUpperCase() || 'ACH',
+              };
+            })
+            .filter((bank: any) => bank !== null);
+          
+          setClickpesaBanks(mappedBanks as Array<{ id: string; name: string; bic?: string; transferType?: string }>);
+        } else {
+          console.warn('Failed to fetch ClickPesa banks, using fallback list');
+        }
+      } catch (err) {
+        console.error('Error fetching banks:', err);
+        // Continue with fallback list
+      } finally {
+        setLoadingBanks(false);
+      }
+    };
+
+    fetchBanks();
+  }, [token, router]);
+
+  // Use only ClickPesa banks (no fallback)
+  const banks = clickpesaBanks;
 
   // Mobile Network Operators (MNOs)
   const mnos = [
@@ -390,12 +446,15 @@ export default function TransferPage() {
         }
 
         // Only show success when provider has disbursed successfully
-        if (data?.status === 'COMPLETED') {
-          setSuccess('Disbursed successfully!');
+        const providerStatus = (data?.status || '').toString().toUpperCase();
+        if (providerStatus === 'COMPLETED' || providerStatus === 'PROCESSING') {
+          const message = providerStatus === 'COMPLETED'
+            ? 'Disbursed successfully!'
+            : `Transfer submitted to provider. Awaiting confirmation (status: ${providerStatus}).`;
+          setSuccess(message);
           setTimeout(() => setSuccess(''), 5000);
         } else {
-          setError(`Transfer not completed. Provider status: ${data?.status || 'UNKNOWN'}`);
-          // Don't proceed as success
+          setError(`Transfer not completed. Provider status: ${providerStatus || 'UNKNOWN'}`);
           return;
         }
         
@@ -432,8 +491,8 @@ export default function TransferPage() {
       if (bulkRecipients.length === 0) {
           setError('Please add at least one recipient');
           setLoading(false);
-          return;
-        }
+        return;
+      }
         // Validate based on transfer method
         if (transferMethod === 'bank') {
           const invalidRecipient = bulkRecipients.some(r => !r.account || !r.amount || parseFloat(r.amount) <= 0 || !r.bank);
@@ -447,9 +506,9 @@ export default function TransferPage() {
           if (invalidRecipient) {
             setError('Please fill in all recipient details including mobile network selection');
             setLoading(false);
-            return;
-          }
-        }
+        return;
+      }
+    }
 
         // Local bulk transfer
         const response = await fetch(buildApiUrl('/transfers/local-bulk'), {
@@ -480,11 +539,20 @@ export default function TransferPage() {
         }
 
         // Only show success when provider has disbursed successfully (if backend aggregates status)
-        if (data?.status === 'COMPLETED') {
-          setSuccess(`Bulk disbursement completed for ${bulkRecipients.length} recipient${bulkRecipients.length > 1 ? 's' : ''}!`);
-          setTimeout(() => setSuccess(''), 5000);
-        } else {
-          setError(`Bulk transfer not completed. Provider status: ${data?.status || 'UNKNOWN'}`);
+        const providerStatus = (data?.status || '').toString().toUpperCase();
+        const summaryCounts = data?.transfer_summary?.counts;
+        const totalRecipients = summaryCounts?.total ?? bulkRecipients.length;
+        if (providerStatus === 'COMPLETED' || providerStatus === 'PROCESSING') {
+          const completed = summaryCounts?.completed ?? 0;
+          const failed = summaryCounts?.failed ?? 0;
+          const processing = summaryCounts?.processing ?? 0;
+          const message = providerStatus === 'COMPLETED'
+            ? `Bulk disbursement completed for ${totalRecipients} recipient${totalRecipients === 1 ? '' : 's'}!`
+            : `Bulk disbursement submitted for ${totalRecipients} recipient${totalRecipients === 1 ? '' : 's'}. Provider status: ${providerStatus}. Completed: ${completed}, Processing: ${processing}, Failed: ${failed}.`;
+          setSuccess(message);
+          setTimeout(() => setSuccess(''), 6000);
+    } else {
+          setError(`Bulk transfer not completed. Provider status: ${providerStatus || 'UNKNOWN'}`);
           return;
         }
         
@@ -536,7 +604,7 @@ export default function TransferPage() {
           border: '1px solid #FECACA',
           color: '#991B1B',
           borderRadius: '12px',
-          display: 'flex',
+                  display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
@@ -544,12 +612,12 @@ export default function TransferPage() {
           <button onClick={() => setError('')} style={{
             marginLeft: '12px',
             background: 'transparent',
-            border: 'none',
+                  border: 'none',
             color: '#991B1B',
             fontSize: '16px',
             cursor: 'pointer'
           }}>×</button>
-        </div>
+            </div>
       )}
 
       {success && (
@@ -562,7 +630,7 @@ export default function TransferPage() {
           borderRadius: '12px'
         }}>
           <span style={{ fontSize: '14px' }}>{success}</span>
-        </div>
+          </div>
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
@@ -574,7 +642,7 @@ export default function TransferPage() {
           {/* Transfer Type and Transfer Option */}
           {renderFieldsInPairs([
             createField('Transfer Type', (
-              <select
+            <select
                 value={transferType}
                 onChange={(e) => {
                   const newType = e.target.value as 'card' | 'local' | 'international';
@@ -583,17 +651,17 @@ export default function TransferPage() {
                   setError('');
                   if (newType === 'card') {
                     setTransferSubType('peer');
-                  } else if (newType !== 'card' && transferSubType === 'peer') {
+                  } else {
                     // Keep peer as default for local/international
                   }
                 }}
                 disabled={loading || loadingCards}
-                style={{
-                  width: '100%',
-                  padding: '12px 20px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '20px',
-                  fontSize: '14px',
+              style={{
+                      width: '100%',
+                padding: '12px 20px',
+                border: '1px solid #d1d5db',
+                borderRadius: '20px',
+                fontSize: '14px',
                   backgroundColor: (loading || loadingCards) ? '#f3f4f6' : 'white',
                   boxSizing: 'border-box',
                   cursor: (loading || loadingCards) ? 'not-allowed' : 'pointer'
@@ -602,12 +670,12 @@ export default function TransferPage() {
                 <option value="card">Between Cards</option>
                 <option value="local">Local Transfer</option>
                 <option value="international">International Transfer</option>
-              </select>
+            </select>
             )),
             // Transfer Option - only show when Local or International is selected
             ...((transferType === 'local' || transferType === 'international') ? [
               createField('Transfer Option', (
-                <select
+              <select
                   value={transferSubType}
                   onChange={(e) => {
                     const newSubType = e.target.value as 'peer' | 'bulk';
@@ -620,9 +688,9 @@ export default function TransferPage() {
                 }}
                 disabled={loading || loadingCards}
                 style={{
-                    width: '100%',
+                      width: '100%',
                   padding: '12px 20px',
-                    border: '1px solid #d1d5db',
+                  border: '1px solid #d1d5db',
                   borderRadius: '20px',
                   fontSize: '14px',
                     backgroundColor: (loading || loadingCards) ? '#f3f4f6' : 'white',
@@ -646,8 +714,8 @@ export default function TransferPage() {
                     <option value="">Choose a card</option>
                     {cards.filter(c => c.is_active).map((c) => (
                       <option key={c.id} value={c.id}>{getCardOptionLabel(c)}</option>
-              ))}
-            </select>
+                ))}
+              </select>
                 )),
                 createField('To Card', (
                   <select value={toCard} onChange={(e) => { setToCard(e.target.value); setError(''); }} disabled={loadingCards || loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loadingCards || loading ? '#f3f4f6' : 'white', boxSizing: 'border-box', cursor: loadingCards || loading ? 'not-allowed' : 'pointer' }}>
@@ -708,7 +776,7 @@ export default function TransferPage() {
               createField('Payment Mode', (
                 <select
                   value={transferMode}
-                  onChange={(e) => { setTransferMode(e.target.value as 'card' | 'external'); setError(''); }}
+                  onChange={(e) => { setTransferMode(e.target.value as 'card' | 'external' | 'clickpesa_balance'); setError(''); }}
                   disabled={loading}
                   style={{
                       width: '100%',
@@ -722,6 +790,7 @@ export default function TransferPage() {
                   }}
                 >
                   <option value="card">Use Card</option>
+                  <option value="clickpesa_balance">ClickPesa Balance</option>
                   <option value="external">External Source</option>
                 </select>
               ))
@@ -744,7 +813,7 @@ export default function TransferPage() {
             
             peerFields.push(
               createField('Transfer Method', (
-                <select 
+                  <select
                   value={transferMethod} 
                   onChange={(e) => {
                     const newMethod = e.target.value as 'bank' | 'mno';
@@ -762,12 +831,12 @@ export default function TransferPage() {
                 >
                   <option value="bank">Bank Transfer</option>
                   {showMnoOption && <option value="mno">Mobile Money</option>}
-                </select>
+                  </select>
               ))
             );
 
             // Select Bank - only if bank method
-            if (transferMethod === 'bank') {
+                      if (transferMethod === 'bank') {
               peerFields.push(
                 createField('Select Bank', (
                   <select value={selectedBank} onChange={(e) => { setSelectedBank(e.target.value); setError(''); }} disabled={loading} style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loading ? '#f3f4f6' : 'white', boxSizing: 'border-box', cursor: loading ? 'not-allowed' : 'pointer' }}>
@@ -824,7 +893,7 @@ export default function TransferPage() {
                 if (transferType === 'international') {
                   bulkFields.push(
                     createField('Destination Country', (
-                      <select
+                  <select
                         value={selectedCountry}
                         onChange={(e) => {
                           setSelectedCountry(e.target.value);
@@ -835,12 +904,12 @@ export default function TransferPage() {
                           }
                         }}
                         disabled={loading}
-                        style={{
-                          width: '100%',
-                          padding: '12px 20px',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '20px',
-                          fontSize: '14px',
+                    style={{
+                      width: '100%',
+                      padding: '12px 20px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '20px',
+                      fontSize: '14px',
                           backgroundColor: loading ? '#f3f4f6' : 'white',
                           boxSizing: 'border-box',
                           cursor: loading ? 'not-allowed' : 'pointer'
@@ -849,8 +918,8 @@ export default function TransferPage() {
                         <option value="">Select Country</option>
                         {countries.map((country) => (
                           <option key={country.code} value={country.name}>{country.name}</option>
-                        ))}
-                      </select>
+                    ))}
+                  </select>
                     ))
                   );
                 }
@@ -860,7 +929,7 @@ export default function TransferPage() {
                   createField('Payment Mode', (
                   <select
                   value={transferMode}
-                  onChange={(e) => { setTransferMode(e.target.value as 'card' | 'external'); setError(''); }}
+                  onChange={(e) => { setTransferMode(e.target.value as 'card' | 'external' | 'clickpesa_balance'); setError(''); }}
                     style={{
                       width: '100%',
                       padding: '12px 20px',
@@ -869,11 +938,12 @@ export default function TransferPage() {
                       fontSize: '14px',
                     backgroundColor: 'white',
                     boxSizing: 'border-box'
-                  }}
-                >
+                    }}
+                  >
                   <option value="card">Use Card</option>
+                  <option value="clickpesa_balance">ClickPesa Balance</option>
                   <option value="external">External Source</option>
-                </select>
+                  </select>
                   ))
                 );
 
@@ -894,7 +964,7 @@ export default function TransferPage() {
                 
                 bulkFields.push(
                   createField('Transfer Method', (
-                    <select 
+                  <select
                       value={transferMethod} 
                       onChange={(e) => {
                         const newMethod = e.target.value as 'bank' | 'mno';
@@ -912,7 +982,7 @@ export default function TransferPage() {
                     >
                       <option value="bank">Bank Transfer</option>
                       {showMnoOption && <option value="mno">Mobile Money</option>}
-                    </select>
+                  </select>
                   ))
                 );
 
@@ -966,15 +1036,15 @@ export default function TransferPage() {
                       {isInternational && (
                         <select 
                           value={rec.country || selectedCountry} 
-                          onChange={(e) => { 
-                            const updated = [...bulkRecipients]; 
+                  onChange={(e) => {
+                        const updated = [...bulkRecipients];
                             updated[index].country = e.target.value; 
                             // If switching country and MNO doesn't support it, clear MNO
                             if (transferMethod === 'mno' && !supportsMno(e.target.value)) {
                               updated[index].mno = '';
                             }
-                            setBulkRecipients(updated); 
-                          }} 
+                        setBulkRecipients(updated);
+                      }}
                           disabled={loading}
                           style={{ width: '100%', padding: '12px 20px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '14px', backgroundColor: loading ? '#f3f4f6' : 'white', boxSizing: 'border-box' }}
                         >
@@ -996,18 +1066,18 @@ export default function TransferPage() {
                       ) : (
                         <select 
                           value={rec.mno} 
-                          onChange={(e) => { 
-                            const updated = [...bulkRecipients]; 
+                      onChange={(e) => {
+                        const updated = [...bulkRecipients];
                             updated[index].mno = e.target.value; 
-                            setBulkRecipients(updated); 
-                          }} 
+                        setBulkRecipients(updated);
+                      }}
                           disabled={(isInternational && rec.country && !supportsMno(rec.country)) || loading}
-                          style={{ 
+                  style={{
                             width: '100%', 
                             padding: '12px 20px', 
-                            border: '1px solid #d1d5db', 
+                    border: '1px solid #d1d5db',
                             borderRadius: '20px', 
-                            fontSize: '14px', 
+                          fontSize: '14px',
                             backgroundColor: (isInternational && rec.country && !supportsMno(rec.country)) || loading ? '#f3f4f6' : 'white', 
                             boxSizing: 'border-box',
                             cursor: (isInternational && rec.country && !supportsMno(rec.country)) || loading ? 'not-allowed' : 'pointer'
@@ -1091,12 +1161,12 @@ export default function TransferPage() {
             }}
             onMouseOver={(e) => {
               if (!loading && !loadingCards && cards.length > 0) {
-                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
+              e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg-hover)';
               }
             }}
             onMouseOut={(e) => {
               if (!loading && !loadingCards && cards.length > 0) {
-                e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
+              e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
               }
             }}
           >

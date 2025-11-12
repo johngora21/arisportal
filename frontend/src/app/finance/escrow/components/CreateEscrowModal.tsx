@@ -175,7 +175,7 @@ const CreateEscrowModal: React.FC<CreateEscrowModalProps> = ({ isOpen, onClose, 
           formDataToSend.append(`files`, file);
         });
         
-        const uploadResponse = await fetch('http://localhost:8000/api/v1/escrow-documents', {
+        const uploadResponse = await fetch('/api/v1/escrow-documents', {
           method: 'POST',
           body: formDataToSend
         });
