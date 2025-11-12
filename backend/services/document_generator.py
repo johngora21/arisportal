@@ -116,6 +116,7 @@ class EscrowDocumentGenerator:
         styles = getSampleStyleSheet()
         
         # STANDARDIZED FONT SYSTEM - Professional Legal Document
+        # Using Times New Roman (Times-Roman) for official government document style
         # Using consistent 10pt base with proper hierarchy
         
         # Title style - Main document title
@@ -123,7 +124,7 @@ class EscrowDocumentGenerator:
             'CustomTitle',
             parent=styles['Heading1'],
             fontSize=14,  # Standardized: Large but professional (10pt + 4pt for title)
-            fontName='Helvetica-Bold',
+            fontName='Times-Bold',
             textColor=colors.HexColor('#000000'),
             spaceAfter=12,
             alignment=1,  # Center
@@ -135,7 +136,7 @@ class EscrowDocumentGenerator:
             'CustomSubtitle',
             parent=styles['Normal'],
             fontSize=10,  # Standardized: 10pt base
-            fontName='Helvetica',
+            fontName='Times-Roman',
             textColor=colors.HexColor('#374151'),
             spaceAfter=14,
             alignment=1,
@@ -147,7 +148,7 @@ class EscrowDocumentGenerator:
             'CustomHeading',
             parent=styles['Heading2'],
             fontSize=12,  # Increased: 12pt for better section title visibility
-            fontName='Helvetica-Bold',
+            fontName='Times-Bold',
             textColor=colors.HexColor('#000000'),
             spaceAfter=8,
             spaceBefore=12,
@@ -159,7 +160,7 @@ class EscrowDocumentGenerator:
             'CustomBody',
             parent=styles['Normal'],
             fontSize=10,  # Standardized: Professional 10pt
-            fontName='Helvetica',
+            fontName='Times-Roman',
             alignment=4,  # Justified alignment (like Cmd+J in Word)
             leading=14,
             spaceAfter=6
@@ -170,7 +171,7 @@ class EscrowDocumentGenerator:
             'SignatureStyle',
             parent=styles['Normal'],
             fontSize=10,  # Standardized: 10pt base
-            fontName='Helvetica',
+            fontName='Times-Roman',
             leading=14,
             spaceAfter=4
         )
@@ -186,7 +187,7 @@ class EscrowDocumentGenerator:
             'LogoStyle',
             parent=styles['Normal'],
             fontSize=12,
-            fontName='Helvetica-Bold',
+            fontName='Times-Bold',
             alignment=2,  # Right alignment
             spaceAfter=8,
             leading=14
@@ -207,7 +208,7 @@ class EscrowDocumentGenerator:
             'EscrowIdStyle',
             parent=styles['Normal'],
             fontSize=10,
-            fontName='Helvetica-Bold',
+            fontName='Times-Bold',
             alignment=0,  # Left alignment
             spaceAfter=0,
             leading=14
@@ -217,7 +218,7 @@ class EscrowDocumentGenerator:
             'DateStyle',
             parent=styles['Normal'],
             fontSize=10,
-            fontName='Helvetica',
+            fontName='Times-Roman',
             alignment=2,  # Right alignment
             spaceAfter=0,
             leading=14
@@ -328,7 +329,7 @@ class EscrowDocumentGenerator:
                 milestone_table.setStyle(TableStyle([
                     ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f2937')),
                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Times-Bold'),
                     ('FONTSIZE', (0, 0), (-1, -1), 10),  # Standardized 10pt font size
                     ('ALIGN', (0, 0), (0, -1), 'CENTER'),
                     ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
@@ -531,10 +532,10 @@ class EscrowDocumentGenerator:
         signature_table.hAlign = 'LEFT'  # Start table at left margin
         signature_table.setStyle(TableStyle([
             # Header row styling
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Times-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 10),  # Standardized 10pt font size
             # Body styling
-            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 1), (-1, -1), 'Times-Roman'),
             ('FONTSIZE', (0, 1), (-1, -1), 10),  # Standardized 10pt font size
             # Alignment - Both columns LEFT aligned within their cells
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),    # All text left-aligned within cells
@@ -660,7 +661,7 @@ class EscrowDocumentGenerator:
             'TitleDeedHeader',
             parent=styles['Heading1'],
             fontSize=16,
-            fontName='Helvetica-Bold',
+            fontName='Times-Bold',
             textColor=colors.HexColor('#000000'),
             spaceAfter=6,
             alignment=1,  # Center
@@ -672,7 +673,7 @@ class EscrowDocumentGenerator:
             'GovtHeader',
             parent=styles['Heading1'],
             fontSize=18,
-            fontName='Helvetica-Bold',
+            fontName='Times-Bold',
             textColor=colors.HexColor('#1a1a1a'),
             spaceAfter=4,
             alignment=1,
@@ -684,7 +685,7 @@ class EscrowDocumentGenerator:
             'TitleDeedSection',
             parent=styles['Heading2'],
             fontSize=12,
-            fontName='Helvetica-Bold',
+            fontName='Times-Bold',
             textColor=colors.HexColor('#000000'),
             spaceAfter=8,
             spaceBefore=12,
@@ -699,7 +700,7 @@ class EscrowDocumentGenerator:
             'TitleDeedLabel',
             parent=styles['Normal'],
             fontSize=10,
-            fontName='Helvetica-Bold',
+            fontName='Times-Bold',
             textColor=colors.HexColor('#000000'),
             spaceAfter=2,
             leading=12
@@ -710,7 +711,7 @@ class EscrowDocumentGenerator:
             'TitleDeedValue',
             parent=styles['Normal'],
             fontSize=10,
-            fontName='Helvetica',
+            fontName='Times-Roman',
             textColor=colors.HexColor('#1a1a1a'),
             spaceAfter=6,
             leading=14,
@@ -722,7 +723,7 @@ class EscrowDocumentGenerator:
             'TableLabel',
             parent=styles['Normal'],
             fontSize=10,
-            fontName='Helvetica-Bold',
+            fontName='Times-Bold',
             alignment=0,  # Left
             leading=12
         )
@@ -731,7 +732,7 @@ class EscrowDocumentGenerator:
             'TableValue',
             parent=styles['Normal'],
             fontSize=10,
-            fontName='Helvetica',
+            fontName='Times-Roman',
             alignment=0,
             leading=12
         )
@@ -772,8 +773,8 @@ class EscrowDocumentGenerator:
         
         doc_info_table = Table(doc_info_data, colWidths=[2.5*inch, 4*inch])
         doc_info_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (0, -1), 'Times-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Times-Roman'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
             ('ALIGN', (1, 0), (1, -1), 'LEFT'),
@@ -811,8 +812,8 @@ class EscrowDocumentGenerator:
         
         prop_desc_table = Table(prop_desc_data, colWidths=[2.5*inch, 4*inch])
         prop_desc_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (0, -1), 'Times-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Times-Roman'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
             ('ALIGN', (1, 0), (1, -1), 'LEFT'),
@@ -859,8 +860,8 @@ class EscrowDocumentGenerator:
         
         location_table = Table(location_data, colWidths=[2.5*inch, 4*inch])
         location_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (0, -1), 'Times-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Times-Roman'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
             ('ALIGN', (1, 0), (1, -1), 'LEFT'),
@@ -906,8 +907,8 @@ class EscrowDocumentGenerator:
         
         ownership_table = Table(ownership_data, colWidths=[2.5*inch, 4*inch])
         ownership_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (0, -1), 'Times-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Times-Roman'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
             ('ALIGN', (1, 0), (1, -1), 'LEFT'),
@@ -941,8 +942,8 @@ class EscrowDocumentGenerator:
             if boundary_data:
                 boundary_table = Table(boundary_data, colWidths=[2.5*inch, 4*inch])
                 boundary_table.setStyle(TableStyle([
-                    ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-                    ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+                    ('FONTNAME', (0, 0), (0, -1), 'Times-Bold'),
+                    ('FONTNAME', (1, 0), (1, -1), 'Times-Roman'),
                     ('FONTSIZE', (0, 0), (-1, -1), 10),
                     ('ALIGN', (0, 0), (0, -1), 'LEFT'),
                     ('ALIGN', (1, 0), (1, -1), 'LEFT'),
@@ -983,7 +984,7 @@ class EscrowDocumentGenerator:
         
         signature_table = Table(signature_data, colWidths=[3.5*inch, 3*inch])
         signature_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 0), (0, -1), 'Times-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
@@ -1003,7 +1004,7 @@ class EscrowDocumentGenerator:
             'Footer',
             parent=styles['Normal'],
             fontSize=8,
-            fontName='Helvetica-Oblique',
+            fontName='Times-Italic',
             textColor=colors.HexColor('#666666'),
             alignment=1,  # Center
             spaceBefore=12

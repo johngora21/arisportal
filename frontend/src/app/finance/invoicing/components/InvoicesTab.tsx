@@ -64,7 +64,7 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
   const { token } = useAuth();
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-  const [selectedChannel, setSelectedChannel] = useState<'email' | 'sms' | 'whatsapp'>('email');
+  const [selectedChannel, setSelectedChannel] = useState<'email' | 'whatsapp'>('email');
   const [initiatingUSSD, setInitiatingUSSD] = useState(false);
   
   // Generate payment message with control number and payment link
@@ -111,43 +111,19 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
       ? `https://pay.clickpesa.com/pay/${controlNumber}`
       : '';
 
-    // Build message - ALWAYS include control number and payment instructions
+    // Build simple, clean message
     let message = `Dear ${clientName},\n\n`;
     message += `Invoice: ${invoiceNumber}\n`;
     message += `Amount: ${amount}\n`;
     
     // Check if control number is a placeholder (NOCTRL)
     if (controlNumber && controlNumber.startsWith('NOCTRL')) {
-      message += `\n⚠️ WARNING: This invoice has an invalid control number (${controlNumber}).\n`;
-      message += `Please contact the merchant to regenerate a valid payment control number.\n\n`;
-      message += `This invoice cannot be paid until a valid control number is generated.\n`;
-      message += `Please contact the merchant to resolve this issue.\n\n`;
-    } else {
-      message += `Control Number: ${controlNumber}\n\n`;
-      message += `Payment Instructions:\n\n`;
-      
-      // USSD Push Payment Link - always show if we have invoice ID
-      if (ussdPushLink) {
-        message += `Pay via USSD Push (Recommended):\n`;
-        message += `Click this link to receive a payment request on your phone:\n`;
-        message += `${ussdPushLink}\n`;
-        if (phone) {
-          message += `(Payment request will be sent to ${phone})\n`;
-        }
-        message += `\n`;
-      }
-      
-      // Web Payment Link - only show if we have a valid control number
-      if (webPaymentLink) {
-        message += `${ussdPushLink ? 'OR pay online:\n' : 'Pay online:\n'}`;
-        message += `${webPaymentLink}\n\n`;
-      }
-      
-   
+      message += `\n⚠️ WARNING: This invoice has an invalid control number. Please contact the merchant.\n`;
+    } else if (controlNumber && controlNumber !== 'N/A') {
+      message += `Control Number: ${controlNumber}\n`;
     }
     
-    message += `Thank you for your business!\n\n`;
-    message += `Best regards`;
+    message += `\nThank you for your business!`;
     
     return message;
   };
@@ -172,7 +148,7 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
       if (sendingInvoice.email) {
         setSelectedChannel('email');
       } else if (sendingInvoice.phone) {
-        setSelectedChannel('sms');
+        setSelectedChannel('whatsapp');
       }
       // Message content will be set by the other useEffect
     }
@@ -185,7 +161,7 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
     if (invoice.email) {
       setSelectedChannel('email');
     } else if (invoice.phone) {
-      setSelectedChannel('sms');
+      setSelectedChannel('whatsapp');
     }
     // Message content will be set by the useEffect above
   };
@@ -200,15 +176,202 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
     }
   };
 
-  const handleSendMessage = () => {
+  const generateInvoicePDF = async (invoice: Invoice): Promise<{ pdfBase64: string; filename: string }> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Dynamic imports to avoid TypeScript issues
+        const html2canvas = (await import('html2canvas')).default;
+        const jsPDF = (await import('jspdf')).jsPDF;
+
+        // Create a temporary div to render the invoice
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.left = '-9999px';
+        tempDiv.style.width = '210mm'; // A4 width
+        tempDiv.style.padding = '20mm';
+        tempDiv.style.backgroundColor = '#ffffff';
+        tempDiv.style.fontFamily = 'Arial, sans-serif';
+        document.body.appendChild(tempDiv);
+
+        // Build invoice HTML
+        const invoiceNumber = invoice.number || invoice.invoiceData?.invoice_number || 'N/A';
+        const clientName = invoice.client || invoice.invoiceData?.client_name || 'Customer';
+        const amount = invoice.amount || (invoice.invoiceData?.total ? `${invoice.invoiceData.currency || 'TZS'} ${invoice.invoiceData.total}` : 'N/A');
+        const date = invoice.date || (invoice.invoiceData?.issue_date ? new Date(invoice.invoiceData.issue_date).toLocaleDateString() : new Date().toLocaleDateString());
+        
+        let itemsHTML = '';
+        if (invoice.invoiceData?.items) {
+          try {
+            const items = typeof invoice.invoiceData.items === 'string' 
+              ? JSON.parse(invoice.invoiceData.items) 
+              : invoice.invoiceData.items;
+            items.forEach((item: any) => {
+              itemsHTML += `
+                <tr>
+                  <td>${item.description || ''}</td>
+                  <td>${item.quantity || 0}</td>
+                  <td>${item.rate || 0}</td>
+                  <td>${item.amount || 0}</td>
+                </tr>
+              `;
+            });
+          } catch (e) {
+            console.error('Error parsing items:', e);
+          }
+        }
+
+        tempDiv.innerHTML = `
+          <div style="max-width: 100%;">
+            <h1 style="font-size: 24px; margin-bottom: 20px;">Invoice ${invoiceNumber}</h1>
+            <div style="margin-bottom: 20px;">
+              <p><strong>Date:</strong> ${date}</p>
+              <p><strong>Client:</strong> ${clientName}</p>
+              <p><strong>Amount:</strong> ${amount}</p>
+            </div>
+            ${itemsHTML ? `
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <thead>
+                  <tr style="background-color: #f3f4f6;">
+                    <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Description</th>
+                    <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">Quantity</th>
+                    <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">Rate</th>
+                    <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsHTML}
+                </tbody>
+              </table>
+            ` : ''}
+            <div style="margin-top: 20px; text-align: right;">
+              <p style="font-size: 18px; font-weight: bold;">Total: ${amount}</p>
+            </div>
+          </div>
+        `;
+
+        // Generate PDF
+        const canvas = await html2canvas(tempDiv, {
+          background: '#ffffff',
+          logging: false,
+          scale: 2
+        });
+
+        const imgData = canvas.toDataURL('image/png', 1.0);
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+
+        const imgWidth = 210;
+        const pageHeight = 297;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+
+        const safeInvoiceNumber = invoiceNumber.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const fileName = `invoice-${safeInvoiceNumber}-${new Date().toISOString().split('T')[0]}.pdf`;
+        
+        // Get PDF as base64 string
+        const pdfBase64 = pdf.output('datauristring').split(',')[1]; // Remove data:application/pdf;base64, prefix
+        
+        // Clean up
+        document.body.removeChild(tempDiv);
+        
+        resolve({ pdfBase64, filename: fileName });
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        reject(error);
+      }
+    });
+  };
+
+  const handleSendMessage = async () => {
     if (messageContent.trim() && selectedInvoice) {
-      console.log(`Sending ${selectedChannel} message to ${selectedInvoice.client}:`, {
-        content: messageContent,
-        file: attachedFile,
-        channel: selectedChannel
-      });
-      alert(`Message sent to ${selectedInvoice.client} via ${selectedChannel}!`);
-      handleCloseMessageModal();
+      try {
+        // Generate PDF
+        const { pdfBase64, filename } = await generateInvoicePDF(selectedInvoice);
+        const invoiceId = selectedInvoice.invoiceData?.id || selectedInvoice.id;
+        
+        if (selectedChannel === 'email' && selectedInvoice.email) {
+          // Send email via backend with PDF attachment
+          const response = await fetch(buildApiUrl(`/invoices/${invoiceId}/send-email`), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              to_email: selectedInvoice.email,
+              subject: `Invoice ${selectedInvoice.number}`,
+              message: messageContent,
+              pdf_base64: pdfBase64,
+              pdf_filename: filename
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || 'Failed to send email');
+          }
+
+          const result = await response.json();
+          alert(`✅ Email sent successfully to ${selectedInvoice.email}!`);
+          handleCloseMessageModal();
+        } else if (selectedChannel === 'whatsapp' && selectedInvoice.phone) {
+          // For WhatsApp, download the file and open WhatsApp
+          // Convert base64 to blob and download
+          const byteCharacters = atob(pdfBase64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          // Small delay for download to start
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Open WhatsApp with message
+          // Format phone number (remove +, spaces, etc.)
+          let phone = selectedInvoice.phone.replace(/[^\d]/g, '');
+          // If starts with 0, replace with country code (255 for Tanzania)
+          if (phone.startsWith('0')) {
+            phone = '255' + phone.substring(1);
+          } else if (!phone.startsWith('255') && phone.length === 9) {
+            phone = '255' + phone;
+          }
+          const message = encodeURIComponent(messageContent);
+          const whatsappLink = `https://wa.me/${phone}?text=${message}`;
+          window.open(whatsappLink, '_blank');
+          alert('📄 Invoice PDF downloaded. Please attach it to your WhatsApp message.');
+          handleCloseMessageModal();
+        } else {
+          alert(`Please select a valid ${selectedChannel === 'email' ? 'email address' : 'phone number'}`);
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert(`Failed to send ${selectedChannel}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
   };
 
@@ -442,20 +605,6 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
                     <input
                       type="radio"
                       name="channel"
-                      value="sms"
-                      checked={selectedChannel === 'sms'}
-                      onChange={(e) => setSelectedChannel(e.target.value as any)}
-                    />
-                    <Phone size={16} color="#6b7280" />
-                    <span style={{ fontSize: '14px', color: '#374151' }}>SMS</span>
-                  </label>
-                )}
-                
-                {selectedInvoice.whatsapp && (
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                    <input
-                      type="radio"
-                      name="channel"
                       value="whatsapp"
                       checked={selectedChannel === 'whatsapp'}
                       onChange={(e) => setSelectedChannel(e.target.value as any)}
@@ -476,11 +625,9 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                 {selectedChannel === 'email' && <Mail size={16} color="#6b7280" />}
-                {selectedChannel === 'sms' && <Phone size={16} color="#6b7280" />}
                 {selectedChannel === 'whatsapp' && <MessageSquare size={16} color="#6b7280" />}
                 <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
                   {selectedChannel === 'email' && `Email: ${selectedInvoice.email}`}
-                  {selectedChannel === 'sms' && `SMS: ${selectedInvoice.phone}`}
                   {selectedChannel === 'whatsapp' && `WhatsApp: ${selectedInvoice.phone}`}
                 </span>
               </div>
@@ -565,90 +712,7 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
                         Regenerate Control Number
                       </button>
                     </>
-                  ) : (
-                    <>
-                      <div style={{ fontSize: '12px', fontWeight: '600', color: '#1e40af', marginBottom: '6px' }}>
-                        Payment Control Number
-                      </div>
-                      <div style={{ fontSize: '18px', fontWeight: '700', color: '#1e3a8a', fontFamily: 'monospace', marginBottom: '8px' }}>
-                        {selectedInvoice.invoiceData.control_number}
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '8px' }}>
-                        Control Number: <span style={{ fontFamily: 'monospace', fontWeight: '600', color: '#1e40af' }}>{selectedInvoice.invoiceData.control_number}</span>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        {selectedInvoice.phone && (
-                          <button
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              if (!token || !selectedInvoice.invoiceData?.id) {
-                                alert('Unable to initiate USSD push. Please ensure you are logged in.');
-                                return;
-                              }
-                              
-                              setInitiatingUSSD(true);
-                              try {
-                                const response = await fetch(
-                                  buildApiUrl(`/invoices/${selectedInvoice.invoiceData.id}/initiate-ussd-push`),
-                                  {
-                                    method: 'POST',
-                                    headers: {
-                                      'Authorization': `Bearer ${token}`,
-                                      'Content-Type': 'application/json'
-                                    }
-                                  }
-                                );
-                                
-                                if (!response.ok) {
-                                  const error = await response.json().catch(() => ({ detail: 'Failed to initiate USSD push' }));
-                                  throw new Error(error.detail || 'Failed to initiate USSD push');
-                                }
-                                
-                                const result = await response.json();
-                            alert(`✅ USSD push payment request sent to ${selectedInvoice.phone}!\n\nPlease check your phone and approve the payment request.`);
-                          } catch (error) {
-                            console.error('Error initiating USSD push:', error);
-                            alert(`Failed to send USSD push: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                          } finally {
-                            setInitiatingUSSD(false);
-                          }
-                        }}
-                        disabled={initiatingUSSD || !selectedInvoice.phone || !token}
-                        style={{
-                          fontSize: '12px',
-                          color: 'white',
-                          backgroundColor: initiatingUSSD ? '#9ca3af' : '#10b981',
-                          padding: '8px 16px',
-                          borderRadius: '6px',
-                          textAlign: 'center',
-                          fontWeight: '600',
-                          border: 'none',
-                          cursor: initiatingUSSD ? 'not-allowed' : 'pointer',
-                          display: 'block'
-                        }}
-                      >
-                        {initiatingUSSD ? '⏳ Sending USSD Push...' : '📱 Send USSD Push Payment Request'}
-                      </button>
-                    )}
-                    {selectedInvoice.invoiceData.control_number && !selectedInvoice.invoiceData.control_number.startsWith('NOCTRL') && (
-                      <a 
-                        href={`https://pay.clickpesa.com/pay/${selectedInvoice.invoiceData.control_number}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          fontSize: '11px',
-                          color: '#3b82f6',
-                          textDecoration: 'underline',
-                          textAlign: 'center',
-                          display: 'block'
-                        }}
-                      >
-                        🌐 Or pay online: https://pay.clickpesa.com/pay/{selectedInvoice.invoiceData.control_number}
-                      </a>
-                    )}
-                      </div>
-                    </>
-                  )}
+                  ) : null}
                 </div>
               )}
             </div>
@@ -749,7 +813,7 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
                 }}
               >
                 <Send size={16} />
-                Send {selectedChannel === 'email' ? 'Email' : selectedChannel === 'sms' ? 'SMS' : 'WhatsApp'}
+                Send {selectedChannel === 'email' ? 'Email' : 'WhatsApp'}
               </button>
             </div>
           </div>

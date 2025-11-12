@@ -344,10 +344,10 @@ export default function InvoicingPage() {
     setShowCreateModal(true);
   };
 
-  const handleUpdateInvoice = async (updatedData: any) => {
+  const handleUpdateInvoice = async (updatedData: any, skipCloseModal: boolean = false) => {
     if (!editingInvoice || !token) {
       // Fallback to local update if no token
-    if (editingInvoice) {
+      if (editingInvoice) {
         const currency = updatedData.currency || 'TZS';
         const formattedAmount = formatAmountWithCurrency(updatedData.total || 0, currency);
         
@@ -362,11 +362,13 @@ export default function InvoicingPage() {
             : inv
         ));
       }
-      setEditingInvoice(null);
-      setShowCreateModal(false);
-      setOpenOnInvoiceTab(false);
-      setSelectedTemplateId(null);
-      setDownloadingInvoice(null);
+      if (!skipCloseModal) {
+        setEditingInvoice(null);
+        setShowCreateModal(false);
+        setOpenOnInvoiceTab(false);
+        setSelectedTemplateId(null);
+        setDownloadingInvoice(null);
+      }
       return;
     }
 
@@ -478,13 +480,25 @@ export default function InvoicingPage() {
           : inv
       ));
 
-      alert('Invoice updated successfully!');
+      if (!skipCloseModal) {
+        alert('Invoice updated successfully!');
+      }
       
-      // Reload invoices to get the latest data
-      await loadInvoices();
+      // Reload invoices to get the latest data (but don't wait if sending)
+      if (!skipCloseModal) {
+        await loadInvoices();
+      } else {
+        // If sending, reload in background without blocking
+        loadInvoices().catch(console.error);
+      }
+      
+      // Return the updated invoice for Send functionality
+      return updatedInvoice;
     } catch (error) {
       console.error('Error updating invoice:', error);
-      alert(`Failed to update invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      if (!skipCloseModal) {
+        alert(`Failed to update invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
       
       // Fallback to local update on error
       if (editingInvoice) {
@@ -502,19 +516,77 @@ export default function InvoicingPage() {
             : inv
         ));
       }
+      
+      throw error; // Re-throw so handleSendInvoice can catch it
     }
 
-    setEditingInvoice(null);
-    setShowCreateModal(false);
-    setOpenOnInvoiceTab(false);
-    setSelectedTemplateId(null);
-    setDownloadingInvoice(null);
+    if (!skipCloseModal) {
+      setEditingInvoice(null);
+      setShowCreateModal(false);
+      setOpenOnInvoiceTab(false);
+      setSelectedTemplateId(null);
+      setDownloadingInvoice(null);
+    }
   };
 
   const handleSendInvoice = async (invoiceData: any) => {
     try {
-      // First, save the invoice if not already saved (skip closing modal)
-      const savedInvoice = await handleSaveInvoice(invoiceData, true);
+      let savedInvoice: any = null;
+      
+      // If editing an existing invoice, update it first and regenerate control number
+      if (editingInvoice) {
+        const invoiceId = editingInvoice.invoiceData?.id || editingInvoice.id;
+        
+        // First, update the invoice (skip closing modal)
+        await handleUpdateInvoice(invoiceData, true);
+        
+        // Then regenerate the control number
+        try {
+          const regenerateResponse = await fetch(buildApiUrl(`/invoices/${invoiceId}/regenerate-control-number`), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (!regenerateResponse.ok) {
+            const errorData = await regenerateResponse.json().catch(() => ({}));
+            const errorMessage = errorData.detail || errorData.message || 'Failed to regenerate control number';
+            console.error('Regenerate control number error:', errorMessage);
+            throw new Error(errorMessage);
+          }
+
+          savedInvoice = await regenerateResponse.json();
+          console.log('✅ Control number regenerated successfully:', savedInvoice.control_number);
+        } catch (regenerateError) {
+          console.error('Error regenerating control number:', regenerateError);
+          const errorMessage = regenerateError instanceof Error ? regenerateError.message : 'Unknown error';
+          
+          // If it's the "already has valid control number" error, we can proceed
+          // Otherwise, show the actual error
+          if (errorMessage.includes('already has a valid control number')) {
+            console.warn('Invoice already has control number, fetching updated invoice...');
+            // Fetch the updated invoice to get the latest data
+            const fetchResponse = await fetch(buildApiUrl(`/invoices/${invoiceId}`), {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            if (fetchResponse.ok) {
+              savedInvoice = await fetchResponse.json();
+            } else {
+              throw new Error('Failed to fetch updated invoice');
+            }
+          } else {
+            // For other errors, throw to show proper error message
+            throw new Error(`Failed to regenerate control number: ${errorMessage}`);
+          }
+        }
+      } else {
+        // New invoice - create it
+        savedInvoice = await handleSaveInvoice(invoiceData, true);
+      }
       
       if (savedInvoice && savedInvoice.id) {
         // Create Invoice object for the message modal

@@ -15,6 +15,13 @@ import httpx
 import json
 import random
 import time
+import smtplib
+import os
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+import base64
 
 router = APIRouter()
 security = HTTPBearer()
@@ -176,7 +183,50 @@ async def create_invoice(
                 )
             
         # Keep the provided invoice number; do NOT replace it with control number
-        invoice_number = invoice_data.invoice_number or f"INV-{datetime.utcnow().strftime('%Y%m%d')}-{random.randint(100,999)}"
+        # If not provided, generate a unique invoice number
+        if invoice_data.invoice_number:
+            invoice_number = invoice_data.invoice_number
+            # Check if provided invoice number already exists
+            existing = db.query(Invoice).filter(Invoice.invoice_number == invoice_number).first()
+            if existing:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invoice number '{invoice_number}' already exists. Please use a different invoice number."
+                )
+        else:
+            # Generate unique invoice number with retry logic
+            max_attempts = 100
+            for attempt in range(max_attempts):
+                # Use timestamp with milliseconds + random for better uniqueness
+                timestamp = datetime.utcnow()
+                date_str = timestamp.strftime('%Y%m%d')
+                # Add milliseconds and random component
+                random_suffix = random.randint(1000, 9999)  # 4 digits instead of 3
+                invoice_number = f"INV-{date_str}-{random_suffix}"
+                
+                # Check if this invoice number already exists
+                existing = db.query(Invoice).filter(Invoice.invoice_number == invoice_number).first()
+                if not existing:
+                    break  # Found a unique number
+                
+                # If we've tried many times, add more randomness
+                if attempt > 50:
+                    time.sleep(0.001)  # Small delay to ensure timestamp difference
+                    timestamp = datetime.utcnow()
+                    date_str = timestamp.strftime('%Y%m%d')
+                    random_suffix = random.randint(10000, 99999)  # 5 digits for more uniqueness
+                    invoice_number = f"INV-{date_str}-{random_suffix}"
+                    existing = db.query(Invoice).filter(Invoice.invoice_number == invoice_number).first()
+                    if not existing:
+                        break
+            
+            # Final check - if still not unique after all attempts, raise error
+            existing = db.query(Invoice).filter(Invoice.invoice_number == invoice_number).first()
+            if existing:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to generate unique invoice number. Please try again or provide a custom invoice number."
+                )
         
         # Generate ClickPesa control number for payment - REQUIRED, no placeholders!
         control_number = None
@@ -224,10 +274,11 @@ async def create_invoice(
             }
             
             # Generate reference (max 20 chars for ClickPesa API requirement)
-            # Use short format: INV + last 6 digits of timestamp + 4 digit random = 13 chars
-            timestamp_suffix = str(int(time.time()))[-6:]  # Last 6 digits of timestamp
-            random_suffix = str(random.randint(1000, 9999))  # 4 digit random
-            bill_reference = f"INV{timestamp_suffix}{random_suffix}"  # Total: 3 + 6 + 4 = 13 chars (well under 20)
+            # Use numbers only - no words/letters in reference
+            # Format: timestamp (last 8 digits) + random (6 digits) = 14 chars
+            timestamp_suffix = str(int(time.time()))[-8:]  # Last 8 digits of timestamp
+            random_suffix = str(random.randint(100000, 999999))  # 6 digit random
+            bill_reference = f"{timestamp_suffix}{random_suffix}"  # Total: 8 + 6 = 14 chars (numbers only)
             
             print(f"📞 Calling ClickPesa API to create control number for invoice {invoice_number}")
             print(f"   Recipient: {recipient.get('name')}, Phone: {recipient.get('phone')}, Email: {recipient.get('email')}")
@@ -292,6 +343,13 @@ async def create_invoice(
         
         # CRITICAL VALIDATION: Ensure control_number is valid before creating invoice
         print(f"🔒 VALIDATING control_number before creating invoice: {control_number} (type: {type(control_number)})")
+        
+        # Validate that control number does NOT start with "INV"
+        if isinstance(control_number, str) and control_number.strip().upper().startswith('INV'):
+            raise HTTPException(
+                status_code=500,
+                detail=f"CRITICAL ERROR: Control number cannot start with 'INV'. Received: {control_number}. Please regenerate."
+            )
         
         if control_number is None:
             raise HTTPException(
@@ -674,12 +732,8 @@ async def regenerate_control_number(
         if not invoice:
             raise HTTPException(status_code=404, detail="Invoice not found")
         
-        # Check if invoice already has a valid control number
-        if invoice.control_number and not invoice.control_number.startswith('NOCTRL'):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invoice already has a valid control number: {invoice.control_number}. Cannot regenerate."
-            )
+        # Allow regeneration even if control number exists (needed when invoice is edited, especially amount changes)
+        # The old control number will be replaced with a new one for the updated invoice
         
         # Format client phone number for ClickPesa
         formatted_client_phone = None
@@ -709,10 +763,11 @@ async def regenerate_control_number(
         }
         
         # Generate short reference (max 20 chars for ClickPesa API requirement)
-        # Use short format: INV + last 6 digits of timestamp + 4 digit random = 13 chars
-        timestamp_suffix = str(int(time.time()))[-6:]  # Last 6 digits of timestamp
-        random_suffix = str(random.randint(1000, 9999))  # 4 digit random
-        bill_reference = f"INV{timestamp_suffix}{random_suffix}"  # Total: 13 chars (well under 20)
+        # Use numbers only - no words/letters in reference
+        # Format: timestamp (last 8 digits) + random (6 digits) = 14 chars
+        timestamp_suffix = str(int(time.time()))[-8:]  # Last 8 digits of timestamp
+        random_suffix = str(random.randint(100000, 999999))  # 6 digit random
+        bill_reference = f"{timestamp_suffix}{random_suffix}"  # Total: 8 + 6 = 14 chars (numbers only)
         
         print(f"🔄 Regenerating control number for invoice {invoice.invoice_number} (ID: {invoice_id})")
         
@@ -733,6 +788,13 @@ async def regenerate_control_number(
             raise HTTPException(
                 status_code=500,
                 detail=f"ClickPesa API did not return a control number. Response: {clickpesa_response}"
+            )
+        
+        # Validate that control number does NOT start with "INV"
+        if isinstance(control_number, str) and control_number.strip().upper().startswith('INV'):
+            raise HTTPException(
+                status_code=500,
+                detail=f"CRITICAL ERROR: Control number cannot start with 'INV'. Received: {control_number}. Please try again."
             )
         
         # Update invoice with new control number
@@ -843,3 +905,97 @@ async def initiate_invoice_ussd_push(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to initiate USSD push: {str(e)}")
+
+class SendEmailRequest(BaseModel):
+    to_email: str
+    subject: str
+    message: str
+    pdf_base64: str  # Base64 encoded PDF content
+    pdf_filename: str
+
+@router.post("/{invoice_id}/send-email", response_model=dict)
+async def send_invoice_email(
+    invoice_id: int,
+    email_data: SendEmailRequest,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Send invoice via email with PDF attachment.
+    """
+    try:
+        # Get the invoice
+        invoice = db.query(Invoice).filter(
+            Invoice.id == invoice_id,
+            Invoice.user_id == user_id
+        ).first()
+        
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        
+        # Get user profile for sender email
+        from models.user import UserProfile
+        user_profile = db.query(UserProfile).filter(UserProfile.id == user_id).first()
+        if not user_profile:
+            raise HTTPException(status_code=404, detail="User profile not found")
+        
+        # Get SMTP settings from environment variables
+        smtp_host = os.getenv('SMTP_HOST', 'smtp.gmail.com')
+        smtp_port = int(os.getenv('SMTP_PORT', '587'))
+        smtp_user = os.getenv('SMTP_USER', user_profile.business_email or user_profile.email)
+        smtp_password = os.getenv('SMTP_PASSWORD', '')
+        
+        if not smtp_user or not smtp_password:
+            raise HTTPException(
+                status_code=400,
+                detail="SMTP credentials not configured. Please set SMTP_USER and SMTP_PASSWORD in environment variables."
+            )
+        
+        # Decode PDF from base64
+        try:
+            pdf_data = base64.b64decode(email_data.pdf_base64)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid PDF data: {str(e)}")
+        
+        # Create email message
+        msg = MIMEMultipart()
+        msg['From'] = smtp_user
+        msg['To'] = email_data.to_email
+        msg['Subject'] = email_data.subject
+        
+        # Add message body
+        msg.attach(MIMEText(email_data.message, 'plain'))
+        
+        # Add PDF attachment
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload(pdf_data)
+        encoders.encode_base64(part)
+        part.add_header(
+            'Content-Disposition',
+            f'attachment; filename= {email_data.pdf_filename}'
+        )
+        msg.attach(part)
+        
+        # Send email
+        try:
+            server = smtplib.SMTP(smtp_host, smtp_port)
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+            server.quit()
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to send email: {str(e)}. Please check your SMTP settings."
+            )
+        
+        return {
+            'success': True,
+            'message': 'Email sent successfully',
+            'to': email_data.to_email
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")

@@ -15,12 +15,13 @@ import {
   User,
   Code
 } from 'lucide-react';
-import { API_CONFIG } from '../../../config/api';
+import { buildApiUrl } from '../../../config/api';
 import CreateEscrowModal from './components/CreateEscrowModal';
 import ViewEscrowModal from './components/ViewEscrowModal';
 import ContractSignatureModal from './components/ContractSignatureModal';
 import ReleaseEscrowModal from './components/ReleaseEscrowModal';
 import { useCurrency } from '../../../contexts/CurrencyContext';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface EscrowAccount {
   id: number;
@@ -59,6 +60,7 @@ interface EscrowAccount {
 
 export default function EscrowPage() {
   const { formatCurrency } = useCurrency();
+  const { token } = useAuth();
   const [activeTab, setActiveTab] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -77,7 +79,11 @@ export default function EscrowPage() {
   const fetchEscrows = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/`);
+      const response = await fetch(buildApiUrl('/escrow/'), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch escrows');
       }
@@ -99,7 +105,11 @@ export default function EscrowPage() {
   // Fetch escrow statistics
   const fetchStats = async () => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/stats/summary`);
+      const response = await fetch(buildApiUrl('/escrow/stats/summary'), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch stats');
       }
@@ -126,10 +136,11 @@ export default function EscrowPage() {
   // Create new escrow
   const handleCreateEscrow = async (escrowData: any) => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/`, {
+      const response = await fetch(buildApiUrl('/escrow/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(escrowData),
       });
@@ -154,10 +165,11 @@ export default function EscrowPage() {
   // Update escrow status
   const handleUpdateStatus = async (escrowId: string, newStatus: string) => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/${escrowId}/status`, {
+      const response = await fetch(buildApiUrl(`/escrow/${escrowId}/status`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ status: newStatus }),
       });
@@ -193,14 +205,31 @@ export default function EscrowPage() {
     setLoadingContract(true);
     try {
       // Pass the escrow_id to fetch real escrow data
-      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/contract/document?escrow_id=${escrowId}`);
-      if (!response.ok) throw new Error('Failed to fetch contract');
+      const response = await fetch(buildApiUrl(`/escrow/contract/document?escrow_id=${escrowId}`), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = `Failed to fetch contract (${response.status})`;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.detail || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+      
       const data = await response.json();
       setContractData(data);
       setShowContractModal(true);
     } catch (err) {
       console.error('Error fetching contract:', err);
-      alert('Failed to load smart contract');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load contract document';
+      alert(errorMessage);
     } finally {
       setLoadingContract(false);
     }
@@ -217,10 +246,11 @@ export default function EscrowPage() {
     const escrowId = releaseEscrowTarget.escrow_id;
     try {
       setReleasingEscrow(true);
-      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/${escrowId}/release`, {
+      const response = await fetch(buildApiUrl(`/escrow/${escrowId}/release`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload),
       });
