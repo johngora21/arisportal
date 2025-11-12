@@ -616,13 +616,16 @@ class ClickPesaService(PaymentProviderInterface):
         token = get_clickpesa_token()
         auth_header = token if isinstance(token, str) and token.lower().startswith('bearer ') else f"Bearer {token}"
         try:
+            # Use longer timeout for banks list endpoint
+            timeout = httpx.Timeout(60.0, connect=30.0)
             res = httpx.get(
                 f"{self.base_url}/third-parties/list/banks",
                 headers={
                     'Authorization': auth_header,
                     'Content-Type': 'application/json'
                 },
-                timeout=20.0
+                timeout=timeout,
+                follow_redirects=True
             )
             res.raise_for_status()
             try:
@@ -635,9 +638,12 @@ class ClickPesaService(PaymentProviderInterface):
             try:
                 err = e.response.json()
             except Exception:
-                err = {'message': str(e)}
-            print(f"[ClickPesa BANKS][ERROR] {err}")
-            raise Exception(f"ClickPesa banks list failed: {err}")
+                err = {'message': str(e), 'status_code': e.response.status_code, 'text': e.response.text[:200]}
+            print(f"[ClickPesa BANKS][ERROR] Status: {e.response.status_code}, Error: {err}")
+            raise Exception(f"ClickPesa banks list failed (Status {e.response.status_code}): {err.get('message', str(err))}")
+        except Exception as e:
+            print(f"[ClickPesa BANKS][ERROR] Unexpected error: {str(e)}")
+            raise
 
     def poll_mobile_money_payout_success(self, payout_id: str, *, max_attempts: int = 5, interval_seconds: float = 2.0) -> Dict:
         """

@@ -32,7 +32,7 @@ export default function TransferPage() {
   const [selectedBank, setSelectedBank] = useState('');
   const [selectedMno, setSelectedMno] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
-  const [transferMode, setTransferMode] = useState<'card' | 'external' | 'clickpesa_balance'>('card');
+  const [transferMode, setTransferMode] = useState<'card' | 'external'>('card');
   const [fromCard, setFromCard] = useState('');
   const [toCard, setToCard] = useState('');
   const [bulkRecipients, setBulkRecipients] = useState<Array<{ id: string; recipientName: string; account: string; amount: string; bank: string; mno: string; country?: string }>>([
@@ -182,7 +182,15 @@ export default function TransferPage() {
           
           setClickpesaBanks(mappedBanks as Array<{ id: string; name: string; bic?: string; transferType?: string }>);
         } else {
-          console.warn('Failed to fetch ClickPesa banks, using fallback list');
+          const errorText = await response.text().catch(() => '');
+          let errorMessage = 'Failed to fetch banks from ClickPesa';
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.detail || errorMessage;
+          } catch {
+            if (errorText) errorMessage = errorText;
+          }
+          console.error('Failed to fetch ClickPesa banks:', errorMessage);
         }
       } catch (err) {
         console.error('Error fetching banks:', err);
@@ -776,7 +784,7 @@ export default function TransferPage() {
               createField('Payment Mode', (
                 <select
                   value={transferMode}
-                  onChange={(e) => { setTransferMode(e.target.value as 'card' | 'external' | 'clickpesa_balance'); setError(''); }}
+                  onChange={(e) => { setTransferMode(e.target.value as 'card' | 'external'); setError(''); }}
                   disabled={loading}
                   style={{
                       width: '100%',
@@ -790,7 +798,6 @@ export default function TransferPage() {
                   }}
                 >
                   <option value="card">Use Card</option>
-                  <option value="clickpesa_balance">ClickPesa Balance</option>
                   <option value="external">External Source</option>
                 </select>
               ))
@@ -929,7 +936,7 @@ export default function TransferPage() {
                   createField('Payment Mode', (
                   <select
                   value={transferMode}
-                  onChange={(e) => { setTransferMode(e.target.value as 'card' | 'external' | 'clickpesa_balance'); setError(''); }}
+                  onChange={(e) => { setTransferMode(e.target.value as 'card' | 'external'); setError(''); }}
                     style={{
                       width: '100%',
                       padding: '12px 20px',
@@ -941,7 +948,6 @@ export default function TransferPage() {
                     }}
                   >
                   <option value="card">Use Card</option>
-                  <option value="clickpesa_balance">ClickPesa Balance</option>
                   <option value="external">External Source</option>
                   </select>
                   ))

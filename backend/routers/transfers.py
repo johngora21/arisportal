@@ -55,7 +55,7 @@ class CardTransferRequest(BaseModel):
 
 class PeerTransferRequest(BaseModel):
     from_card_id: Optional[int] = None
-    transfer_mode: str  # 'card', 'clickpesa_balance', or 'external'
+    transfer_mode: str  # 'card' or 'external'
     transfer_method: str  # 'bank' or 'mno'
     recipient_name: str
     recipient_account: str  # Bank account or phone number
@@ -73,7 +73,7 @@ class BulkTransferRecipientRequest(BaseModel):
 
 class BulkTransferRequest(BaseModel):
     from_card_id: Optional[int] = None
-    transfer_mode: str  # 'card', 'clickpesa_balance', or 'external'
+    transfer_mode: str  # 'card' or 'external'
     transfer_method: str  # 'bank' or 'mno'
     recipients: List[BulkTransferRecipientRequest]
     description: Optional[str] = None
@@ -84,6 +84,15 @@ class TransferResponse(BaseModel):
     status: str
     amount: float
     currency: str
+    description: Optional[str] = None
+    from_card_id: Optional[int] = None
+    to_card_id: Optional[int] = None
+    transfer_mode: Optional[str] = None
+    transfer_method: Optional[str] = None
+    recipient_name: Optional[str] = None
+    recipient_account: Optional[str] = None
+    recipient_bank: Optional[str] = None
+    recipient_mno: Optional[str] = None
     created_at: datetime
     clickpesa_reference: Optional[str] = None
     transfer_summary: Optional[dict] = None
@@ -373,7 +382,7 @@ async def create_local_peer_transfer(
     
     # If MNO payout, process via ClickPesa and ledger
     if transfer_data.transfer_method == 'mno':
-        # MNO payouts can use card balance or ClickPesa balance
+        # MNO payouts use card balance
         # External mode (control number) not supported for MNO yet
         if transfer_data.transfer_mode == 'external':
             raise HTTPException(status_code=400, detail="External source mode (control number) not yet implemented for MNO transfers")
@@ -386,7 +395,6 @@ async def create_local_peer_transfer(
             current_balance = _get_card_balance(from_card.id, db)
             if current_balance < transfer_data.amount:
                 raise HTTPException(status_code=400, detail="Insufficient balance")
-        # For clickpesa_balance mode, no card or balance check needed - ClickPesa API handles it
 
         try:
             clickpesa_service = ClickPesaService()
@@ -424,7 +432,6 @@ async def create_local_peer_transfer(
 
             if provider_status in ["SUCCESS"]:
                 # Confirmed success — debit from card only if using card mode
-                # For clickpesa_balance mode, ClickPesa API already debited from ClickPesa balance
                 if transfer_data.transfer_mode == 'card' and from_card:
                     _create_ledger_entry(
                         card_id=from_card.id,
@@ -463,7 +470,6 @@ async def create_local_peer_transfer(
     elif transfer_data.transfer_method == 'bank':
         # Bank payouts can use:
         # - transfer_mode='card': Debit from card balance, then ClickPesa routes to bank
-        # - transfer_mode='clickpesa_balance': Direct payout from ClickPesa balance to bank
         # - transfer_mode='external': Generate control number for external payment
         bank_details = _resolve_bank_details(transfer_data.recipient_bank)
         if not bank_details or not bank_details.get("bic"):
@@ -479,8 +485,8 @@ async def create_local_peer_transfer(
             reference = f"TRF{transfer.id}{uuid.uuid4().hex[:8].upper()}"
 
             # Create bank payout via ClickPesa
-            # - If transfer_mode='clickpesa_balance': Directly debits from ClickPesa balance
             # - If transfer_mode='card': We'll debit from card balance below
+            # - If transfer_mode='external': Generate control number (not yet implemented for bank transfers)
             payout = clickpesa_service.create_bank_payout(
                 amount=transfer_data.amount,
                 account_number=transfer_data.recipient_account,
@@ -637,7 +643,6 @@ async def create_local_bulk_transfer(
                     )
                 else:
                     # Bank payout
-                    # - transfer_mode='clickpesa_balance': Direct payout from ClickPesa balance
                     # - transfer_mode='card': Debit from card balance
                     # - transfer_mode='external': Generate control number (not implemented yet)
                     bank_details = _resolve_bank_details(recipient.bank_id)
@@ -645,8 +650,8 @@ async def create_local_bulk_transfer(
                         raise Exception(f"Unsupported or missing bank mapping for '{recipient.bank_id}'")
 
                     # Create bank payout via ClickPesa
-                    # - If transfer_mode='clickpesa_balance': Directly debits from ClickPesa balance
                     # - If transfer_mode='card': We'll debit from card balance below
+                    # - If transfer_mode='external': Generate control number (not yet implemented for bank transfers)
                     provider_payload = clickpesa_service.create_bank_payout(
                         amount=recipient.amount,
                         account_number=recipient.recipient_account,
@@ -706,7 +711,7 @@ async def create_local_bulk_transfer(
                 "providerReference": provider_reference,
             })
 
-            # Debit from card balance if transfer_mode='card', otherwise ClickPesa balance is used directly
+            # Debit from card balance if transfer_mode='card'
             if from_card and recipient.status != TransferStatus.FAILED:
                 _create_ledger_entry(
                     card_id=from_card.id,
@@ -767,11 +772,41 @@ async def get_user_transfers(
     db: Session = Depends(get_db)
 ):
     """Get all transfers for a user"""
-    transfers = db.query(Transfer).filter(
-        Transfer.user_id == user_id
-    ).order_by(Transfer.created_at.desc()).all()
-    
-    return transfers
+    try:
+        transfers = db.query(Transfer).filter(
+            Transfer.user_id == user_id
+        ).order_by(Transfer.created_at.desc()).all()
+        
+        # Convert SQLAlchemy models to dict format for Pydantic
+        result = []
+        for transfer in transfers:
+            result.append({
+                "id": transfer.id,
+                "transfer_type": transfer.transfer_type.value if hasattr(transfer.transfer_type, 'value') else str(transfer.transfer_type),
+                "status": transfer.status.value if hasattr(transfer.status, 'value') else str(transfer.status),
+                "amount": transfer.amount,
+                "currency": transfer.currency,
+                "description": transfer.description,
+                "from_card_id": transfer.from_card_id,
+                "to_card_id": transfer.to_card_id,
+                "transfer_mode": transfer.transfer_mode,
+                "transfer_method": transfer.transfer_method.value if transfer.transfer_method and hasattr(transfer.transfer_method, 'value') else (str(transfer.transfer_method) if transfer.transfer_method else None),
+                "recipient_name": transfer.recipient_name,
+                "recipient_account": transfer.recipient_account,
+                "recipient_bank": transfer.recipient_bank,
+                "recipient_mno": transfer.recipient_mno,
+                "created_at": transfer.created_at,
+                "clickpesa_reference": transfer.clickpesa_reference,
+                "transfer_summary": None
+            })
+        
+        return result
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"❌ Error fetching transfers: {str(e)}")
+        print(error_trace)
+        raise HTTPException(status_code=500, detail=f"Failed to fetch transfers: {str(e)}")
 
 @router.get("/{transfer_id}", response_model=TransferResponse)
 async def get_transfer(
@@ -800,5 +835,9 @@ async def get_clickpesa_banks(
         banks = clickpesa_service.get_banks_list()
         return banks
     except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"❌ Error fetching banks list: {str(e)}")
+        print(f"❌ Traceback: {error_trace}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch banks: {str(e)}")
 
