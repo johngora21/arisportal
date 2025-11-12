@@ -8,12 +8,64 @@ from routers.clickpesa import get_clickpesa_token
 import httpx
 import time
 
+# ClickPesa bank metadata (BIC codes and defaults)
+BANKS_METADATA = {
+    "crdb": {"bic": "CORUTZTZ", "name": "CRDB Bank", "transfer_type": "ACH"},
+    "nmb": {"bic": "NMBBTZTZ", "name": "NMB Bank", "transfer_type": "ACH"},
+    "equity": {"bic": "EQBLTZTZ", "name": "Equity Bank Tanzania", "transfer_type": "ACH"},
+    "absa": {"bic": "BARCTZTZ", "name": "Absa Bank Tanzania", "transfer_type": "ACH"},
+    "stanbic": {"bic": "SBICTZTX", "name": "Stanbic Bank Tanzania", "transfer_type": "ACH"},
+    "exim": {"bic": "EXIMTZTZ", "name": "Exim Bank Tanzania", "transfer_type": "ACH"},
+    "diamond": {"bic": "DTKETZTZ", "name": "Diamond Trust Bank", "transfer_type": "ACH"},
+    "kcb": {"bic": "KCBLTZTZ", "name": "KCB Bank Tanzania", "transfer_type": "ACH"},
+    "national": {"bic": "NCBKTZTZ", "name": "National Bank of Commerce", "transfer_type": "ACH"},
+    "barclays": {"bic": "BARCTZTZ", "name": "Barclays Bank Tanzania", "transfer_type": "ACH"},
+}
+
+MNO_CHANNEL_MAP = {
+    'vodacom': 'MPESA_TZ',
+    'airtel': 'AIRTEL_TZ',
+    'tigo': 'TIGO_TZ',
+    'halotel': 'HALOPESA_TZ',
+    'ttcl': 'TTCL_TZ',
+}
+
+
 class ClickPesaService(PaymentProviderInterface):
     """ClickPesa API wrapper for local Tanzania payments"""
-    
+
+    BANKS_METADATA = BANKS_METADATA
+    MNO_CHANNEL_MAP = MNO_CHANNEL_MAP
+
     def __init__(self):
         self.base_url = "https://api.clickpesa.com"
-    
+
+    @staticmethod
+    def normalize_msisdn(phone_number: str) -> str:
+        """Normalise Tanzanian MSISDN to 255XXXXXXXXX format."""
+        if not phone_number:
+            raise ValueError("Phone number is required")
+
+        formatted = phone_number.strip().replace('+', '').replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+        if formatted.startswith('255') and len(formatted) >= 12:
+            return formatted
+        if formatted.startswith('0') and len(formatted) >= 10:
+            return '255' + formatted[1:]
+        if formatted.isdigit() and len(formatted) == 9:
+            return '255' + formatted
+        if formatted.isdigit() and len(formatted) == 12:
+            return formatted
+        raise ValueError(f"Invalid Tanzanian phone number format: {phone_number}")
+
+    @staticmethod
+    def normalize_bank_key(bank_key: str) -> str:
+        if not bank_key:
+            raise ValueError("Bank key is required")
+        normalized = bank_key.strip().lower()
+        if normalized not in BANKS_METADATA:
+            raise ValueError(f"Unsupported bank '{bank_key}'. Supported values: {', '.join(BANKS_METADATA.keys())}")
+        return normalized
+
     def create_transfer(self, amount: float, currency: str, recipient: Dict, reference: str) -> Dict:
         """
         Create a payment via ClickPesa BillPay
@@ -56,15 +108,15 @@ class ClickPesaService(PaymentProviderInterface):
             print(f"⏱️ [ClickPesa] Starting API call at {time.time()}")
             
             try:
-            response = httpx.post(
-                f"{self.base_url}/third-parties/billpay/create-customer-control-number",
-                headers={
+                response = httpx.post(
+                    f"{self.base_url}/third-parties/billpay/create-customer-control-number",
+                    headers={
                         'Authorization': token,  # ClickPesa uses token directly, not Bearer token
-                    'Content-Type': 'application/json'
-                },
-                json=billpay_request,
+                        'Content-Type': 'application/json'
+                    },
+                    json=billpay_request,
                     timeout=15.0  # 15 second timeout - fail fast if ClickPesa is slow
-            )
+                )
                 print(f"⏱️ [ClickPesa] API call completed at {time.time()}")
             except httpx.TimeoutException as timeout_error:
                 print(f"❌ [ClickPesa] API call TIMED OUT after 15 seconds")
@@ -81,8 +133,8 @@ class ClickPesaService(PaymentProviderInterface):
             print(f"📡 ClickPesa API Response Headers: {dict(response.headers)}")
             
             try:
-            response.raise_for_status()
-            billpay_response = response.json()
+                response.raise_for_status()
+                billpay_response = response.json()
                 print(f"📦 ClickPesa API Response Body: {billpay_response}")
             except httpx.HTTPStatusError as e:
                 # Try to get error details from response
@@ -278,19 +330,12 @@ class ClickPesaService(PaymentProviderInterface):
 
         Returns: Provider response dict (includes provider reference/status)
         """
-        channel_map = {
-            'vodacom': 'MPESA_TZ',
-            'airtel': 'AIRTEL_TZ',
-            'tigo': 'TIGO_TZ',
-            'halotel': 'HALOPESA_TZ',
-            'ttcl': 'TTCL_TZ',
-        }
-
-        channel = channel_map.get(mno_id)
+        channel = self.MNO_CHANNEL_MAP.get(mno_id)
         if not channel:
             raise Exception(f"Unsupported MNO: {mno_id}")
 
         token = get_clickpesa_token()
+        normalized_phone = self.normalize_msisdn(phone)
 
         payload = {
             "paymentMode": "MOBILE_MONEY",
@@ -298,7 +343,7 @@ class ClickPesaService(PaymentProviderInterface):
             "amount": amount,
             "currency": currency,
             "customerName": recipient_name,
-            "customerPhone": phone,
+            "customerPhone": normalized_phone,
             "externalReference": reference,
             "description": description or f"Payout to {recipient_name}"
         }
@@ -344,7 +389,7 @@ class ClickPesaService(PaymentProviderInterface):
         token = get_clickpesa_token()
         payload = {
             "amount": amount,
-            "phoneNumber": phone_number,
+            "phoneNumber": self.normalize_msisdn(phone_number),
             "currency": currency,
             "orderReference": order_reference,
         }
@@ -514,4 +559,63 @@ class ClickPesaService(PaymentProviderInterface):
                 last_payload = {"status": "ERROR", "error": str(exc)}
             time.sleep(interval_seconds)
         return last_payload
+
+    def create_bank_payout(
+        self,
+        *,
+        amount: float,
+        currency: str,
+        bank_key: str,
+        account_number: str,
+        account_name: str,
+        order_reference: str,
+        branch_code: Optional[str] = None,
+        description: Optional[str] = None
+    ) -> Dict:
+        """Create a bank (ACH) payout via ClickPesa."""
+        normalized_key = self.normalize_bank_key(bank_key)
+        bank_info = self.BANKS_METADATA[normalized_key]
+        token = get_clickpesa_token()
+        auth_header = token if isinstance(token, str) and token.lower().startswith('bearer ') else f"Bearer {token}"
+
+        payload = {
+            "amount": amount,
+            "currency": currency,
+            "orderReference": order_reference,
+            "bankAccountNumber": account_number,
+            "bankAccountName": account_name,
+            "bankName": bank_info["name"],
+            "transferType": bank_info["transfer_type"],
+            "swiftCode": bank_info["bic"],
+        }
+        if branch_code:
+            payload["bankBranchCode"] = branch_code
+        if description:
+            payload["description"] = description
+
+        try:
+            print(f"[ClickPesa BANK PAYOUT] POST payload={payload}")
+            res = httpx.post(
+                f"{self.base_url}/third-parties/payouts/create-bank-payout",
+                headers={
+                    'Authorization': auth_header,
+                    'Content-Type': 'application/json'
+                },
+                json=payload,
+                timeout=20.0
+            )
+            res.raise_for_status()
+            try:
+                body = res.json()
+            except Exception:
+                body = {"raw": res.text}
+            print(f"[ClickPesa BANK PAYOUT] status_code={res.status_code} body={body}")
+            return body
+        except httpx.HTTPStatusError as e:
+            try:
+                err = e.response.json()
+            except Exception:
+                err = {'message': str(e)}
+            print(f"[ClickPesa BANK PAYOUT][ERROR] {err}")
+            raise Exception(f"ClickPesa bank payout failed: {err}")
 

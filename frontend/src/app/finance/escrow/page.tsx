@@ -19,6 +19,7 @@ import { API_CONFIG } from '../../../config/api';
 import CreateEscrowModal from './components/CreateEscrowModal';
 import ViewEscrowModal from './components/ViewEscrowModal';
 import ContractSignatureModal from './components/ContractSignatureModal';
+import ReleaseEscrowModal from './components/ReleaseEscrowModal';
 import { useCurrency } from '../../../contexts/CurrencyContext';
 
 interface EscrowAccount {
@@ -45,6 +46,15 @@ interface EscrowAccount {
   completed_at?: string;
   cancelled_at?: string;
   cancelled_reason?: string;
+  control_number?: string | null;
+  payout_method?: string | null;
+  payout_details?: any;
+  payout_status?: string | null;
+  payout_reference?: string | null;
+  payout_provider_response?: any;
+  release_transaction_hash?: string | null;
+  release_block_number?: number | null;
+  released_via_web3?: boolean | null;
 }
 
 export default function EscrowPage() {
@@ -59,6 +69,9 @@ export default function EscrowPage() {
   const [escrowAccounts, setEscrowAccounts] = useState<EscrowAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [releaseModalOpen, setReleaseModalOpen] = useState(false);
+  const [releaseEscrowTarget, setReleaseEscrowTarget] = useState<EscrowAccount | null>(null);
+  const [releasingEscrow, setReleasingEscrow] = useState(false);
 
   // Fetch escrows from API
   const fetchEscrows = async () => {
@@ -193,31 +206,40 @@ export default function EscrowPage() {
     }
   };
 
-  // Release escrow funds
-  const handleReleaseEscrow = async (escrowId: string) => {
-    if (!confirm(`Are you sure you want to release funds for escrow ${escrowId}?`)) {
-      return;
-    }
+  const handleReleaseEscrow = (account: EscrowAccount) => {
+    setReleaseEscrowTarget(account);
+    setReleaseModalOpen(true);
+  };
 
+  const handleSubmitRelease = async (payload: any) => {
+    if (!releaseEscrowTarget) return;
+
+    const escrowId = releaseEscrowTarget.escrow_id;
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/${escrowId}/status`, {
-        method: 'PATCH',
+      setReleasingEscrow(true);
+      const response = await fetch(`${API_CONFIG.BASE_URL}/escrow/${escrowId}/release`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: 'COMPLETED' }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to release escrow');
+        const errorText = await response.text();
+        throw new Error(`Failed to release escrow: ${response.status} ${errorText}`);
       }
 
-      // Refresh the escrow list
+      const result = await response.json();
       await fetchEscrows();
-      alert(`Escrow ${escrowId} has been released successfully!`);
+      setReleaseModalOpen(false);
+      setReleaseEscrowTarget(null);
+      alert(`Escrow ${escrowId} release status: ${result.payout_status}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to release escrow');
       console.error('Error releasing escrow:', err);
+    } finally {
+      setReleasingEscrow(false);
     }
   };
 
@@ -519,7 +541,7 @@ export default function EscrowPage() {
                       </button>
                       {account.status === 'PENDING' && (
                         <button 
-                          onClick={() => handleReleaseEscrow(account.escrow_id)}
+                          onClick={() => handleReleaseEscrow(account)}
                           style={{
                           padding: '8px 12px',
                           backgroundColor: '#10b981',
@@ -549,7 +571,7 @@ export default function EscrowPage() {
                       )}
                       {account.status === 'ACTIVE' && (
                         <button 
-                          onClick={() => handleReleaseEscrow(account.escrow_id)}
+                          onClick={() => handleReleaseEscrow(account)}
                           style={{
                             padding: '8px 12px',
                             backgroundColor: '#10b981',
@@ -578,6 +600,17 @@ export default function EscrowPage() {
                         </button>
                       )}
                     </div>
+                    {account.control_number && (
+                      <div style={{ fontSize: '12px', color: '#334155', marginTop: '12px' }}>
+                        <strong>Control #:</strong> {account.control_number}
+                      </div>
+                    )}
+                    {account.payout_status && (
+                      <div style={{ fontSize: '12px', color: '#334155', marginTop: '4px' }}>
+                        <strong>Payout Status:</strong> {account.payout_status}
+                        {account.payout_method ? ` · ${account.payout_method.toUpperCase()}` : ''}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -615,247 +648,18 @@ export default function EscrowPage() {
         />
       )}
 
-      {/* Old Modal - Keep for backwards compatibility if needed */}
-      {false && showContractModal && contractData && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.75)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 2000,
-          backdropFilter: 'blur(4px)'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            width: '95%',
-            maxWidth: '800px',
-            maxHeight: '95vh',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-          }}>
-            {/* Header */}
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              padding: '24px',
-              borderBottom: '1px solid #e5e7eb',
-              backgroundColor: '#f9fafb'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  backgroundColor: 'var(--mc-sidebar-bg)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '24px'
-                }}>
-                  ⚖️
-                </div>
-              <div>
-                  <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#111827', margin: 0 }}>
-                    Escrow Agreement
-                </h2>
-                  <p style={{ fontSize: '13px', color: '#6b7280', margin: '4px 0 0 0' }}>
-                    {contractData.contract_name}
-                </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowContractModal(false)}
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f3f4f6';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <XCircle size={24} color="#6b7280" />
-              </button>
-            </div>
-
-            {/* Document Preview */}
-            <div style={{
-              flex: 1,
-              overflow: 'auto',
-              padding: '40px',
-              backgroundColor: '#ffffff'
-            }}>
-              {contractData.format === 'pdf' ? (
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '24px',
-                  maxWidth: '500px',
-                  margin: '0 auto'
-                }}>
-                  {/* Document Preview */}
-                  <div style={{
-                    width: '100%',
-                    backgroundColor: '#f3f4f6',
-                    borderRadius: '12px',
-                    border: '2px dashed #d1d5db',
-                    padding: '48px 32px',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{
-                      fontSize: '64px',
-                      marginBottom: '16px'
-                    }}>📋</div>
-                    <h3 style={{
-                      fontSize: '22px',
-                      fontWeight: '700',
-                      color: '#111827',
-                      margin: '0 0 8px 0'
-                    }}>
-                      Legal Agreement Ready
-                    </h3>
-                    <p style={{
-                      fontSize: '15px',
-                      color: '#6b7280',
-                      margin: '0 0 24px 0',
-                      lineHeight: '1.6'
-                    }}>
-                      This contract document includes all terms, conditions, and signature sections for both parties to execute.
-                    </p>
-                    
-                    <div style={{
-                      backgroundColor: 'white',
-                      borderRadius: '8px',
-                      padding: '20px',
-                      textAlign: 'left',
-                      border: '1px solid #e5e7eb'
-                    }}>
-                      <div style={{ 
-                        fontSize: '13px', 
-                        fontWeight: '600', 
-                        color: '#6b7280',
-                        marginBottom: '12px',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}>
-                        Document Details
-                      </div>
-                      <div style={{ 
-                        fontSize: '14px', 
-                        color: '#111827',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px'
-                      }}>
-                        <div><strong>Type:</strong> Legal Escrow Agreement</div>
-                        <div><strong>Format:</strong> PDF Document</div>
-                        <div><strong>Status:</strong> Ready for Download & Signature</div>
-                      </div>
-                    </div>
-            </div>
-
-              <button
-                onClick={() => {
-                      const byteCharacters = atob(contractData.code);
-                      const byteNumbers = new Array(byteCharacters.length);
-                      for (let i = 0; i < byteCharacters.length; i++) {
-                        byteNumbers[i] = byteCharacters.charCodeAt(i);
-                      }
-                      const byteArray = new Uint8Array(byteNumbers);
-                      const blob = new Blob([byteArray], { type: 'application/pdf' });
-                      
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = contractData.contract_name;
-                  a.click();
-                  URL.revokeObjectURL(url);
-                      setShowContractModal(false);
-                }}
-                style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '14px 32px',
-                      backgroundColor: 'var(--mc-sidebar-bg)',
-                  color: 'white',
-                  border: 'none',
-                      borderRadius: '12px',
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 12px -2px rgba(59, 130, 246, 0.4)',
-                      transition: 'all 0.2s ease',
-                      width: '100%',
-                      justifyContent: 'center'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.backgroundColor = '#2563eb';
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 8px 16px -4px rgba(59, 130, 246, 0.5)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--mc-sidebar-bg)';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 4px 12px -2px rgba(59, 130, 246, 0.4)';
-                    }}
-                  >
-                    <Eye size={20} />
-                    Download & Sign Contract
-              </button>
-                  
-                  <p style={{
-                    fontSize: '13px',
-                    color: '#9ca3af',
-                    margin: '8px 0 0 0',
-                    textAlign: 'center'
-                  }}>
-                    Download to print, sign, and share with both parties
-                  </p>
-                </div>
-              ) : (
-                <div style={{
-                  backgroundColor: '#1e293b',
-                  borderRadius: '12px',
-                  padding: '24px',
-                  fontFamily: 'Monaco, Menlo, monospace'
-                }}>
-                  <pre style={{
-                    margin: 0,
-                    color: '#e2e8f0',
-                    fontSize: '12px',
-                    lineHeight: '1.8',
-                    whiteSpace: 'pre-wrap',
-                    wordWrap: 'break-word'
-                  }}>
-                    {contractData.code}
-                  </pre>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <ReleaseEscrowModal
+        isOpen={releaseModalOpen}
+        escrow={releaseEscrowTarget}
+        isSubmitting={releasingEscrow}
+        onClose={() => {
+          if (!releasingEscrow) {
+            setReleaseModalOpen(false);
+            setReleaseEscrowTarget(null);
+          }
+        }}
+        onSubmit={handleSubmitRelease}
+      />
 
       {/* Error Display */}
       {error && (

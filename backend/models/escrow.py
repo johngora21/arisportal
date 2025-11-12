@@ -64,6 +64,19 @@ class Escrow(Base):
     completed_at = Column(DateTime)
     cancelled_at = Column(DateTime)
     cancelled_reason = Column(Text)
+    
+    # ClickPesa Payment Control Number
+    control_number = Column(String(100))  # ClickPesa billpay control number for payment
+
+    # Payee payout configuration and release tracking
+    payout_method = Column(String(50))  # 'bank' or 'mno'
+    payout_details = Column(Text)  # JSON payload with bank/MNO metadata
+    payout_status = Column(String(50))  # PENDING, PROCESSING, SUCCESS, FAILED
+    payout_reference = Column(String(100))  # Reference used with provider
+    payout_provider_response = Column(Text)  # Raw provider response payload for audit
+    release_transaction_hash = Column(String(100))  # Blockchain tx hash recorded via web3
+    release_block_number = Column(Integer)  # Blockchain block number when release recorded
+    released_via_web3 = Column(Boolean, default=False)
 
     def to_dict(self):
         """Convert the escrow object to a dictionary"""
@@ -84,7 +97,14 @@ class Escrow(Base):
                 documents_list = json.loads(self.documents)
             except:
                 pass
-        
+
+        payout_details = None
+        if self.payout_details:
+            try:
+                payout_details = json.loads(self.payout_details)
+            except:
+                payout_details = self.payout_details
+
         return {
             "id": self.id,
             "escrow_id": self.escrow_id,
@@ -111,7 +131,16 @@ class Escrow(Base):
             "cancelled_at": self.cancelled_at.isoformat() if self.cancelled_at else None,
             "cancelled_reason": self.cancelled_reason,
             "created_by_role": self.created_by_role,
-            "release_authority": self.release_authority
+            "release_authority": self.release_authority,
+            "control_number": self.control_number,
+            "payout_method": self.payout_method,
+            "payout_details": payout_details,
+            "payout_status": self.payout_status,
+            "payout_reference": self.payout_reference,
+            "payout_provider_response": self.payout_provider_response,
+            "release_transaction_hash": self.release_transaction_hash,
+            "release_block_number": self.release_block_number,
+            "released_via_web3": self.released_via_web3
         }
 
 class EscrowMilestone(Base):
