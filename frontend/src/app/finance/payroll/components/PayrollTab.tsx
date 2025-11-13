@@ -179,7 +179,9 @@ const PayrollTab: React.FC<PayrollTabProps> = ({
     }
   };
   const payrollRecords = useMemo<PayrollRecord[]>(() => {
-    return rawPayrollRecords.map(record => {
+    const dedupedMap = new Map<string, PayrollRecord>();
+
+    rawPayrollRecords.forEach(record => {
       const staff = staffData.find(s => s.id === record.staff_id);
 
       const allowancesDetail = safeJsonParse(staff?.allowances_detail);
@@ -308,7 +310,25 @@ const PayrollTab: React.FC<PayrollTabProps> = ({
       const rawStatus = (record.status || 'pending').toLowerCase();
       const normalizedStatus = rawStatus === 'paid' ? 'paid' : 'pending';
 
-      return {
+      const key = `${record.staff_id ?? staff?.id ?? employeeId}-${payPeriod}`;
+      const existing = dedupedMap.get(key);
+      const existingCreatedAt = existing?.createdAt
+        ? new Date(existing.createdAt)
+        : null;
+      const currentCreatedAt = record.created_at
+        ? new Date(record.created_at)
+        : null;
+
+      if (
+        existing &&
+        existingCreatedAt &&
+        currentCreatedAt &&
+        existingCreatedAt >= currentCreatedAt
+      ) {
+        return;
+      }
+
+      dedupedMap.set(key, {
         id:
           record.id !== undefined && record.id !== null
             ? record.id.toString()
@@ -361,8 +381,10 @@ const PayrollTab: React.FC<PayrollTabProps> = ({
         paidAt: record.paid_at || null,
         processedAt: record.processed_at || null,
         createdAt: record.created_at || null
-      };
+      });
     });
+
+    return Array.from(dedupedMap.values());
   }, [rawPayrollRecords, staffData, monthFilter]);
 
   const filteredPayroll = useMemo(() => {
