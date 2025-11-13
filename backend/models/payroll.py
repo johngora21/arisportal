@@ -310,6 +310,9 @@ class PayrollPayment(Base):
     # ClickPesa Response
     clickpesa_response = Column(JSON, nullable=True)
     
+    # Employee payout details (for automatic payouts after payment)
+    employee_payout_details = Column(JSON, nullable=True)  # Array of employee bank details
+    
     # System Information
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCurrency } from '../../../../contexts/CurrencyContext';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { buildApiUrl } from '../../../../config/api';
 import { 
   ArrowUpRight,
   ArrowDownLeft,
@@ -11,88 +13,200 @@ import {
   Wallet
 } from 'lucide-react';
 
+interface Transfer {
+  id: number;
+  transfer_type: string;
+  status: string;
+  amount: number;
+  currency: string;
+  description?: string;
+  from_card_id?: number;
+  to_card_id?: number;
+  recipient_name?: string;
+  recipient_account?: string;
+  recipient_bank?: string;
+  recipient_mno?: string;
+  transfer_method?: string;
+  created_at: string;
+}
+
 export default function HistoryPage() {
   const { formatCurrency } = useCurrency();
+  const { token, isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [dateRange, setDateRange] = useState('30');
+  const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [cards, setCards] = useState<Array<{id: number; cardholder_name: string | null; last_four: string}>>([]);
 
-  // Mock transaction data
-  const transactions = [
-    {
-      id: '1',
-      type: 'transfer',
-      status: 'completed',
-      description: 'Monthly savings transfer',
-      from: 'Main Wallet',
-      to: 'Savings Wallet',
-      amount: -500000,
-      date: '2024-01-15T13:30:00Z',
-      icon: ArrowDownLeft,
-      iconColor: '#059669'
-    },
-    {
-      id: '2',
-      type: 'topup',
-      status: 'completed',
-      description: 'Business capital top-up',
-      from: 'Bank Transfer',
-      to: 'Business Wallet',
-      amount: 2000000,
-      date: '2024-01-14T17:20:00Z',
-      icon: ArrowUpRight,
-      iconColor: '#059669'
-    },
-    {
-      id: '3',
-      type: 'transfer',
-      status: 'pending',
-      description: 'Payment for services',
-      from: 'Business Wallet',
-      to: 'John Doe',
-      amount: -750000,
-      date: '2024-01-14T12:15:00Z',
-      icon: ArrowDownLeft,
-      iconColor: '#f59e0b'
-    },
-    {
-      id: '4',
-      type: 'cashout',
-      status: 'completed',
-      description: 'Cash withdrawal',
-      from: 'Main Wallet',
-      to: 'Bank Account',
-      amount: -300000,
-      date: '2024-01-13T19:45:00Z',
-      icon: ArrowDownLeft,
-      iconColor: '#059669'
-    },
-    {
-      id: '5',
-      type: 'topup',
-      status: 'completed',
-      description: 'Mobile money deposit',
-      from: 'Mobile Money',
-      to: 'Savings Wallet',
-      amount: 150000,
-      date: '2024-01-12T14:30:00Z',
-      icon: ArrowUpRight,
-      iconColor: '#059669'
-    },
-    {
-      id: '6',
-      type: 'transfer',
-      status: 'completed',
-      description: 'Emergency fund transfer',
-      from: 'Savings Wallet',
-      to: 'Main Wallet',
-      amount: -200000,
-      date: '2024-01-11T11:20:00Z',
-      icon: ArrowDownLeft,
-      iconColor: '#059669'
+  // Fetch cards for display names
+  useEffect(() => {
+    const fetchCards = async () => {
+      if (!token) return;
+      
+      try {
+        const response = await fetch(buildApiUrl('/cards'), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setCards(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching cards:', error);
+      }
+    };
+
+    if (token) {
+      fetchCards();
     }
-  ];
+  }, [token]);
+
+  // Fetch transfers from API
+  useEffect(() => {
+    const fetchTransfers = async () => {
+      if (!token || !isAuthenticated) {
+        setError('Please login to view transaction history');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const apiUrl = buildApiUrl('/transfers');
+        console.log('Fetching transfers from:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          // Token might be invalid or expired - try to get detailed error
+          const errorText = await response.text().catch(() => '');
+          let errorMessage = 'Please login to view transaction history';
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.detail || errorMessage;
+          } catch {
+            if (errorText) errorMessage = errorText;
+          }
+          setError(errorMessage);
+          setLoading(false);
+          return;
+        }
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorMessage = `Failed to fetch transfers (${response.status})`;
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.detail || errorMessage;
+          } catch {
+            errorMessage = errorText || errorMessage;
+          }
+          throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        setTransfers(data || []);
+      } catch (err: any) {
+        console.error('Error fetching transfers:', err);
+        setError(err.message || 'Failed to load transaction history');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransfers();
+  }, [token, isAuthenticated]);
+
+  // Convert transfers to transaction format for display
+  const getCardName = (cardId: number | null | undefined): string => {
+    if (!cardId) return 'Unknown';
+    const card = cards.find(c => c.id === cardId);
+    if (card) {
+      return card.cardholder_name || `Card ****${card.last_four}`;
+    }
+    return 'Unknown Card';
+  };
+
+  const getTransactionIcon = (transfer: Transfer) => {
+    if (transfer.transfer_type === 'card_to_card') {
+      return { icon: CreditCard, color: '#3b82f6' };
+    } else if (transfer.transfer_method === 'bank') {
+      return { icon: Building, color: '#059669' };
+    } else if (transfer.transfer_method === 'mno') {
+      return { icon: Smartphone, color: '#10b981' };
+    }
+    return { icon: ArrowDownLeft, color: '#6b7280' };
+  };
+
+  const getTransactionDescription = (transfer: Transfer): string => {
+    if (transfer.description) {
+      return transfer.description;
+    }
+    
+    if (transfer.transfer_type === 'card_to_card') {
+      return 'Card to card transfer';
+    } else if (transfer.transfer_type === 'local_peer') {
+      return transfer.recipient_name ? `Payment to ${transfer.recipient_name}` : 'Peer transfer';
+    } else if (transfer.transfer_type === 'local_bulk') {
+      return 'Bulk transfer';
+    }
+    return 'Transfer';
+  };
+
+  const getTransactionFromTo = (transfer: Transfer): { from: string; to: string } => {
+    if (transfer.transfer_type === 'card_to_card') {
+      return {
+        from: getCardName(transfer.from_card_id),
+        to: getCardName(transfer.to_card_id)
+      };
+    } else {
+      const from = transfer.from_card_id ? getCardName(transfer.from_card_id) : 
+                   (transfer.transfer_mode === 'clickpesa_balance' ? 'ClickPesa Balance' : 'External Source');
+      const to = transfer.recipient_name || 
+                 (transfer.transfer_method === 'bank' ? transfer.recipient_bank || 'Bank Account' : 
+                  transfer.transfer_method === 'mno' ? transfer.recipient_mno || 'Mobile Money' : 
+                  transfer.recipient_account || 'Recipient');
+      return { from, to };
+    }
+  };
+
+  const transactions = transfers.map(transfer => {
+    const { from, to } = getTransactionFromTo(transfer);
+    const { icon, color } = getTransactionIcon(transfer);
+    // Amount is negative for outgoing, positive for incoming
+    // For card-to-card: from_card is negative, to_card is positive
+    // For peer/bulk: always negative (outgoing)
+    const amount = transfer.transfer_type === 'card_to_card' ? -transfer.amount : -transfer.amount;
+    
+    return {
+      id: transfer.id.toString(),
+      type: transfer.transfer_type,
+      status: transfer.status,
+      description: getTransactionDescription(transfer),
+      from,
+      to,
+      amount,
+      date: transfer.created_at,
+      icon,
+      iconColor: color
+    };
+  });
 
 
   const formatDate = (dateString: string) => {
@@ -125,11 +239,47 @@ export default function HistoryPage() {
                          transaction.from.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          transaction.to.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesType = filterType === 'all' || transaction.type === filterType;
+    // Map transfer types to filter types
+    let transactionType = transaction.type;
+    if (transaction.type === 'card_to_card') {
+      transactionType = 'transfer';
+    } else if (transaction.type === 'local_peer' || transaction.type === 'local_bulk') {
+      transactionType = 'transfer';
+    }
+    
+    const matchesType = filterType === 'all' || transactionType === filterType;
     const matchesStatus = filterStatus === 'all' || transaction.status === filterStatus;
+    
+    // Date range filter
+    if (dateRange !== 'all') {
+      const transactionDate = new Date(transaction.date);
+      const now = new Date();
+      const daysAgo = parseInt(dateRange);
+      const cutoffDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+      if (transactionDate < cutoffDate) {
+        return false;
+      }
+    }
     
     return matchesSearch && matchesType && matchesStatus;
   });
+
+  if (loading) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+        <Wallet size={48} color="#6b7280" style={{ marginBottom: '16px' }} />
+        <p>Loading transaction history...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center', color: '#ef4444' }}>
+        <p style={{ margin: 0 }}>{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -156,6 +306,7 @@ export default function HistoryPage() {
             <option value="30">Last 30 days</option>
             <option value="90">Last 90 days</option>
             <option value="365">Last year</option>
+            <option value="all">All time</option>
           </select>
         </div>
       </div>

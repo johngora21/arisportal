@@ -1,4 +1,4 @@
-import { getApiUrl } from '../../../../config/api';
+import { getApiUrl, buildApiUrl } from '../../../../config/api';
 
 export interface Branch {
   id: number;
@@ -198,14 +198,39 @@ export interface DetailedPayrollRecord {
   created_at: string;
 }
 
+// Helper function to get auth token
+const getAuthToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('auth_token');
+  }
+  return null;
+};
+
+// Helper function to get auth headers
+const getAuthHeaders = (): HeadersInit => {
+  const token = getAuthToken();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 // Service classes for API calls
 export class BranchService {
   static async fetchBranches(search?: string): Promise<Branch[]> {
     try {
-      const url = new URL(getApiUrl('PAYROLL.BRANCHES'));
-      if (search) url.searchParams.append('search', search);
+      let url = getApiUrl('PAYROLL.BRANCHES');
+      if (!url || typeof url !== 'string') {
+        throw new Error('Invalid API URL returned from getApiUrl');
+      }
+      if (search) url += `?search=${encodeURIComponent(search)}`;
       
-      const response = await fetch(url.toString());
+      const response = await fetch(url, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch branches');
       
       return await response.json();
@@ -219,7 +244,7 @@ export class BranchService {
     try {
       const response = await fetch(getApiUrl('PAYROLL.BRANCHES'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(branchData)
       });
       
@@ -235,11 +260,18 @@ export class BranchService {
 export class DepartmentService {
   static async fetchDepartments(branchId?: number, search?: string): Promise<Department[]> {
     try {
-      const url = new URL(getApiUrl('PAYROLL.DEPARTMENTS'));
-      if (branchId) url.searchParams.append('branch_id', branchId.toString());
-      if (search) url.searchParams.append('search', search);
+      let url = getApiUrl('PAYROLL.DEPARTMENTS');
+      if (!url || typeof url !== 'string') {
+        throw new Error('Invalid API URL returned from getApiUrl');
+      }
+      const params = new URLSearchParams();
+      if (branchId) params.append('branch_id', branchId.toString());
+      if (search) params.append('search', search);
+      if (params.toString()) url += `?${params.toString()}`;
       
-      const response = await fetch(url.toString());
+      const response = await fetch(url, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch departments');
       
       return await response.json();
@@ -253,7 +285,7 @@ export class DepartmentService {
     try {
       const response = await fetch(getApiUrl('PAYROLL.DEPARTMENTS'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(departmentData)
       });
       
@@ -269,11 +301,18 @@ export class DepartmentService {
 export class RoleService {
   static async fetchRoles(departmentId?: number, search?: string): Promise<Role[]> {
     try {
-      const url = new URL(getApiUrl('PAYROLL.ROLES'));
-      if (departmentId) url.searchParams.append('department_id', departmentId.toString());
-      if (search) url.searchParams.append('search', search);
+      let url = getApiUrl('PAYROLL.ROLES');
+      if (!url || typeof url !== 'string') {
+        throw new Error('Invalid API URL returned from getApiUrl');
+      }
+      const params = new URLSearchParams();
+      if (departmentId) params.append('department_id', departmentId.toString());
+      if (search) params.append('search', search);
+      if (params.toString()) url += `?${params.toString()}`;
       
-      const response = await fetch(url.toString());
+      const response = await fetch(url, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch roles');
       
       return await response.json();
@@ -287,7 +326,7 @@ export class RoleService {
     try {
       const response = await fetch(getApiUrl('PAYROLL.ROLES'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(roleData)
       });
       
@@ -310,7 +349,7 @@ export class RoleService {
       
       const response = await fetch(`${getApiUrl('PAYROLL.ROLES')}/${roleId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(roleData),
         signal: controller.signal
       });
@@ -341,7 +380,8 @@ export class RoleService {
   static async deleteRole(roleId: string): Promise<void> {
     try {
       const response = await fetch(`${getApiUrl('PAYROLL.ROLES')}/${roleId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders()
       });
       
       if (!response.ok) throw new Error('Failed to delete role');
@@ -360,13 +400,20 @@ export class StaffService {
     search?: string
   ): Promise<Staff[]> {
     try {
-      const url = new URL(getApiUrl('PAYROLL.STAFF'));
-      if (branchId) url.searchParams.append('branch_id', branchId.toString());
-      if (departmentId) url.searchParams.append('department_id', departmentId.toString());
-      if (employmentStatus) url.searchParams.append('employment_status', employmentStatus);
-      if (search) url.searchParams.append('search', search);
+      let url = getApiUrl('PAYROLL.STAFF');
+      if (!url || typeof url !== 'string') {
+        throw new Error('Invalid API URL returned from getApiUrl');
+      }
+      const params = new URLSearchParams();
+      if (branchId) params.append('branch_id', branchId.toString());
+      if (departmentId) params.append('department_id', departmentId.toString());
+      if (employmentStatus) params.append('employment_status', employmentStatus);
+      if (search) params.append('search', search);
+      if (params.toString()) url += `?${params.toString()}`;
       
-      const response = await fetch(url.toString());
+      const response = await fetch(url, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch staff');
       
       return await response.json();
@@ -380,7 +427,7 @@ export class StaffService {
     try {
       const response = await fetch(getApiUrl('PAYROLL.STAFF'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(staffData)
       });
       
@@ -397,7 +444,9 @@ export class StaffService {
 
   static async getStaffMember(staffId: number): Promise<Staff> {
     try {
-      const response = await fetch(`${getApiUrl('PAYROLL.STAFF')}/${staffId}`);
+      const response = await fetch(`${getApiUrl('PAYROLL.STAFF')}/${staffId}`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch staff member');
       
       return await response.json();
@@ -411,7 +460,7 @@ export class StaffService {
     try {
       const response = await fetch(`${getApiUrl('PAYROLL.STAFF')}/${staffId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(staffData)
       });
       
@@ -426,7 +475,8 @@ export class StaffService {
   static async deleteStaff(staffId: string): Promise<void> {
     try {
       const response = await fetch(`${getApiUrl('PAYROLL.STAFF')}/${staffId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders()
       });
       
       if (!response.ok) throw new Error('Failed to delete staff');
@@ -442,7 +492,7 @@ export class PayrollService {
     try {
       const response = await fetch(getApiUrl('PAYROLL.PROCESS'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(request)
       });
       
@@ -459,11 +509,15 @@ export class PayrollService {
     staffId?: number
   ): Promise<PayrollRecord[]> {
     try {
-      const url = new URL(getApiUrl('PAYROLL.RECORDS'));
-      if (payrollPeriod) url.searchParams.append('payroll_period', payrollPeriod);
-      if (staffId) url.searchParams.append('staff_id', staffId.toString());
+      let url = getApiUrl('PAYROLL.RECORDS');
+      const params = new URLSearchParams();
+      if (payrollPeriod) params.append('payroll_period', payrollPeriod);
+      if (staffId) params.append('staff_id', staffId.toString());
+      if (params.toString()) url += `?${params.toString()}`;
       
-      const response = await fetch(url.toString());
+      const response = await fetch(url, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch payroll records');
       
       return await response.json();
@@ -478,11 +532,15 @@ export class PayrollService {
     branchId?: number
   ): Promise<PayrollSummary> {
     try {
-      const url = new URL(getApiUrl('PAYROLL.SUMMARY'));
-      if (payrollPeriod) url.searchParams.append('payroll_period', payrollPeriod);
-      if (branchId) url.searchParams.append('branch_id', branchId.toString());
+      let url = getApiUrl('PAYROLL.SUMMARY');
+      const params = new URLSearchParams();
+      if (payrollPeriod) params.append('payroll_period', payrollPeriod);
+      if (branchId) params.append('branch_id', branchId.toString());
+      if (params.toString()) url += `?${params.toString()}`;
       
-      const response = await fetch(url.toString());
+      const response = await fetch(url, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch payroll summary');
       
       return await response.json();
@@ -506,11 +564,15 @@ export class PayrollService {
     branchId?: number
   ): Promise<DetailedPayrollRecord[]> {
     try {
-      const url = new URL(getApiUrl('PAYROLL.RECORDS') + '/detailed');
-      if (payrollPeriod) url.searchParams.append('payroll_period', payrollPeriod);
-      if (branchId) url.searchParams.append('branch_id', branchId.toString());
+      let url = getApiUrl('PAYROLL.RECORDS') + '/detailed';
+      const params = new URLSearchParams();
+      if (payrollPeriod) params.append('payroll_period', payrollPeriod);
+      if (branchId) params.append('branch_id', branchId.toString());
+      if (params.toString()) url += `?${params.toString()}`;
       
-      const response = await fetch(url.toString());
+      const response = await fetch(url, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch detailed payroll records');
       
       return await response.json();
@@ -525,11 +587,13 @@ export class PayrollService {
     branchId?: number
   ): Promise<any> {
     try {
-      const url = new URL(getApiUrl('PAYROLL.PROCESS') + '/mark-paid');
-      url.searchParams.append('payroll_period', payrollPeriod);
-      if (branchId) url.searchParams.append('branch_id', branchId.toString());
+      let url = getApiUrl('PAYROLL.PROCESS') + '/mark-paid';
+      const params = new URLSearchParams();
+      params.append('payroll_period', payrollPeriod);
+      if (branchId) params.append('branch_id', branchId.toString());
+      url += `?${params.toString()}`;
       
-      const response = await fetch(url.toString(), {
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -547,11 +611,13 @@ export class PayrollService {
     branchId?: number
   ): Promise<any> {
     try {
-      const url = new URL(getApiUrl('PAYROLL.PROCESS') + '/delete-period');
-      url.searchParams.append('payroll_period', payrollPeriod);
-      if (branchId) url.searchParams.append('branch_id', branchId.toString());
+      let url = getApiUrl('PAYROLL.PROCESS') + '/delete-period';
+      const params = new URLSearchParams();
+      params.append('payroll_period', payrollPeriod);
+      if (branchId) params.append('branch_id', branchId.toString());
+      url += `?${params.toString()}`;
       
-      const response = await fetch(url.toString(), {
+      const response = await fetch(url, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -566,17 +632,33 @@ export class PayrollService {
 
   static async generatePayrollPayment(
     payrollPeriod: string,
+    totalNetSalary: number,
+    totalEmployees: number,
     branchId?: number
   ): Promise<any> {
     try {
-      const url = new URL(getApiUrl('PAYROLL.PROCESS') + '/generate-payment');
-      url.searchParams.append('payroll_period', payrollPeriod);
-      if (branchId) url.searchParams.append('branch_id', branchId.toString());
+      let url = getApiUrl('PAYROLL.GENERATE_PAYMENT');
+      const params = new URLSearchParams();
+      params.append('payroll_period', payrollPeriod);
+      params.append('total_net_salary', totalNetSalary.toString());
+      params.append('total_employees', totalEmployees.toString());
+      if (branchId) params.append('branch_id', branchId.toString());
+      url += `?${params.toString()}`;
       
-      const response = await fetch(url.toString(), {
+      const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: getAuthHeaders()
       });
+      
+      if (response.status === 401 || response.status === 403) {
+        // Token expired or invalid - redirect to login
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user_data');
+          window.location.href = '/authentication/login';
+          throw new Error('Session expired. Please login again.');
+        }
+      }
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -593,12 +675,14 @@ export class PayrollService {
     payrollRecordId: number
   ): Promise<any> {
     try {
-      const url = new URL(getApiUrl('PAYROLL.PROCESS') + '/generate-individual-payment');
-      url.searchParams.append('payroll_record_id', payrollRecordId.toString());
+      let url = getApiUrl('PAYROLL.GENERATE_INDIVIDUAL_PAYMENT');
+      const params = new URLSearchParams();
+      params.append('payroll_record_id', payrollRecordId.toString());
+      url += `?${params.toString()}`;
       
-      const response = await fetch(url.toString(), {
+      const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: getAuthHeaders()
       });
       
       if (!response.ok) {

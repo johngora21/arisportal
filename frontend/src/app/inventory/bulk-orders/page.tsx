@@ -1230,8 +1230,8 @@ export default function BulkOrdersPage() {
                           // Don't auto-join - wait for payment confirmation via webhook
                         } else {
                           setPaymentError('Failed to initiate card payment. Please try again.');
-                          return;
-                        }
+                        return;
+                      }
                       } else if (paymentMethod === 'control') {
                         // Control number payment
                         const generatedControlNumber = paymentResult.controlNumber;
@@ -1240,15 +1240,15 @@ export default function BulkOrdersPage() {
                           setPaymentSuccess(`Control number generated: ${generatedControlNumber}. Use it to complete payment.`);
                         } else {
                           setPaymentError('Failed to generate control number. Please try again.');
-                          return;
-                        }
+                      return;
+                    }
                         // For control number, don't auto-join - wait for payment confirmation
                       }
                       
                       // Close modal after a delay for MNO, keep open for control number
                       if (paymentMethod === 'mno') {
                         setTimeout(() => {
-                          setShowPaymentModal(false);
+                    setShowPaymentModal(false);
                         }, 2000);
                       }
                     } catch (error: any) {

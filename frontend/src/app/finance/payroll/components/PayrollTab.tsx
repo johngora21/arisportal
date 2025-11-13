@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Search,
   Edit,
@@ -24,10 +24,13 @@ import {
   CheckCircle,
   Banknote
 } from 'lucide-react';
+import { useCurrency } from '../../../../contexts/CurrencyContext';
 import { PayrollService, DetailedPayrollRecord, StaffService, Staff } from '../services/payrollService';
 
 interface PayrollRecord {
   id: string;
+  payrollRecordId: number | null;
+  staffId: number | null;
   employeeName: string;
   employeeId: string;
   department: string;
@@ -70,6 +73,9 @@ interface PayrollRecord {
   processedBy: string;
   processedDate: string;
   notes?: string;
+  paidAt: string | null;
+  processedAt: string | null;
+  createdAt: string | null;
 }
 
 interface PayrollTabProps {
@@ -82,21 +88,10 @@ interface PayrollTabProps {
   branches: Array<{ id: string; name: string }>;
 }
 
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  }).format(amount);
-};
-
 const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'paid': return { backgroundColor: '#10b981', color: '#ffffff' };
-    case 'pending': return { backgroundColor: '#fef3c7', color: '#92400e' };
-    case 'failed': return { backgroundColor: '#fecaca', color: '#991b1b' };
-    default: return { backgroundColor: '#f3f4f6', color: '#374151' };
-  }
+  return status === 'paid'
+    ? { backgroundColor: '#10b981', color: '#ffffff' }
+    : { backgroundColor: '#fef3c7', color: '#92400e' };
 };
 
 const PayrollTab: React.FC<PayrollTabProps> = ({ 
@@ -108,12 +103,16 @@ const PayrollTab: React.FC<PayrollTabProps> = ({
   setMonthFilter,
   branches 
 }) => {
+  const { formatCurrency } = useCurrency();
   const [showPayrollModal, setShowPayrollModal] = useState(false);
   const [selectedPayrollRecord, setSelectedPayrollRecord] = useState<PayrollRecord | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPaymentRecord, setSelectedPaymentRecord] = useState<PayrollRecord | null>(null);
   const [staffData, setStaffData] = useState<Staff[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [rawPayrollRecords, setRawPayrollRecords] = useState<DetailedPayrollRecord[]>([]);
+  const [isLoadingStaff, setIsLoadingStaff] = useState(true);
+  const [isLoadingRecords, setIsLoadingRecords] = useState(true);
+  const isLoading = isLoadingStaff || isLoadingRecords;
   const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
   const [controlNumber, setControlNumber] = useState('');
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
@@ -122,7 +121,7 @@ const PayrollTab: React.FC<PayrollTabProps> = ({
   // Fetch staff data on component mount
   useEffect(() => {
     const fetchStaffData = async () => {
-      setLoading(true);
+      setIsLoadingStaff(true);
       try {
         const staff = await StaffService.fetchStaff();
         setStaffData(staff);
@@ -130,12 +129,45 @@ const PayrollTab: React.FC<PayrollTabProps> = ({
         console.error('Error fetching staff data:', error);
         setStaffData([]);
       } finally {
-        setLoading(false);
+        setIsLoadingStaff(false);
       }
     };
 
     fetchStaffData();
   }, []);
+
+  const loadPayrollRecords = useCallback(async () => {
+    setIsLoadingRecords(true);
+    try {
+      const selectedBranch =
+        branchFilter !== 'all'
+          ? branches.find(
+              branch =>
+                branch.name === branchFilter || branch.id === branchFilter
+            )
+          : undefined;
+
+      const parsedBranchId =
+        selectedBranch && !Number.isNaN(Number(selectedBranch.id))
+          ? Number(selectedBranch.id)
+          : undefined;
+
+      const detailedRecords = await PayrollService.fetchDetailedPayrollRecords(
+        monthFilter !== 'all' ? monthFilter : undefined,
+        parsedBranchId
+      );
+      setRawPayrollRecords(detailedRecords);
+    } catch (error) {
+      console.error('Error fetching detailed payroll records:', error);
+      setRawPayrollRecords([]);
+    } finally {
+      setIsLoadingRecords(false);
+    }
+  }, [branchFilter, branches, monthFilter]);
+
+  useEffect(() => {
+    loadPayrollRecords();
+  }, [loadPayrollRecords]);
 
   // Helper function to safely parse JSON
   const safeJsonParse = (jsonString: string, defaultValue: any = []) => {
@@ -146,170 +178,218 @@ const PayrollTab: React.FC<PayrollTabProps> = ({
       return defaultValue;
     }
   };
+  const payrollRecords = useMemo<PayrollRecord[]>(() => {
+    return rawPayrollRecords.map(record => {
+      const staff = staffData.find(s => s.id === record.staff_id);
 
+      const allowancesDetail = safeJsonParse(staff?.allowances_detail);
+      const allowanceBreakdown = Array.isArray(allowancesDetail)
+        ? allowancesDetail
+            .map((item: any) => {
+              if (!item) return null;
+              const amount = item.amount ? Number(item.amount) : 0;
+              if (!Number.isFinite(amount) || amount === 0) return null;
+              return {
+                type: item.name || item.type || 'Allowance',
+                amount,
+                description: item.description || item.notes || 'Monthly allowance'
+              };
+            })
+            .filter(Boolean) as Array<{ type: string; amount: number; description: string }>
+        : [];
 
-  // Filter staff data first, then convert to payroll records
-  const filteredStaff = staffData.filter(staff => {
-    const fullName = `${staff.first_name} ${staff.last_name}`.toLowerCase();
-    const matchesSearch = fullName.includes(searchQuery.toLowerCase()) ||
-                         (staff.employee_id && staff.employee_id.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                         (staff.department_name && staff.department_name.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesBranch = branchFilter === 'all' || (staff.branch_name && staff.branch_name === branchFilter);
-    
-    return matchesSearch && matchesBranch;
-  });
+      const socialSecurityData = safeJsonParse(staff?.social_security);
+      let socialSecurityTotal = 0;
+      const socialSecurityBreakdown = Array.isArray(socialSecurityData)
+        ? socialSecurityData
+            .map((item: any) => {
+              if (!item) return null;
+              let amount = 0;
+              if (item.percentage && staff?.basic_salary) {
+                amount = (staff.basic_salary * Number(item.percentage)) / 100;
+              } else if (item.amount) {
+                amount = Number(item.amount);
+              }
+              if (!Number.isFinite(amount) || amount === 0) return null;
+              socialSecurityTotal += amount;
+              return {
+                type: item.name || item.type || 'Social Security',
+                amount,
+                description: item.percentage ? `${item.percentage}% of basic salary` : 'Monthly amount'
+              };
+            })
+            .filter(Boolean) as Array<{ type: string; amount: number; description: string }>
+        : [];
 
-  const filteredPayroll = filteredStaff.map(staff => {
-    // Calculate deductions exactly like in staff details page
-    let totalDeductions = 0;
+      const insuranceData = safeJsonParse(staff?.insurance);
+      let insuranceTotal = 0;
+      const insuranceBreakdown = Array.isArray(insuranceData)
+        ? insuranceData
+            .map((item: any) => {
+              if (!item) return null;
+              let amount = 0;
+              if (item.annualAmount) {
+                amount = Number(item.annualAmount) / 12;
+              } else if (item.amount) {
+                amount = Number(item.amount);
+              }
+              if (!Number.isFinite(amount) || amount === 0) return null;
+              insuranceTotal += amount;
+              return {
+                type: item.name || item.type || 'Insurance',
+                amount,
+                description: item.annualAmount ? 'Annual amount divided by 12' : 'Monthly amount'
+              };
+            })
+            .filter(Boolean) as Array<{ type: string; amount: number; description: string }>
+        : [];
 
-    // Social Security deductions (percentage-based on basic salary)
-    const socialSecurity = safeJsonParse(staff.social_security);
-    if (Array.isArray(socialSecurity)) {
-      socialSecurity.forEach((item: any) => {
-        if (item.percentage && staff.basic_salary) {
-          const deduction = (staff.basic_salary * parseFloat(item.percentage)) / 100;
-          totalDeductions += deduction;
-        } else if (item.amount) {
-          totalDeductions += parseFloat(item.amount);
-        }
-      });
-    }
+      const loansData = safeJsonParse(staff?.loans);
+      let loansTotal = 0;
+      const loansBreakdown = Array.isArray(loansData)
+        ? loansData
+            .map((item: any) => {
+              if (!item) return null;
+              const amount = item.monthly_deduction
+                ? Number(item.monthly_deduction)
+                : item.amount
+                ? Number(item.amount)
+                : 0;
+              if (!Number.isFinite(amount) || amount === 0) return null;
+              loansTotal += amount;
+              return {
+                type: item.name || item.type || 'Loan',
+                amount,
+                description: item.description || 'Loan deduction'
+              };
+            })
+            .filter(Boolean) as Array<{ type: string; amount: number; description: string }>
+        : [];
 
-    // Insurance deductions (annual amounts converted to monthly)
-    const insuranceData = safeJsonParse(staff.insurance);
-    if (Array.isArray(insuranceData)) {
-      insuranceData.forEach((item: any) => {
-        if (item.annualAmount) {
-          const deduction = parseFloat(item.annualAmount) / 12;
-          totalDeductions += deduction;
-        } else if (item.amount) {
-          const deduction = parseFloat(item.amount);
-          totalDeductions += deduction;
-        }
-      });
-    }
+      const payeTax = Number(record.paye_tax) || 0;
+      const payeBreakdown =
+        payeTax > 0
+          ? [
+              {
+                type: 'PAYE Tax',
+                amount: payeTax,
+                description: 'Progressive tax on gross taxable income'
+              }
+            ]
+          : [];
 
-    // Loan deductions (monthly amounts)
-    const loansData = safeJsonParse(staff.loans);
-    if (Array.isArray(loansData)) {
-      loansData.forEach((item: any) => {
-        if (item.amount) {
-          const deduction = parseFloat(item.amount);
-          totalDeductions += deduction;
-        }
-      });
-    }
+      const deductionBreakdown = [
+        ...socialSecurityBreakdown,
+        ...insuranceBreakdown,
+        ...loansBreakdown,
+        ...payeBreakdown
+      ];
 
-    // PAYE Tax calculation (if eligible) - calculated on gross taxable income (basic salary + allowances)
-    let payeTax = 0;
-    if (staff.paye_eligible && staff.basic_salary) {
-      const basicSalary = staff.basic_salary;
-      let allowancesTotal = 0;
+      const totalDeductions =
+        record.total_deductions ??
+        socialSecurityTotal + insuranceTotal + loansTotal + payeTax;
 
-      // Calculate total allowances from actual data
-      const allowancesDetail = safeJsonParse(staff.allowances_detail);
-      if (Array.isArray(allowancesDetail)) {
-        allowancesDetail.forEach((item: any) => {
-          if (item.amount) allowancesTotal += parseFloat(item.amount);
-        });
-      }
+      const netSalary =
+        record.net_salary ??
+        (record.basic_salary ?? 0) + (record.allowances ?? 0) - totalDeductions;
 
-      const grossTaxableIncome = basicSalary + allowancesTotal;
+      const employeeName =
+        record.name ||
+        (staff ? `${staff.first_name} ${staff.last_name}` : 'Unknown Employee');
 
-      // Tanzania monthly tax brackets - using gross_taxable_income
-      if (grossTaxableIncome <= 270000) {
-        payeTax = 0;
-      } else if (grossTaxableIncome <= 520000) {
-        payeTax = (grossTaxableIncome - 270000) * 0.08;
-      } else if (grossTaxableIncome <= 760000) {
-        payeTax = 20000 + (grossTaxableIncome - 520000) * 0.20;
-      } else if (grossTaxableIncome <= 1000000) {
-        payeTax = 68000 + (grossTaxableIncome - 760000) * 0.25;
-      } else {
-        payeTax = 128000 + (grossTaxableIncome - 1000000) * 0.30;
-      }
+      const employeeId =
+        record.employee_id || staff?.employee_id || staff?.employee_number || '';
 
-      totalDeductions += payeTax;
-    }
+      const branchName = record.branch_name || staff?.branch_name || 'Unknown';
+      const departmentName =
+        record.department_name || staff?.department_name || 'Unknown';
 
-    // Calculate net salary exactly like in staff details page
-    let netSalary = staff.basic_salary || 0;
+      const payPeriod = record.payroll_period || monthFilter;
+      const rawStatus = (record.status || 'pending').toLowerCase();
+      const normalizedStatus = rawStatus === 'paid' ? 'paid' : 'pending';
 
-    // Add allowances (allowances are NEVER deducted)
-    const allowancesDetail = safeJsonParse(staff.allowances_detail);
-    if (Array.isArray(allowancesDetail)) {
-      allowancesDetail.forEach((item: any) => {
-        if (item.amount) netSalary += parseFloat(item.amount);
-      });
-    }
+      return {
+        id:
+          record.id !== undefined && record.id !== null
+            ? record.id.toString()
+            : `${record.staff_id ?? 'staff'}-${payPeriod}`,
+        payrollRecordId: record.id ?? null,
+        staffId: record.staff_id ?? null,
+        employeeName,
+        employeeId,
+        department: departmentName,
+        branch: branchName,
+        basicSalary: record.basic_salary ?? staff?.basic_salary ?? 0,
+        allowances: record.allowances ?? staff?.allowances ?? 0,
+        deductions: totalDeductions,
+        netSalary,
+        payPeriod,
+        payDate:
+          record.pay_date ||
+          record.processed_at ||
+          record.created_at ||
+          new Date().toISOString(),
+        status: normalizedStatus,
+        email: record.email || staff?.email || '',
+        phone: staff?.phone || '',
+        position: staff?.role_name || staff?.employment_type || 'Not set',
+        hireDate: staff?.hire_date || record.created_at || new Date().toISOString(),
+        bankDetails: {
+          bankName: staff?.bank_name || 'Not provided',
+          accountNumber: staff?.bank_account || 'Not provided',
+          accountName:
+            staff?.account_name ||
+            (staff ? `${staff.first_name} ${staff.last_name}` : 'Not provided')
+        },
+        allowanceBreakdown,
+        deductionBreakdown,
+        taxDetails: {
+          federalTax: payeTax,
+          stateTax: 0,
+          socialSecurity: socialSecurityTotal,
+          medicare: 0,
+          totalTaxes: payeTax + socialSecurityTotal
+        },
+        paymentMethod:
+          normalizedStatus === 'paid'
+            ? 'BillPay Control Number'
+            : 'Pending',
+        processedBy: 'System',
+        processedDate:
+          record.processed_at || record.created_at || new Date().toISOString(),
+        notes: record.notes || '',
+        paidAt: record.paid_at || null,
+        processedAt: record.processed_at || null,
+        createdAt: record.created_at || null
+      };
+    });
+  }, [rawPayrollRecords, staffData, monthFilter]);
 
-    // Subtract all deductions (PAYE, Social Security, Insurance, Loans)
-    netSalary -= totalDeductions;
+  const filteredPayroll = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const branchNameFilter =
+      branchFilter === 'all' ? null : branchFilter.trim().toLowerCase();
+    const periodFilter = monthFilter === 'all' ? null : monthFilter;
 
-    return {
-      id: staff.id.toString(),
-      employeeName: `${staff.first_name} ${staff.last_name}`,
-      employeeId: staff.employee_id || staff.employee_number || '',
-      department: staff.department_name || 'Unknown',
-      branch: staff.branch_name || 'Unknown',
-      basicSalary: staff.basic_salary || 0,
-      allowances: staff.allowances || 0,
-      deductions: totalDeductions,
-      netSalary: netSalary,
-      payPeriod: '2024-12', // Default to current month
-      payDate: new Date().toISOString().split('T')[0],
-      status: 'paid',
-      email: staff.email || '',
-      phone: staff.phone || '',
-      position: staff.role_name || '',
-      hireDate: staff.hire_date || '',
-      bankDetails: {
-        bankName: staff.bank_name || '',
-        accountNumber: staff.bank_account || '',
-        accountName: staff.account_name || 'N/A'
-      },
-      allowanceBreakdown: (safeJsonParse(staff.allowances_detail) || []).map((item: any) => ({
-        type: item.name || 'Allowance',
-        amount: item.amount || 0,
-        description: 'Monthly allowance'
-      })),
-      deductionBreakdown: [
-        ...(safeJsonParse(staff.social_security) || []).map((item: any) => ({
-          type: item.name,
-          amount: item.percentage ? (staff.basic_salary * parseFloat(item.percentage)) / 100 : item.amount || 0,
-          description: item.percentage ? `${item.percentage}% of basic salary` : 'Monthly amount'
-        })),
-        ...(safeJsonParse(staff.insurance) || []).map((item: any) => ({
-          type: item.name,
-          amount: item.annualAmount ? parseFloat(item.annualAmount) / 12 : item.amount || 0,
-          description: item.annualAmount ? 'Annual amount divided by 12' : 'Monthly amount'
-        })),
-        ...(safeJsonParse(staff.loans) || []).map((item: any) => ({
-          type: item.name,
-          amount: item.amount || 0,
-          description: `${item.type || 'loan'} deduction`
-        })),
-        ...(staff.paye_eligible ? [{
-          type: 'PAYE Tax',
-          amount: payeTax,
-          description: 'Progressive tax on gross taxable income'
-        }] : [])
-      ],
-      taxDetails: {
-        federalTax: payeTax,
-        stateTax: 0,
-        socialSecurity: 0,
-        medicare: 0,
-        totalTaxes: payeTax
-      },
-      paymentMethod: 'Direct Deposit',
-      processedBy: 'System',
-      processedDate: new Date().toISOString(),
-      notes: ''
-    };
-  });
+    return payrollRecords.filter(record => {
+      const employeeName = record.employeeName?.toLowerCase() ?? '';
+      const employeeId = record.employeeId?.toLowerCase() ?? '';
+      const branchName = record.branch?.toLowerCase() ?? '';
+      const payPeriod = record.payPeriod ?? '';
+
+      const matchesSearch =
+        !query ||
+        employeeName.includes(query) ||
+        employeeId.includes(query);
+
+      const matchesBranch =
+        !branchNameFilter || branchName === branchNameFilter;
+
+      const matchesPeriod = !periodFilter || payPeriod === periodFilter;
+
+      return matchesSearch && matchesBranch && matchesPeriod;
+    });
+  }, [payrollRecords, searchQuery, branchFilter, monthFilter]);
 
   const handleViewPayroll = (record: PayrollRecord) => {
     setSelectedPayrollRecord(record);
@@ -321,7 +401,11 @@ const PayrollTab: React.FC<PayrollTabProps> = ({
       try {
         // Here you would call an API to delete the payroll record
         // For now, we'll just remove it from the local state
-        setStaffData(prevStaff => prevStaff.filter(staff => staff.id.toString() !== record.id));
+        if (record.payrollRecordId !== null) {
+          setRawPayrollRecords(prev =>
+            prev.filter(pr => pr.id !== record.payrollRecordId)
+          );
+        }
         console.log('Deleted payroll record for:', record.employeeName);
       } catch (error) {
         console.error('Error deleting payroll record:', error);
@@ -341,38 +425,28 @@ const PayrollTab: React.FC<PayrollTabProps> = ({
   const handleGeneratePayment = async () => {
     if (!selectedPaymentRecord) return;
     
+    if (!selectedPaymentRecord.payrollRecordId) {
+      setPaymentError('Payroll record information is missing for this employee.');
+      return;
+    }
+
+    if (selectedPaymentRecord.status === 'paid') {
+      setPaymentError('This payroll record is already marked as paid.');
+      return;
+    }
+
     setIsGeneratingPayment(true);
     setPaymentError('');
     
     try {
-      // Fetch actual payroll records to get the real payroll record ID
-      // The selectedPaymentRecord.id is actually the staff ID, not payroll record ID
-      const staffMember = staffData.find(s => s.id.toString() === selectedPaymentRecord.id);
-      if (!staffMember) {
-        throw new Error('Staff member not found');
-      }
-      
-      // Fetch payroll records for this staff member to get the actual payroll record ID
-      const payrollRecords = await PayrollService.fetchPayrollRecords(
-        monthFilter !== 'all' ? monthFilter : undefined,
-        staffMember.id
+      const response = await PayrollService.generateIndividualPayrollPayment(
+        selectedPaymentRecord.payrollRecordId
       );
-      
-      // Find the most recent unpaid payroll record for this staff member
-      const unpaidRecord = payrollRecords
-        .filter((pr: any) => pr.status !== 'paid')
-        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-      
-      if (!unpaidRecord) {
-        throw new Error('No unpaid payroll record found for this employee');
-      }
-      
-      // Use the actual payroll record ID
-      const response = await PayrollService.generateIndividualPayrollPayment(unpaidRecord.id);
       
       if (response.success) {
         setControlNumber(response.billpay_control_number);
         setPaymentDetails(response);
+        await loadPayrollRecords();
       } else {
         setPaymentError(response.message || 'Failed to generate payment control number.');
       }
@@ -540,7 +614,7 @@ const PayrollTab: React.FC<PayrollTabProps> = ({
             </tr>
           </thead>
           <tbody>
-            {loading ? (
+            {isLoading ? (
               <tr>
                 <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
                   Loading payroll records...
@@ -1159,57 +1233,48 @@ const PayrollTab: React.FC<PayrollTabProps> = ({
             {/* Payment Control Number Display */}
             {controlNumber && paymentDetails && (
               <div style={{
-                border: '2px solid #10b981',
+                border: '1px solid #e5e7eb',
                 borderRadius: '16px',
                 padding: '24px',
                 marginBottom: '24px',
-                backgroundColor: '#f0fdf4'
+                backgroundColor: 'white'
               }}>
                 <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
                   Payment Control Number Generated
                 </h4>
                 <div style={{ marginBottom: '12px' }}>
                   <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Control Number:</div>
-                  <div style={{ fontSize: '24px', fontWeight: '700', color: '#059669', fontFamily: 'monospace' }}>
+                  <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937', fontFamily: 'monospace' }}>
                     {controlNumber}
                   </div>
                 </div>
                 <div style={{ marginBottom: '12px' }}>
-                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Merchant Number:</div>
-                  <div style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', fontFamily: 'monospace' }}>
-                    {paymentDetails.billpay_namba}
-                  </div>
-                </div>
-                <div style={{ marginBottom: '12px' }}>
                   <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Total Amount to Pay:</div>
-                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937' }}>
-                    {paymentDetails.total_amount.toLocaleString()} TZS
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#10b981' }}>
+                    {formatCurrency(paymentDetails.total_amount)}
                   </div>
                 </div>
                 <div style={{ 
-                  backgroundColor: 'white', 
+                  backgroundColor: '#f9fafb', 
                   padding: '12px', 
                   borderRadius: '8px',
                   fontSize: '12px',
                   color: '#374151',
                   marginTop: '12px'
                 }}>
-                  <strong>Breakdown:</strong><br />
-                  Net Salary: {paymentDetails.net_salary.toLocaleString()} TZS<br />
-                  ClickPesa Fee: {paymentDetails.clickpesa_fee.toLocaleString()} TZS<br />
-                  Platform Fee (1%): {paymentDetails.platform_fee.toLocaleString()} TZS<br />
-                  Settlement Fee (1%): {paymentDetails.settlement_fee.toLocaleString()} TZS<br />
-                  <strong>Total: {paymentDetails.total_amount.toLocaleString()} TZS</strong>
+                  Net Salary: {formatCurrency(paymentDetails.net_salary)}<br />
+                  Total Fees: {formatCurrency(paymentDetails.total_amount - paymentDetails.net_salary)}<br />
+                  <strong style={{ color: '#10b981' }}>Total: {formatCurrency(paymentDetails.total_amount)}</strong>
                 </div>
                 <div style={{ 
                   marginTop: '16px',
                   padding: '12px',
-                  backgroundColor: '#dbeafe',
+                  backgroundColor: '#f9fafb',
                   borderRadius: '8px',
                   fontSize: '13px',
-                  color: '#1e40af'
+                  color: '#374151'
                 }}>
-                  <strong>Instructions:</strong> Use the control number {controlNumber} and merchant number {paymentDetails.billpay_namba} to pay via your preferred payment method. Once paid, the salary will be automatically sent to {selectedPaymentRecord.employeeName}'s bank account.
+                  <strong>Instructions:</strong> Use the control number {controlNumber} to pay via your preferred payment method (MNO, Bank, etc.). Once paid, the salary will be automatically sent to {selectedPaymentRecord.employeeName}'s bank account.
                 </div>
               </div>
             )}

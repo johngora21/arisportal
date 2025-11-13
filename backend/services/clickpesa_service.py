@@ -4,8 +4,9 @@ Wraps ClickPesa API calls in the PaymentProviderInterface
 """
 from typing import Dict, Optional
 from services.payment_provider import PaymentProviderInterface
+from services.clickpesa_fees import calculate_clickpesa_fee, PaymentMethod
 from routers.clickpesa import get_clickpesa_token
-import httpx
+import requests
 import time
 
 # ClickPesa bank metadata (BIC codes and defaults)
@@ -66,12 +67,12 @@ class ClickPesaService(PaymentProviderInterface):
             raise ValueError(f"Unsupported bank '{bank_key}'. Supported values: {', '.join(BANKS_METADATA.keys())}")
         return normalized
 
-    def create_transfer(self, amount: float, currency: str, recipient: Dict, reference: str) -> Dict:
+    def create_transfer(self, amount: float, currency: str, recipient: Dict, reference: str, payment_method: Optional[PaymentMethod] = None) -> Dict:
         """
         Create a payment via ClickPesa BillPay
         
         Args:
-            amount: Payment amount
+            amount: Payment amount (base amount before fees)
             currency: Currency (TZS for Tanzania)
             recipient: Recipient details {
                 'name': str,
@@ -79,11 +80,21 @@ class ClickPesaService(PaymentProviderInterface):
                 'email': Optional[str]
             }
             reference: Transaction reference
+            payment_method: Optional payment method (defaults to MOBILE_MONEY_BILLPAY)
             
         Returns:
-            Payment details including control number
+            Payment details including control number and fee breakdown
         """
         try:
+            # Calculate fees (default to Mobile Money BillPay if not specified)
+            if payment_method is None:
+                payment_method = PaymentMethod.MOBILE_MONEY_BILLPAY
+            
+            fees = calculate_clickpesa_fee(amount, payment_method, currency)
+            
+            # Use total amount (base + fees) for the control number
+            total_amount = fees['total_amount']
+            
             print(f"⏱️ [ClickPesa] Starting token request at {time.time()}")
             token = get_clickpesa_token()
             print(f"⏱️ [ClickPesa] Token received at {time.time()}")
@@ -92,7 +103,7 @@ class ClickPesaService(PaymentProviderInterface):
                 "customerName": recipient.get('name'),
                 "billDescription": recipient.get('description', 'Payment'),
                 "billPaymentMode": "ALLOW_PARTIAL_AND_OVER_PAYMENT",
-                "billAmount": amount,
+                "billAmount": total_amount,  # Use total amount including fees
                 "billReference": reference
             }
             
@@ -108,23 +119,29 @@ class ClickPesaService(PaymentProviderInterface):
             print(f"⏱️ [ClickPesa] Starting API call at {time.time()}")
             
             try:
-                response = httpx.post(
+                # Use simple requests.post() like cards.py does (but with requests instead of httpx)
+                response = requests.post(
                     f"{self.base_url}/third-parties/billpay/create-customer-control-number",
                     headers={
-                        'Authorization': token,  # ClickPesa uses token directly, not Bearer token
+                        'Authorization': token,  # Token format matches what works in cards.py
                         'Content-Type': 'application/json'
                     },
                     json=billpay_request,
-                    timeout=15.0  # 15 second timeout - fail fast if ClickPesa is slow
+                    timeout=10.0
                 )
                 print(f"⏱️ [ClickPesa] API call completed at {time.time()}")
-            except httpx.TimeoutException as timeout_error:
-                print(f"❌ [ClickPesa] API call TIMED OUT after 15 seconds")
-                raise Exception(f"ClickPesa API request timed out after 15 seconds. The API may be slow or unavailable. Please try again later.")
-            except httpx.ConnectError as connect_error:
-                print(f"❌ [ClickPesa] Connection error: {connect_error}")
-                raise Exception(f"Failed to connect to ClickPesa API. Please check your internet connection and try again.")
-            except httpx.RequestError as request_error:
+            except requests.exceptions.ConnectionError as connect_error:
+                error_msg = str(connect_error)
+                if "reset by remote peer" in error_msg.lower() or "stream" in error_msg.lower():
+                    print(f"❌ [ClickPesa] Connection reset by server: {connect_error}")
+                    raise Exception(f"ClickPesa server reset the connection. This may be due to server overload. Please try again in a few moments.")
+                else:
+                    print(f"❌ [ClickPesa] Connection error: {connect_error}")
+                    raise Exception(f"Failed to connect to ClickPesa API: {str(connect_error)}. Please check your internet connection and try again.")
+            except requests.exceptions.Timeout as timeout_error:
+                print(f"❌ [ClickPesa] API call TIMED OUT")
+                raise Exception(f"ClickPesa API request timed out. The API may be slow or unavailable. Please try again later.")
+            except requests.exceptions.RequestException as request_error:
                 print(f"❌ [ClickPesa] Request error: {request_error}")
                 raise Exception(f"ClickPesa API request failed: {str(request_error)}")
             
@@ -136,7 +153,7 @@ class ClickPesaService(PaymentProviderInterface):
                 response.raise_for_status()
                 billpay_response = response.json()
                 print(f"📦 ClickPesa API Response Body: {billpay_response}")
-            except httpx.HTTPStatusError as e:
+            except requests.exceptions.HTTPError as e:
                 # Try to get error details from response
                 error_body = {}
                 try:
@@ -179,14 +196,23 @@ class ClickPesaService(PaymentProviderInterface):
                 'transfer_id': control_number,
                 'status': 'pending',
                 'reference': reference,
-                'amount': amount,
+                'amount': amount,  # Base amount
+                'total_amount': total_amount,  # Amount including fees
                 'currency': currency,
                 'recipient': recipient.get('name'),
                 'provider': 'CLICKPESA',
                 'control_number': control_number,
-                'billPayNumber': control_number  # Also include this for backward compatibility
+                'billPayNumber': control_number,  # Also include this for backward compatibility
+                'fees': {
+                    'clickpesa_fee': fees['clickpesa_fee'],
+                    'platform_fee': fees['platform_fee'],
+                    'total_fee': fees['total_fee']
+                }
             }
         except Exception as e:
+            # Don't double-wrap exceptions that are already formatted
+            if "ClickPesa" in str(e) or "connection" in str(e).lower() or "timeout" in str(e).lower():
+                raise
             error_msg = f"ClickPesa API error: {str(e)}"
             print(f"❌ {error_msg}")
             raise Exception(error_msg)
@@ -197,20 +223,24 @@ class ClickPesaService(PaymentProviderInterface):
         This sends a payment request directly to the customer's phone.
         
         Args:
-            amount: Payment amount
+            amount: Payment amount (base amount before fees)
             currency: Currency (TZS for Tanzania)
             phone_number: Customer phone number (format: 255712345678, no + sign)
             order_reference: Unique order reference
             checksum: Optional checksum for security
             
         Returns:
-            USSD push transaction details including id and status
+            USSD push transaction details including id, status, and fee breakdown
         """
         try:
+            # Calculate fees for USSD push (tiered fees + 1% platform fee)
+            fees = calculate_clickpesa_fee(amount, PaymentMethod.MOBILE_MONEY_USSD, currency)
+            total_amount = fees['total_amount']
+            
             token = get_clickpesa_token()
             
             payload = {
-                "amount": str(amount),
+                "amount": str(total_amount),  # Use total amount including fees
                 "currency": currency,
                 "orderReference": order_reference,
                 "phoneNumber": phone_number
@@ -219,7 +249,7 @@ class ClickPesaService(PaymentProviderInterface):
             if checksum:
                 payload["checksum"] = checksum
             
-            response = httpx.post(
+            response = requests.post(
                 f"{self.base_url}/third-parties/payments/initiate-ussd-push-request",
                 headers={
                     'Authorization': token,
@@ -236,11 +266,18 @@ class ClickPesaService(PaymentProviderInterface):
                 'status': ussd_response.get('status', 'PROCESSING'),
                 'channel': ussd_response.get('channel'),
                 'order_reference': ussd_response.get('orderReference'),
+                'amount': amount,  # Base amount
+                'total_amount': total_amount,  # Amount including fees
                 'collected_amount': ussd_response.get('collectedAmount'),
                 'collected_currency': ussd_response.get('collectedCurrency'),
                 'created_at': ussd_response.get('createdAt'),
                 'provider': 'CLICKPESA',
-                'type': 'USSD_PUSH'
+                'type': 'USSD_PUSH',
+                'fees': {
+                    'clickpesa_fee': fees['clickpesa_fee'],
+                    'platform_fee': fees['platform_fee'],
+                    'total_fee': fees['total_fee']
+                }
             }
         except Exception as e:
             raise Exception(f"ClickPesa USSD push error: {str(e)}")
@@ -274,7 +311,7 @@ class ClickPesaService(PaymentProviderInterface):
             if checksum:
                 payload["checksum"] = checksum
             
-            response = httpx.post(
+            response = requests.post(
                 f"{self.base_url}/third-parties/payments/preview-ussd-push-request",
                 headers={
                     'Authorization': token,
@@ -293,7 +330,7 @@ class ClickPesaService(PaymentProviderInterface):
         Initiate a card payment via ClickPesa
         
         Args:
-            amount: Payment amount
+            amount: Payment amount (base amount before fees)
             currency: Currency (USD or TZS)
             order_reference: Unique order reference
             customer_id: Optional customer ID if customer exists in ClickPesa
@@ -301,13 +338,17 @@ class ClickPesaService(PaymentProviderInterface):
             checksum: Optional checksum for security
             
         Returns:
-            Card payment details including payment link
+            Card payment details including payment link and fee breakdown
         """
         try:
+            # Calculate fees for card payment (4.85% + 1% platform fee)
+            fees = calculate_clickpesa_fee(amount, PaymentMethod.CARD, currency)
+            total_amount = fees['total_amount']
+            
             token = get_clickpesa_token()
             
             payload = {
-                "amount": str(amount),
+                "amount": str(total_amount),  # Use total amount including fees
                 "currency": currency,
                 "orderReference": order_reference
             }
@@ -324,7 +365,7 @@ class ClickPesaService(PaymentProviderInterface):
             if checksum:
                 payload["checksum"] = checksum
             
-            response = httpx.post(
+            response = requests.post(
                 f"{self.base_url}/third-parties/payments/initiate-card-payment",
                 headers={
                     'Authorization': token,
@@ -340,10 +381,16 @@ class ClickPesaService(PaymentProviderInterface):
                 'card_payment_link': card_response.get('cardPaymentLink'),
                 'client_id': card_response.get('clientId'),
                 'order_reference': order_reference,
-                'amount': amount,
+                'amount': amount,  # Base amount
+                'total_amount': total_amount,  # Amount including fees
                 'currency': currency,
                 'provider': 'CLICKPESA',
-                'type': 'CARD_PAYMENT'
+                'type': 'CARD_PAYMENT',
+                'fees': {
+                    'clickpesa_fee': fees['clickpesa_fee'],
+                    'platform_fee': fees['platform_fee'],
+                    'total_fee': fees['total_fee']
+                }
             }
         except Exception as e:
             raise Exception(f"ClickPesa card payment error: {str(e)}")
@@ -373,7 +420,7 @@ class ClickPesaService(PaymentProviderInterface):
             if checksum:
                 payload["checksum"] = checksum
             
-            response = httpx.post(
+            response = requests.post(
                 f"{self.base_url}/third-parties/payments/preview-card-payment",
                 headers={
                     'Authorization': token,
@@ -450,7 +497,7 @@ class ClickPesaService(PaymentProviderInterface):
         try:
             print(f"[ClickPesa DISBURSE] POST payload={payload}")
             auth_header = token if isinstance(token, str) and token.lower().startswith('bearer ') else f"Bearer {token}"
-            res = httpx.post(
+            res = requests.post(
                 f"{self.base_url}/third-parties/payments/disbursements",
                 headers={
                     'Authorization': auth_header,
@@ -472,7 +519,7 @@ class ClickPesaService(PaymentProviderInterface):
                 'request': payload,
                 'response': body
             }
-        except httpx.HTTPStatusError as e:
+        except requests.exceptions.HTTPError as e:
             try:
                 err = e.response.json()
             except Exception:
@@ -480,14 +527,24 @@ class ClickPesaService(PaymentProviderInterface):
             print(f"[ClickPesa DISBURSE][ERROR] {err}")
             raise Exception(f"ClickPesa disbursement failed: {err}")
 
-    def create_mobile_money_payout(self, *, amount: float, currency: str, phone_number: str, order_reference: str, checksum: Optional[str] = None) -> Dict:
+    def create_mobile_money_payout(self, *, amount: float, currency: str, phone_number: str, order_reference: str, checksum: Optional[str] = None, include_fees_in_amount: bool = True) -> Dict:
         """
         Preferred: Create Mobile Money Payout via ClickPesa payouts API.
         Mirrors docs: POST /third-parties/payouts/create-mobile-money-payout
+        
+        Args:
+            amount: Base payout amount (before fees)
+            include_fees_in_amount: If True, fees are included in the payout amount (deducted from recipient)
         """
+        # Calculate fees for mobile money payout
+        fees = calculate_clickpesa_fee(amount, PaymentMethod.MOBILE_MONEY_PAYOUT, currency)
+        
+        # If fees should be included in amount, use total_amount; otherwise use base amount
+        payout_amount = fees['total_amount'] if include_fees_in_amount else amount
+        
         token = get_clickpesa_token()
         payload = {
-            "amount": amount,
+            "amount": payout_amount,
             "phoneNumber": self.normalize_msisdn(phone_number),
             "currency": currency,
             "orderReference": order_reference,
@@ -498,7 +555,7 @@ class ClickPesaService(PaymentProviderInterface):
         try:
             print(f"[ClickPesa PAYOUT] POST payload={payload}")
             auth_header = token if isinstance(token, str) and token.lower().startswith('bearer ') else f"Bearer {token}"
-            res = httpx.post(
+            res = requests.post(
                 f"{self.base_url}/third-parties/payouts/create-mobile-money-payout",
                 headers={
                     'Authorization': auth_header,
@@ -513,8 +570,19 @@ class ClickPesaService(PaymentProviderInterface):
             except Exception:
                 body = {"raw": res.text}
             print(f"[ClickPesa PAYOUT] status_code={res.status_code} body={body}")
-            return body
-        except httpx.HTTPStatusError as e:
+            
+            # Add fee information to response
+            result = body.copy() if isinstance(body, dict) else {"raw": body}
+            result['fees'] = {
+                'clickpesa_fee': fees['clickpesa_fee'],
+                'platform_fee': fees['platform_fee'],
+                'total_fee': fees['total_fee'],
+                'base_amount': amount,
+                'total_amount': payout_amount,
+                'include_fees_in_amount': include_fees_in_amount
+            }
+            return result
+        except requests.exceptions.HTTPError as e:
             try:
                 err = e.response.json()
             except Exception:
@@ -534,14 +602,32 @@ class ClickPesaService(PaymentProviderInterface):
         transfer_type: str = "ACH",
         account_currency: str = "TZS",
         checksum: Optional[str] = None,
+        include_fees_in_amount: bool = True,
     ) -> Dict:
         """
         Create a bank payout via ClickPesa payouts API.
         Mirrors docs: POST /third-parties/payouts/create-bank-payout
+        
+        Args:
+            amount: Base payout amount (before fees)
+            transfer_type: "ACH" or "RTGS" (TISS)
+            include_fees_in_amount: If True, fees are included in the payout amount
         """
+        # Determine payment method based on transfer type
+        if transfer_type == "TISS":
+            payment_method = PaymentMethod.BANK_TISS_TZS if currency == "TZS" else PaymentMethod.BANK_TISS_USD
+        else:
+            payment_method = PaymentMethod.BANK_EFT_ACH
+        
+        # Calculate fees
+        fees = calculate_clickpesa_fee(amount, payment_method, currency)
+        
+        # If fees should be included in amount, use total_amount; otherwise use base amount
+        payout_amount = fees['total_amount'] if include_fees_in_amount else amount
+        
         token = get_clickpesa_token()
         payload = {
-            "amount": amount,
+            "amount": payout_amount,
             "accountNumber": account_number,
             "accountName": account_name,
             "currency": currency,
@@ -556,7 +642,7 @@ class ClickPesaService(PaymentProviderInterface):
         try:
             print(f"[ClickPesa BANK PAYOUT] POST payload={payload}")
             auth_header = token if isinstance(token, str) and token.lower().startswith('bearer ') else f"Bearer {token}"
-            res = httpx.post(
+            res = requests.post(
                 f"{self.base_url}/third-parties/payouts/create-bank-payout",
                 headers={
                     'Authorization': auth_header,
@@ -571,8 +657,19 @@ class ClickPesaService(PaymentProviderInterface):
             except Exception:
                 body = {"raw": res.text}
             print(f"[ClickPesa BANK PAYOUT] status_code={res.status_code} body={body}")
-            return body
-        except httpx.HTTPStatusError as e:
+            
+            # Add fee information to response
+            result = body.copy() if isinstance(body, dict) else {"raw": body}
+            result['fees'] = {
+                'clickpesa_fee': fees['clickpesa_fee'],
+                'platform_fee': fees['platform_fee'],
+                'total_fee': fees['total_fee'],
+                'base_amount': amount,
+                'total_amount': payout_amount,
+                'include_fees_in_amount': include_fees_in_amount
+            }
+            return result
+        except requests.exceptions.HTTPError as e:
             try:
                 err = e.response.json()
             except Exception:
@@ -585,7 +682,7 @@ class ClickPesaService(PaymentProviderInterface):
         token = get_clickpesa_token()
         auth_header = token if isinstance(token, str) and token.lower().startswith('bearer ') else f"Bearer {token}"
         try:
-            res = httpx.get(
+            res = requests.get(
                 f"{self.base_url}/third-parties/payouts/{payout_id}",
                 headers={
                     'Authorization': auth_header,
@@ -600,7 +697,7 @@ class ClickPesaService(PaymentProviderInterface):
                 body = {"raw": res.text}
             print(f"[ClickPesa PAYOUT STATUS] status_code={res.status_code} body={body}")
             return body
-        except httpx.HTTPStatusError as e:
+        except requests.exceptions.HTTPError as e:
             try:
                 err = e.response.json()
             except Exception:
@@ -617,15 +714,13 @@ class ClickPesaService(PaymentProviderInterface):
         auth_header = token if isinstance(token, str) and token.lower().startswith('bearer ') else f"Bearer {token}"
         try:
             # Use longer timeout for banks list endpoint
-            timeout = httpx.Timeout(60.0, connect=30.0)
-            res = httpx.get(
+            res = requests.get(
                 f"{self.base_url}/third-parties/list/banks",
                 headers={
                     'Authorization': auth_header,
                     'Content-Type': 'application/json'
                 },
-                timeout=timeout,
-                follow_redirects=True
+                timeout=(30, 60)  # (connect timeout, read timeout)
             )
             res.raise_for_status()
             try:
@@ -634,7 +729,7 @@ class ClickPesaService(PaymentProviderInterface):
                 body = {"raw": res.text}
             print(f"[ClickPesa BANKS] status_code={res.status_code} body={body}")
             return body
-        except httpx.HTTPStatusError as e:
+        except requests.exceptions.HTTPError as e:
             try:
                 err = e.response.json()
             except Exception:
@@ -700,7 +795,7 @@ class ClickPesaService(PaymentProviderInterface):
 
         try:
             print(f"[ClickPesa BANK PAYOUT] POST payload={payload}")
-            res = httpx.post(
+            res = requests.post(
                 f"{self.base_url}/third-parties/payouts/create-bank-payout",
                 headers={
                     'Authorization': auth_header,
@@ -716,7 +811,7 @@ class ClickPesaService(PaymentProviderInterface):
                 body = {"raw": res.text}
             print(f"[ClickPesa BANK PAYOUT] status_code={res.status_code} body={body}")
             return body
-        except httpx.HTTPStatusError as e:
+        except requests.exceptions.HTTPError as e:
             try:
                 err = e.response.json()
             except Exception:

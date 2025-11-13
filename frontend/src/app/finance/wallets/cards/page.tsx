@@ -175,9 +175,9 @@ export default function CardsPage() {
       } catch (err: any) {
         console.error('Error fetching cards:', err);
         if (err.name === 'AbortError' || err.message?.includes('timed out')) {
-          setError('Request timed out. The server may be slow or the backend needs to be restarted. Please check if the backend is running on port 8000.');
+          setError('Request timed out. The server may be slow or the backend needs to be restarted. Please check if the backend is running.');
         } else if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
-          setError('Cannot connect to server. Please make sure the backend is running on http://localhost:8000');
+          setError('Cannot connect to server. Please make sure the backend is running.');
         } else if (err.message?.includes('404')) {
           setError('Cards endpoint not found. The backend may need to be restarted to register the cards router.');
         } else {

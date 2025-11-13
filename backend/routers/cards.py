@@ -12,6 +12,9 @@ import uuid
 import jwt
 from routers.clickpesa import get_clickpesa_token
 import httpx
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 security = HTTPBearer()
@@ -248,7 +251,11 @@ async def get_user_cards(
     try:
         # Before returning cards, reconcile any pending mobile payouts (unless explicitly skipped)
         if not skip_reconcile:
-            reconcile_pending_mno_payouts(user_id, db)
+            try:
+                reconcile_pending_mno_payouts(user_id, db)
+            except Exception as reconcile_error:
+                print(f"⚠️ Error reconciling MNO payouts: {str(reconcile_error)}, continuing with card fetch")
+                # Continue even if reconciliation fails
 
         # Use raw SQL to select only columns that exist in the database
         from sqlalchemy import text
@@ -324,7 +331,7 @@ async def create_card(
         result = db.execute(count_query, {"user_id": user_id}).fetchone()
         existing_cards = result[0] if result else 0
         is_default = existing_cards == 0
-    
+        
         # Calculate expiry date (3 years from now)
         from datetime import datetime, timedelta
         expiry_date = datetime.now() + timedelta(days=3*365)  # 3 years
@@ -1210,6 +1217,107 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
             "new_balance": new_balance,
             "ledger_entry_id": ledger_entry.id
         }
+    
+    # Check if this is a payroll payment
+    from models.payroll import PayrollPayment, PayrollRecord
+    payroll_payment = db.query(PayrollPayment).filter(
+        PayrollPayment.billpay_control_number == normalized_control_number
+    ).first()
+    
+    if payroll_payment and status in ['completed', 'SUCCESS', 'SETTLED', 'paid']:
+        print(f"✅ Matched payroll payment {payroll_payment.id} with control number {normalized_control_number}")
+        
+        # Update payroll payment status
+        payroll_payment.status = "paid"
+        payroll_payment.paid_at = datetime.utcnow()
+        db.commit()
+        
+        # Process automatic payouts to employees
+        try:
+            import json
+            from services.clickpesa_service import ClickPesaService
+            from services.clickpesa_fees import calculate_clickpesa_fee, PaymentMethod
+            
+            clickpesa_service = ClickPesaService()
+            employee_details = json.loads(payroll_payment.employee_payout_details) if payroll_payment.employee_payout_details else []
+            
+            payout_results = []
+            for employee in employee_details:
+                try:
+                    # Get bank BIC from bank name using BANKS_METADATA
+                    from services.clickpesa_service import BANKS_METADATA
+                    bank_name_lower = employee['bank_name'].lower().strip()
+                    bank_bic = None
+                    
+                    # Try to match bank name to BIC
+                    for bank_key, bank_info in BANKS_METADATA.items():
+                        if bank_key in bank_name_lower or bank_info['name'].lower() in bank_name_lower:
+                            bank_bic = bank_info['bic']
+                            break
+                    
+                    if not bank_bic:
+                        # Default to CRDB if bank not found
+                        logger.warning(f"Bank BIC not found for {employee['bank_name']}, using CRDB default")
+                        bank_bic = "CORUTZTZ"
+                    
+                    # Calculate fees for this payout
+                    fees = calculate_clickpesa_fee(employee['net_salary'], PaymentMethod.BANK_EFT_ACH, "TZS")
+                    
+                    # Create bank payout
+                    payout_result = clickpesa_service.create_bank_payout(
+                        amount=employee['net_salary'],
+                        account_number=employee['bank_account'],
+                        account_name=employee['account_name'],
+                        currency="TZS",
+                        order_reference=f"PAYROLL-{payroll_payment.payroll_period}-{employee['payroll_record_id']}",
+                        bic=bank_bic,
+                        transfer_type="ACH",
+                        include_fees_in_amount=True  # Fees deducted from payout amount
+                    )
+                    
+                    payout_results.append({
+                        'staff_id': employee['staff_id'],
+                        'staff_name': employee['staff_name'],
+                        'status': 'success',
+                        'payout_response': payout_result
+                    })
+                    
+                    # Update payroll record status
+                    payroll_record = db.query(PayrollRecord).filter(PayrollRecord.id == employee['payroll_record_id']).first()
+                    if payroll_record:
+                        payroll_record.status = "paid"
+                        payroll_record.paid_at = datetime.utcnow()
+                    
+                except Exception as e:
+                    logger.error(f"Error processing payout for employee {employee['staff_name']}: {str(e)}")
+                    payout_results.append({
+                        'staff_id': employee['staff_id'],
+                        'staff_name': employee['staff_name'],
+                        'status': 'failed',
+                        'error': str(e)
+                    })
+            
+            # Update payroll payment status to processing (payouts initiated)
+            payroll_payment.status = "processing"
+            payroll_payment.processed_at = datetime.utcnow()
+            db.commit()
+            
+            print(f"💰 Processed {len([r for r in payout_results if r['status'] == 'success'])}/{len(employee_details)} employee payouts")
+            return {
+                "status": "success",
+                "type": "payroll_payment",
+                "payroll_payment_id": payroll_payment.id,
+                "amount": amount,
+                "payouts_processed": len([r for r in payout_results if r['status'] == 'success']),
+                "total_employees": len(employee_details)
+            }
+        except Exception as e:
+            logger.error(f"Error processing payroll payouts: {str(e)}")
+            return {
+                "status": "error",
+                "type": "payroll_payment",
+                "message": f"Payment received but payout processing failed: {str(e)}"
+            }
     
     # No matching payment found
     print(f"❌ Payment not found for control number: {normalized_control_number} (original: {billpay_number})")

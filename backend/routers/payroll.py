@@ -13,6 +13,7 @@ import os
 import uuid
 from routers.clickpesa import get_clickpesa_token
 from services.clickpesa_service import ClickPesaService
+from routers.cards import get_current_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -1551,11 +1552,43 @@ def calculate_employer_costs(gross_salary: float, basic_salary: float):
     }
 
 # Payroll processing endpoints
-@router.post("/payroll/process")
+@router.post("/process")
 async def process_payroll(request: PayrollProcessRequest, db: Session = Depends(get_db)):
     """Process payroll for a specific period"""
     try:
-        # Allow reprocessing payroll for any period - no duplicate check
+        # Delete any existing PayrollCalculation records for this period and branch first
+        # This ensures we always use the most recent processed payroll
+        existing_calc_query = db.query(PayrollCalculation).filter(
+            PayrollCalculation.payroll_period == request.payroll_period
+        )
+        if request.branch_id:
+            existing_calc_query = existing_calc_query.filter(PayrollCalculation.branch_id == request.branch_id)
+        else:
+            # If no branch_id, delete all calculations for this period (all branches)
+            pass
+        
+        existing_calculations = existing_calc_query.all()
+        if existing_calculations:
+            logger.info(f"Deleting {len(existing_calculations)} existing PayrollCalculation records for period {request.payroll_period}")
+            for calc in existing_calculations:
+                db.delete(calc)
+            db.commit()
+        
+        # Also delete existing PayrollRecord records for this period and branch
+        existing_records_query = db.query(PayrollRecord).filter(
+            PayrollRecord.payroll_period == request.payroll_period
+        )
+        if request.branch_id:
+            # Get staff IDs for this branch
+            branch_staff_ids = db.query(Staff.id).filter(Staff.branch_id == request.branch_id).subquery()
+            existing_records_query = existing_records_query.filter(PayrollRecord.staff_id.in_(branch_staff_ids))
+        
+        existing_records = existing_records_query.all()
+        if existing_records:
+            logger.info(f"Deleting {len(existing_records)} existing PayrollRecord records for period {request.payroll_period}")
+            for record in existing_records:
+                db.delete(record)
+            db.commit()
         
         # Get all active staff
         query = db.query(Staff).filter(Staff.is_active == True, Staff.employment_status == EmploymentStatus.ACTIVE)
@@ -1776,32 +1809,61 @@ async def process_payroll(request: PayrollProcessRequest, db: Session = Depends(
             total_deductions += calculation["total_deductions"]
             total_net += calculation["net_salary"]
         
-        # Create payroll calculation summary
+        # Commit all payroll records first
+        db.commit()
+        
+        # Sum from detailed_records (EXACTLY what frontend will sum and display)
+        # The frontend does: payrollData.reduce((sum, emp) => sum + (emp.net_salary || 0), 0)
+        # JavaScript handles this as: start with 0, add each net_salary (or 0 if null/undefined)
+        # We must replicate this EXACT logic to match frontend calculation
+        stored_total_net = 0.0
+        stored_total_gross = 0.0
+        stored_total_deductions = 0.0
+        stored_total_allowances = 0.0
+        
+        # Replicate JavaScript's reduce logic exactly
+        for r in detailed_records:
+            # JavaScript: (emp.net_salary || 0) - if net_salary is falsy, use 0
+            net_sal = r.get("net_salary") or 0.0
+            gross_sal = r.get("gross_salary") or 0.0
+            deductions = r.get("deductions") or 0.0
+            allowances = r.get("allowances") or 0.0
+            
+            stored_total_net += float(net_sal)
+            stored_total_gross += float(gross_sal)
+            stored_total_deductions += float(deductions)
+            stored_total_allowances += float(allowances)
+        
+        # Create payroll calculation summary - store EXACTLY what frontend displays
+        # Frontend displays ONLY: Total Employees, Total Gross Salary, Total Deductions, Total Allowances, Total Net Salary
+        # These are calculated from detailed_records by summing: gross_salary, deductions, allowances, net_salary
         payroll_calculation = PayrollCalculation(
             payroll_period=request.payroll_period,
             branch_id=request.branch_id,
             total_employees=len(staff_members),
-            total_gross_salary=total_gross,
-            total_deductions=total_deductions,
-            total_net_salary=total_net,
-            total_paye_tax=sum(r.paye_tax for r in payroll_records),
-            total_sdl_tax=sum(r.sdl_tax for r in payroll_records),
-            total_nssf=sum(r.nssf for r in payroll_records),
-            total_nhif=sum(r.nhif for r in payroll_records),
+            total_gross_salary=stored_total_gross,
+            total_deductions=stored_total_deductions,
+            total_net_salary=stored_total_net,  # EXACT sum from detailed_records (matches frontend)
+            total_paye_tax=0,
+            total_sdl_tax=0,
+            total_nssf=0,
+            total_nhif=0,
             status="calculated",
             calculated_at=datetime.utcnow()
         )
         
         db.add(payroll_calculation)
         db.commit()
+        db.refresh(payroll_calculation)
         
+        # Return EXACTLY what was stored (matching what frontend will display)
         return {
             "message": f"Payroll processed successfully for {len(staff_members)} employees",
             "payroll_period": request.payroll_period,
-            "total_employees": len(staff_members),
-            "total_gross_salary": total_gross,
-            "total_deductions": total_deductions,
-            "total_net_salary": total_net,
+            "total_employees": payroll_calculation.total_employees,  # From stored calculation
+            "total_gross_salary": payroll_calculation.total_gross_salary,  # From stored calculation
+            "total_deductions": payroll_calculation.total_deductions,  # From stored calculation
+            "total_net_salary": payroll_calculation.total_net_salary,  # From stored calculation (EXACT match with frontend)
             "total_sdl": total_sdl,
             "payroll_records": len(payroll_records),
             "detailed_records": detailed_records,
@@ -1821,7 +1883,7 @@ async def get_payroll_records(
     limit: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_db)
 ):
-    """Get payroll records with optional filtering"""
+    """Get payroll records with optional filtering. Status reflects actual payment status from PayrollPayment."""
     query = db.query(PayrollRecord)
     
     if payroll_period:
@@ -1831,6 +1893,40 @@ async def get_payroll_records(
         query = query.filter(PayrollRecord.staff_id == staff_id)
     
     records = query.offset(skip).limit(limit).all()
+    
+    # Derive status from latest PayrollPayment entry instead of trusting stored status
+    for record in records:
+        payroll_payment = (
+            db.query(PayrollPayment)
+            .filter(PayrollPayment.payroll_record_id == record.id)
+            .order_by(PayrollPayment.created_at.desc())
+            .first()
+        )
+
+        derived_status = "calculated"
+        paid_at_value = None
+
+        if payroll_payment:
+            payment_status = (payroll_payment.status or "pending").lower()
+
+            if payment_status in ("paid", "completed"):
+                derived_status = "paid"
+                paid_at_value = (
+                    payroll_payment.paid_at
+                    or record.paid_at
+                    or datetime.utcnow()
+                )
+            elif payment_status in ("processing", "pending"):
+                derived_status = "processing"
+            elif payment_status == "failed":
+                derived_status = "failed"
+            else:
+                derived_status = payment_status
+
+        record.status = derived_status
+        record.paid_at = paid_at_value
+    
+    db.commit()
     return records
 
 @router.get("/payroll/records/detailed")
@@ -1856,6 +1952,31 @@ async def get_detailed_payroll_records(
         
         detailed_records = []
         for payroll_record, staff in results:
+            paid_at_value = None
+            payroll_payment = (
+                db.query(PayrollPayment)
+                .filter(PayrollPayment.payroll_record_id == payroll_record.id)
+                .order_by(PayrollPayment.created_at.desc())
+                .first()
+            )
+
+            payment_status = payroll_payment.status if payroll_payment else None
+
+            if payment_status:
+                status_lower = payment_status.lower()
+                if status_lower in ("paid", "completed"):
+                    actual_status = "paid"
+                    paid_at_value = payroll_payment.paid_at or payroll_record.paid_at
+                elif status_lower in ("processing", "pending"):
+                    actual_status = "processing"
+                elif status_lower == "failed":
+                    actual_status = "failed"
+                else:
+                    actual_status = status_lower
+                    paid_at_value = payroll_record.paid_at
+            else:
+                actual_status = "calculated"
+            
             # Get department and branch names
             department_name = None
             branch_name = None
@@ -1894,9 +2015,9 @@ async def get_detailed_payroll_records(
                 "hours_worked": payroll_record.hours_worked,
                 "days_worked": payroll_record.days_worked,
                 "notes": payroll_record.notes,
-                "status": payroll_record.status,
+                "status": actual_status,  # Use derived payment status
                 "processed_at": payroll_record.processed_at,
-                "paid_at": payroll_record.paid_at,
+                "paid_at": paid_at_value,
                 "created_at": payroll_record.created_at
             })
         
@@ -2049,3 +2170,389 @@ async def delete_payroll_period(
         db.rollback()
         logger.error(f"Error deleting payroll period: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error deleting payroll period: {str(e)}")
+
+@router.post("/generate-payment")
+async def generate_payroll_payment(
+    payroll_period: str = Query(..., description="Payroll period (YYYY-MM)"),
+    branch_id: Optional[int] = Query(None, description="Optional branch ID"),
+    total_net_salary: float = Query(..., description="Total net salary from processed payroll (exact value from frontend)"),
+    total_employees: int = Query(..., description="Total employees from processed payroll (exact value from frontend)"),
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate a BillPay control number for payroll payment.
+    Uses EXACT values from frontend (from processed payroll display) - NO RECALCULATION.
+    """
+    try:
+        # Use EXACT values sent from frontend - NO FETCHING, NO RECALCULATION
+        # These are the exact values the frontend calculated and displayed
+        
+        # Get payroll records ONLY for employee bank details (for payouts) - NO SUMMING
+        records_query = db.query(PayrollRecord, Staff).join(Staff, PayrollRecord.staff_id == Staff.id).filter(
+            PayrollRecord.payroll_period == payroll_period
+        )
+        if branch_id:
+            records_query = records_query.filter(Staff.branch_id == branch_id)
+        
+        payroll_records_with_staff = records_query.all()
+        
+        if not payroll_records_with_staff:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"No payroll records found for period {payroll_period}. Please process payroll first."
+            )
+        
+        # Extract employee details ONLY - NO SUMMING, just get details for payouts
+        employee_payout_details = []
+        for payroll_record, staff in payroll_records_with_staff:
+            employee_payout_details.append({
+                'payroll_record_id': payroll_record.id,
+                'staff_id': staff.id,
+                'staff_name': f"{staff.first_name} {staff.last_name}",
+                'email': staff.email,
+                'phone': staff.phone,
+                'net_salary': float(payroll_record.net_salary),
+                'bank_name': staff.bank_name,
+                'bank_account': staff.bank_account,
+                'account_name': staff.account_name
+            })
+        
+        # Calculate fees using ClickPesa fee structure
+        # For payroll: BillPay control number fee (1%) + Bank payout fees (2360 TZS per employee) + Platform fee (1%)
+        from services.clickpesa_fees import calculate_clickpesa_fee, PaymentMethod
+        
+        # Calculate BillPay control number fee (1% of net salary, min 500, max 5,000,000)
+        # This is the fee for generating the control number itself
+        billpay_fees = calculate_clickpesa_fee(total_net_salary, PaymentMethod.MOBILE_MONEY_BILLPAY, "TZS")
+        billpay_control_fee = billpay_fees['clickpesa_fee']  # 1% of net salary
+        
+        # Calculate bank payout fees: 2360 TZS per employee (these will be charged when payouts are made)
+        bank_payout_fee_per_employee = 2360.0
+        total_bank_payout_fees = bank_payout_fee_per_employee * total_employees
+        
+        # Total ClickPesa fees (BillPay control fee + bank payout fees)
+        total_clickpesa_fees = billpay_control_fee + total_bank_payout_fees
+        
+        # Platform fee: 1% of total_net_salary
+        total_platform_fees = total_net_salary * 0.01
+        
+        # Total amount for control number (net salaries + all fees)
+        total_amount = total_net_salary + total_clickpesa_fees + total_platform_fees
+        
+        # Get user profile for contact info (ClickPesa requires phone or email)
+        from models.user import UserProfile
+        user_profile = db.query(UserProfile).filter(UserProfile.id == user_id).first()
+        if not user_profile:
+            raise HTTPException(status_code=404, detail="User profile not found")
+        
+        # Get user's contact info
+        customer_phone = user_profile.business_phone or user_profile.phone
+        customer_email = user_profile.business_email or user_profile.email
+        
+        # Format phone number for ClickPesa (must start with country code, no plus sign, no spaces)
+        if customer_phone:
+            customer_phone = customer_phone.replace('+', '').replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+            if not customer_phone.startswith('255'):
+                if customer_phone.startswith('0'):
+                    customer_phone = '255' + customer_phone[1:]
+                elif customer_phone.isdigit() and len(customer_phone) == 9:
+                    customer_phone = '255' + customer_phone
+        
+        # ClickPesa requires at least phone OR email
+        if not customer_phone and not customer_email:
+            raise HTTPException(
+                status_code=400,
+                detail="Phone number or email is required in your profile to generate payment control number."
+            )
+        
+        # Generate BillPay control number via ClickPesa
+        clickpesa_service = ClickPesaService()
+        # Generate numbers-only reference (no letters)
+        import random
+        timestamp_suffix = str(int(datetime.utcnow().timestamp()))[-8:]  # Last 8 digits
+        random_suffix = str(random.randint(100000, 999999))  # 6 digit random
+        bill_reference = f"{timestamp_suffix}{random_suffix}"  # Numbers only
+        
+        try:
+            # Call ClickPesa API directly with our calculated total_amount
+            # (which includes net salaries + all fees)
+            from routers.clickpesa import get_clickpesa_token
+            import requests
+            
+            token = get_clickpesa_token()
+            
+            billpay_request = {
+                "customerName": 'Payroll Payment',
+                "billDescription": f"Payroll payment for {payroll_period}",
+                "billPaymentMode": "ALLOW_PARTIAL_AND_OVER_PAYMENT",
+                "billAmount": total_amount,  # Use our calculated total (includes all fees)
+                "billReference": bill_reference
+            }
+            
+            if customer_phone:
+                billpay_request["customerPhone"] = customer_phone
+            if customer_email:
+                billpay_request["customerEmail"] = customer_email
+            
+            response = requests.post(
+                f"{clickpesa_service.base_url}/third-parties/billpay/create-customer-control-number",
+                headers={
+                    'Authorization': token,
+                    'Content-Type': 'application/json'
+                },
+                json=billpay_request,
+                timeout=10.0
+            )
+            response.raise_for_status()
+            billpay_result = response.json()
+            
+            control_number = billpay_result.get('control_number') or billpay_result.get('billPayNumber')
+            
+            if not control_number:
+                raise HTTPException(
+                    status_code=500,
+                    detail="ClickPesa did not return a control number"
+                )
+            
+            # Validate control number is numbers only (no letters)
+            control_number_str = str(control_number).strip()
+            if not control_number_str.isdigit():
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"ClickPesa returned invalid control number with letters: {control_number_str}. Control numbers must be numbers only."
+                )
+            
+            # Validate control number doesn't start with "INV"
+            if control_number_str.upper().startswith('INV'):
+                raise HTTPException(
+                    status_code=500,
+                    detail="ClickPesa returned invalid control number starting with 'INV'"
+                )
+            
+        except Exception as e:
+            logger.error(f"Error generating ClickPesa control number: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to generate control number: {str(e)}"
+            )
+        
+        # Create PayrollPayment record with employee payout details
+        import json
+        payroll_payment = PayrollPayment(
+            payroll_period=payroll_period,
+            branch_id=branch_id,
+            total_net_salary=total_net_salary,  # Exact value from frontend (processed payroll display)
+            total_clickpesa_fees=total_clickpesa_fees,
+            total_platform_fees=total_platform_fees,
+            total_settlement_fees=0.0,  # Removed as per new fee structure
+            total_amount=total_amount,
+            billpay_control_number=control_number,
+            billpay_reference=bill_reference,
+            status="pending",
+            clickpesa_response=billpay_result,
+            employee_payout_details=json.dumps(employee_payout_details)  # Store employee bank details for payouts
+        )
+        
+        db.add(payroll_payment)
+        db.commit()
+        db.refresh(payroll_payment)
+        
+        return {
+            "success": True,
+            "billpay_control_number": control_number,
+            "billpay_reference": bill_reference,
+            "total_net_salary": total_net_salary,  # Exact value from frontend (processed payroll display)
+            "total_clickpesa_fees": total_clickpesa_fees,
+            "total_platform_fees": total_platform_fees,
+            "total_settlement_fees": 0.0,  # Removed as per new fee structure
+            "total_amount": total_amount,
+            "num_employees": total_employees,
+            "payroll_period": payroll_period,
+            "payroll_payment_id": payroll_payment.id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error generating payroll payment: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating payroll payment: {str(e)}")
+
+@router.post("/generate-individual-payment")
+async def generate_individual_payroll_payment(
+    payroll_record_id: int = Query(..., description="Payroll record ID"),
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate payment for a single employee.
+    Uses control number OR default card from wallets to payout.
+    """
+    try:
+        # Get the payroll record
+        payroll_record = db.query(PayrollRecord).filter(PayrollRecord.id == payroll_record_id).first()
+        if not payroll_record:
+            raise HTTPException(status_code=404, detail="Payroll record not found")
+        
+        # Get staff member details
+        staff = db.query(Staff).filter(Staff.id == payroll_record.staff_id).first()
+        if not staff:
+            raise HTTPException(status_code=404, detail="Staff member not found")
+        
+        # Use EXACT net_salary from payroll record - NO RECALCULATION
+        net_salary = float(payroll_record.net_salary)
+        
+        # Calculate fees
+        from services.clickpesa_fees import calculate_clickpesa_fee, PaymentMethod
+        
+        # BillPay control number fee (1% of net salary)
+        billpay_fees = calculate_clickpesa_fee(net_salary, PaymentMethod.MOBILE_MONEY_BILLPAY, "TZS")
+        billpay_control_fee = billpay_fees['clickpesa_fee']
+        
+        # Bank payout fee (2360 TZS)
+        bank_payout_fee = 2360.0
+        
+        # Total ClickPesa fees
+        total_clickpesa_fees = billpay_control_fee + bank_payout_fee
+        
+        # Platform fee (1% of net salary)
+        total_platform_fees = net_salary * 0.01
+        
+        # Total amount for control number
+        total_amount = net_salary + total_clickpesa_fees + total_platform_fees
+        
+        # Get user profile for contact info
+        from models.user import UserProfile
+        user_profile = db.query(UserProfile).filter(UserProfile.id == user_id).first()
+        if not user_profile:
+            raise HTTPException(status_code=404, detail="User profile not found")
+        
+        # Get user's contact info
+        customer_phone = user_profile.business_phone or user_profile.phone
+        customer_email = user_profile.business_email or user_profile.email
+        
+        # Format phone number for ClickPesa
+        if customer_phone:
+            customer_phone = customer_phone.replace('+', '').replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+            if not customer_phone.startswith('255'):
+                if customer_phone.startswith('0'):
+                    customer_phone = '255' + customer_phone[1:]
+                elif customer_phone.isdigit() and len(customer_phone) == 9:
+                    customer_phone = '255' + customer_phone
+        
+        if not customer_phone and not customer_email:
+            raise HTTPException(
+                status_code=400,
+                detail="Phone number or email is required in your profile to generate payment control number."
+            )
+        
+        # Generate control number via ClickPesa
+        from routers.clickpesa import get_clickpesa_token
+        import requests
+        import random
+        from datetime import datetime
+        
+        token = get_clickpesa_token()
+        
+        # Generate numbers-only reference
+        timestamp_suffix = str(int(datetime.utcnow().timestamp()))[-8:]
+        random_suffix = str(random.randint(100000, 999999))
+        bill_reference = f"{timestamp_suffix}{random_suffix}"
+        
+        billpay_request = {
+            "customerName": f"Payroll Payment - {staff.first_name} {staff.last_name}",
+            "billDescription": f"Payroll payment for {payroll_record.payroll_period} - {staff.first_name} {staff.last_name}",
+            "billPaymentMode": "ALLOW_PARTIAL_AND_OVER_PAYMENT",
+            "billAmount": total_amount,
+            "billReference": bill_reference
+        }
+        
+        if customer_phone:
+            billpay_request["customerPhone"] = customer_phone
+        if customer_email:
+            billpay_request["customerEmail"] = customer_email
+        
+        clickpesa_service = ClickPesaService()
+        response = requests.post(
+            f"{clickpesa_service.base_url}/third-parties/billpay/create-customer-control-number",
+            headers={
+                'Authorization': token,
+                'Content-Type': 'application/json'
+            },
+            json=billpay_request,
+            timeout=10.0
+        )
+        response.raise_for_status()
+        billpay_result = response.json()
+        
+        control_number = billpay_result.get('control_number') or billpay_result.get('billPayNumber')
+        
+        if not control_number:
+            raise HTTPException(
+                status_code=500,
+                detail="ClickPesa did not return a control number"
+            )
+        
+        # Validate control number is numbers only
+        control_number_str = str(control_number).strip()
+        if not control_number_str.isdigit():
+            raise HTTPException(
+                status_code=500,
+                detail=f"ClickPesa returned invalid control number with letters: {control_number_str}"
+            )
+        
+        # Store employee payout details
+        import json
+        employee_payout_details = [{
+            'payroll_record_id': payroll_record.id,
+            'staff_id': staff.id,
+            'staff_name': f"{staff.first_name} {staff.last_name}",
+            'email': staff.email,
+            'phone': staff.phone,
+            'net_salary': net_salary,
+            'bank_name': staff.bank_name,
+            'bank_account': staff.bank_account,
+            'account_name': staff.account_name
+        }]
+        
+        # Create PayrollPayment record
+        payroll_payment = PayrollPayment(
+            payroll_period=payroll_record.payroll_period,
+            branch_id=staff.branch_id,
+            payroll_record_id=payroll_record.id,
+            total_net_salary=net_salary,  # Exact value from payroll record
+            total_clickpesa_fees=total_clickpesa_fees,
+            total_platform_fees=total_platform_fees,
+            total_settlement_fees=0.0,
+            total_amount=total_amount,
+            billpay_control_number=control_number,
+            billpay_reference=bill_reference,
+            status="pending",
+            clickpesa_response=billpay_result,
+            employee_payout_details=json.dumps(employee_payout_details)
+        )
+        
+        db.add(payroll_payment)
+        db.commit()
+        db.refresh(payroll_payment)
+        
+        return {
+            "success": True,
+            "billpay_control_number": control_number,
+            "billpay_reference": bill_reference,
+            "net_salary": net_salary,
+            "total_clickpesa_fees": total_clickpesa_fees,
+            "total_platform_fees": total_platform_fees,
+            "total_settlement_fees": 0.0,
+            "total_amount": total_amount,
+            "payroll_period": payroll_record.payroll_period,
+            "payroll_payment_id": payroll_payment.id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error generating individual payroll payment: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating individual payroll payment: {str(e)}")

@@ -576,61 +576,6 @@ async def get_analytics_stats(db: Session = Depends(get_db)):
         "totalParticipants": total_participants,
         "totalRevenue": total_revenue
     }
-                    'description': f"Pool payment for {pool.title}"
-                },
-                reference=order_reference
-            )
-            control_number = billpay_result.get('control_number')
-            payment_reference = billpay_result.get('bill_reference')
-            payment_status = "pending"  # Waiting for payment via control number
-            
-        # Create payment record in database
-        new_payment = PaymentModel(
-            id=payment_id,
-            pool_id=pool_id,
-            amount=amount,
-            quantity=payment_data.quantity,
-            payment_method=payment_data.paymentMethod,
-            payment_status=payment_status,
-            mno_phone=payment_data.mnoPhone,
-            card_name=payment_data.cardName,
-            card_number=payment_data.cardNumber,
-            card_expiry=payment_data.cardExpiry,
-            card_cvv=payment_data.cardCvv,
-            control_number=control_number,
-            transaction_id=transaction_id,
-            payment_reference=payment_reference
-        )
-        
-        db.add(new_payment)
-        db.commit()
-        db.refresh(new_payment)
-        
-        # Convert to response format
-        return {
-            "id": new_payment.id,
-            "poolId": new_payment.pool_id,
-            "amount": new_payment.amount,
-            "quantity": new_payment.quantity,
-            "paymentMethod": new_payment.payment_method,
-            "paymentStatus": new_payment.payment_status,
-            "mnoPhone": new_payment.mno_phone,
-            "cardName": new_payment.card_name,
-            "cardNumber": new_payment.card_number,
-            "cardExpiry": new_payment.card_expiry,
-            "cardCvv": new_payment.card_cvv,
-            "controlNumber": new_payment.control_number,
-            "transactionId": new_payment.transaction_id,
-            "paymentReference": new_payment.payment_reference,
-            "createdAt": new_payment.created_at.isoformat() if new_payment.created_at else None,
-            "paidAt": new_payment.paid_at.isoformat() if new_payment.paid_at else None
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Payment processing failed: {str(e)}")
 
 @router.post("/payments/{payment_id}/confirm")
 async def confirm_payment(payment_id: str, db: Session = Depends(get_db)):
@@ -661,62 +606,6 @@ async def get_analytics_stats(db: Session = Depends(get_db)):
         "totalParticipants": total_participants,
         "totalRevenue": total_revenue
     }
-                    'description': f"Pool payment for {pool.title}"
-                },
-                reference=order_reference
-            )
-            control_number = billpay_result.get('control_number')
-            payment_reference = billpay_result.get('bill_reference')
-            payment_status = "pending"  # Waiting for payment via control number
-            
-        # Create payment record in database
-        new_payment = PaymentModel(
-            id=payment_id,
-            pool_id=pool_id,
-            amount=amount,
-            quantity=payment_data.quantity,
-            payment_method=payment_data.paymentMethod,
-            payment_status=payment_status,
-            mno_phone=payment_data.mnoPhone,
-            card_name=payment_data.cardName,
-            card_number=payment_data.cardNumber,
-            card_expiry=payment_data.cardExpiry,
-            card_cvv=payment_data.cardCvv,
-            control_number=control_number,
-            transaction_id=transaction_id,
-            payment_reference=payment_reference
-        )
-        
-        db.add(new_payment)
-        db.commit()
-        db.refresh(new_payment)
-        
-        # Convert to response format
-        return {
-            "id": new_payment.id,
-            "poolId": new_payment.pool_id,
-            "amount": new_payment.amount,
-            "quantity": new_payment.quantity,
-            "paymentMethod": new_payment.payment_method,
-            "paymentStatus": new_payment.payment_status,
-            "mnoPhone": new_payment.mno_phone,
-            "cardName": new_payment.card_name,
-            "cardNumber": new_payment.card_number,
-            "cardExpiry": new_payment.card_expiry,
-            "cardCvv": new_payment.card_cvv,
-            "controlNumber": new_payment.control_number,
-            "transactionId": new_payment.transaction_id,
-            "paymentReference": new_payment.payment_reference,
-            "createdAt": new_payment.created_at.isoformat() if new_payment.created_at else None,
-            "paidAt": new_payment.paid_at.isoformat() if new_payment.paid_at else None
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Payment processing failed: {str(e)}")
-
 @router.post("/payments/{payment_id}/confirm")
 async def confirm_payment(payment_id: str, db: Session = Depends(get_db)):
     """Confirm a payment"""
@@ -744,4 +633,4 @@ async def get_analytics_stats(db: Session = Depends(get_db)):
         "totalPools": total_pools,
         "activePools": active_pools,
         "totalParticipants": total_participants,
-        "totalRevenue": total_revenue
+        "totalRevenue": total_revenue    }

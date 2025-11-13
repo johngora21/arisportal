@@ -364,7 +364,7 @@ export const InvoicesTab: React.FC<InvoicesTabProps> = ({
           const whatsappLink = `https://wa.me/${phone}?text=${message}`;
           window.open(whatsappLink, '_blank');
           alert('📄 Invoice PDF downloaded. Please attach it to your WhatsApp message.');
-          handleCloseMessageModal();
+      handleCloseMessageModal();
         } else {
           alert(`Please select a valid ${selectedChannel === 'email' ? 'email address' : 'phone number'}`);
         }

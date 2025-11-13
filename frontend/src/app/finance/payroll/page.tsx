@@ -12,6 +12,7 @@ import {
   Briefcase,
   Shield
 } from 'lucide-react';
+import { useCurrency } from '../../../contexts/CurrencyContext';
 import { 
   BranchesTab, 
   DepartmentsTab, 
@@ -23,6 +24,7 @@ import {
 import { BranchService, DepartmentService, RoleService, StaffService, PayrollService } from './services/payrollService';
 
 export default function PayrollPage() {
+  const { formatCurrency } = useCurrency();
   const [activeTab, setActiveTab] = useState<'branches' | 'departments' | 'roles' | 'staff' | 'payroll'>('branches');
   const [searchQuery, setSearchQuery] = useState('');
   const [branchFilter, setBranchFilter] = useState<string>('all');
@@ -252,7 +254,7 @@ export default function PayrollPage() {
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Monthly Payroll</span>
             </div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              {loading ? '...' : `$${staff.filter(s => s.employment_status === 'active').reduce((sum, s) => sum + (s.total_package || 0), 0).toLocaleString()}`}
+              {loading ? '...' : formatCurrency(staff.filter(s => s.employment_status === 'active').reduce((sum, s) => sum + (s.total_package || 0), 0))}
             </div>
           </div>
 
@@ -262,7 +264,7 @@ export default function PayrollPage() {
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Total Tax</span>
             </div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              {loading ? '...' : `$${(() => {
+              {loading ? '...' : (() => {
                 const activeStaff = staff.filter(s => s.employment_status === 'active');
                 let totalPAYE = 0;
                 let totalSDL = 0;
@@ -333,8 +335,8 @@ export default function PayrollPage() {
                 // SDL only applies if company has at least 10 employees
                 const sdlAmount = activeStaff.length >= 10 ? (totalSDL * 0.035) : 0;
                 
-                return (totalPAYE + sdlAmount).toLocaleString();
-              })()}`}
+                return formatCurrency(totalPAYE + sdlAmount);
+              })()}
             </div>
           </div>
 
@@ -345,12 +347,12 @@ export default function PayrollPage() {
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>SDL</span>
             </div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              {loading ? '...' : `$${(() => {
+              {loading ? '...' : (() => {
                 const activeStaff = staff.filter(s => s.employment_status === 'active');
                 const totalGross = activeStaff.reduce((sum, s) => sum + (s.total_package || 0), 0);
                 const sdlAmount = activeStaff.length >= 10 ? (totalGross * 0.035) : 0;
-                return sdlAmount.toLocaleString();
-              })()}`}
+                return formatCurrency(sdlAmount);
+              })()}
             </div>
           </div>
 
@@ -361,7 +363,7 @@ export default function PayrollPage() {
               <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>PAYE</span>
             </div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937' }}>
-              {loading ? '...' : `$${(() => {
+              {loading ? '...' : (() => {
                 const activeStaff = staff.filter(s => s.employment_status === 'active');
                 let totalPAYE = 0;
                 
@@ -420,8 +422,8 @@ export default function PayrollPage() {
                   }
                 });
                 
-                return totalPAYE.toLocaleString();
-              })()}`}
+                return formatCurrency(totalPAYE);
+              })()}
             </div>
           </div>
         </div>
@@ -560,6 +562,7 @@ interface ProcessPayrollModalProps {
 }
 
 const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClose, branches }) => {
+  const { formatCurrency } = useCurrency();
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('');
   const [payrollData, setPayrollData] = useState<any[]>([]);
@@ -626,7 +629,10 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
     
     try {
       const branchId = selectedBranch ? parseInt(selectedBranch) : undefined;
-      const response = await PayrollService.generatePayrollPayment(selectedMonth, branchId);
+      // Get EXACT values from processed payroll display (same values frontend calculated)
+      const totalNetSalary = payrollData.reduce((sum, emp) => sum + (emp.net_salary || 0), 0);
+      const totalEmployees = payrollSummary?.total_employees || payrollData.length;
+      const response = await PayrollService.generatePayrollPayment(selectedMonth, totalNetSalary, totalEmployees, branchId);
       
       if (response.success) {
         setControlNumber(response.billpay_control_number);
@@ -798,25 +804,25 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
               </div>
               <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#10b981' }}>
-                  {payrollData.reduce((sum, emp) => sum + (emp.gross_salary || 0), 0).toLocaleString()}
+                  {formatCurrency(payrollData.reduce((sum, emp) => sum + (emp.gross_salary || 0), 0))}
                 </div>
                 <div style={{ fontSize: '12px', color: '#6b7280' }}>Total Gross Salary</div>
               </div>
               <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#dc2626' }}>
-                  {payrollData.reduce((sum, emp) => sum + (emp.deductions || 0), 0).toLocaleString()}
+                  {formatCurrency(payrollData.reduce((sum, emp) => sum + (emp.deductions || 0), 0))}
                 </div>
                 <div style={{ fontSize: '12px', color: '#6b7280' }}>Total Deductions</div>
               </div>
               <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#10b981' }}>
-                  {payrollData.reduce((sum, emp) => sum + (emp.allowances || 0), 0).toLocaleString()}
+                  {formatCurrency(payrollData.reduce((sum, emp) => sum + (emp.allowances || 0), 0))}
                 </div>
                 <div style={{ fontSize: '12px', color: '#6b7280' }}>Total Allowances</div>
               </div>
               <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#2563eb' }}>
-                  {payrollData.reduce((sum, emp) => sum + (emp.net_salary || 0), 0).toLocaleString()}
+                  {formatCurrency(payrollData.reduce((sum, emp) => sum + (emp.net_salary || 0), 0))}
                 </div>
                 <div style={{ fontSize: '12px', color: '#6b7280' }}>Total Net Salary</div>
               </div>
@@ -841,19 +847,19 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
                       <tr key={employee.id} style={{ borderTop: '1px solid #e5e7eb' }}>
                         <td style={{ padding: '12px', fontSize: '14px', color: '#1f2937' }}>{employee.name}</td>
                         <td style={{ padding: '12px', textAlign: 'right', fontSize: '14px', color: '#1f2937' }}>
-                          {employee.basic_salary?.toLocaleString() || '0'}
+                          {formatCurrency(employee.basic_salary || 0)}
                         </td>
                         <td style={{ padding: '12px', textAlign: 'right', fontSize: '14px', color: '#10b981' }}>
-                          {employee.allowances?.toLocaleString() || '0'}
+                          {formatCurrency(employee.allowances || 0)}
                         </td>
                         <td style={{ padding: '12px', textAlign: 'right', fontSize: '14px', color: '#1f2937', fontWeight: '600' }}>
-                          {employee.gross_salary?.toLocaleString() || '0'}
+                          {formatCurrency(employee.gross_salary || 0)}
                         </td>
                         <td style={{ padding: '12px', textAlign: 'right', fontSize: '14px', color: '#dc2626' }}>
-                          {employee.deductions?.toLocaleString() || '0'}
+                          {formatCurrency(employee.deductions || 0)}
                         </td>
                         <td style={{ padding: '12px', textAlign: 'right', fontSize: '14px', color: '#2563eb', fontWeight: '600' }}>
-                          {employee.net_salary?.toLocaleString() || '0'}
+                          {formatCurrency(employee.net_salary || 0)}
                         </td>
                       </tr>
                     ))}
@@ -865,57 +871,48 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
             {/* Payment Control Number Display */}
             {controlNumber && paymentDetails && (
               <div style={{
-                border: '2px solid #10b981',
+                border: '1px solid #e5e7eb',
                 borderRadius: '16px',
                 padding: '24px',
                 marginBottom: '24px',
-                backgroundColor: '#f0fdf4'
+                backgroundColor: 'white'
               }}>
                 <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
                   Payment Control Number Generated
                 </h4>
                 <div style={{ marginBottom: '12px' }}>
                   <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Control Number:</div>
-                  <div style={{ fontSize: '24px', fontWeight: '700', color: '#059669', fontFamily: 'monospace' }}>
+                  <div style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937', fontFamily: 'monospace' }}>
                     {controlNumber}
                   </div>
                 </div>
                 <div style={{ marginBottom: '12px' }}>
-                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Merchant Number:</div>
-                  <div style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', fontFamily: 'monospace' }}>
-                    {paymentDetails.billpay_namba}
-                  </div>
-                </div>
-                <div style={{ marginBottom: '12px' }}>
                   <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Total Amount to Pay:</div>
-                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937' }}>
-                    {paymentDetails.total_amount.toLocaleString()} TZS
+                  <div style={{ fontSize: '20px', fontWeight: '700', color: '#10b981' }}>
+                    {formatCurrency(paymentDetails.total_amount)}
                   </div>
                 </div>
                 <div style={{ 
-                  backgroundColor: 'white', 
+                  backgroundColor: '#f9fafb', 
                   padding: '12px', 
                   borderRadius: '8px',
                   fontSize: '12px',
                   color: '#374151',
                   marginTop: '12px'
                 }}>
-                  <strong>Breakdown:</strong><br />
-                  Net Salaries: {paymentDetails.total_net_salary.toLocaleString()} TZS<br />
-                  ClickPesa Fees: {paymentDetails.total_clickpesa_fees.toLocaleString()} TZS<br />
-                  Platform Fees (1%): {paymentDetails.total_platform_fees.toLocaleString()} TZS<br />
-                  Settlement Fees (1%): {paymentDetails.total_settlement_fees.toLocaleString()} TZS<br />
-                  <strong>Total: {paymentDetails.total_amount.toLocaleString()} TZS</strong>
+                  Net Salary: {formatCurrency(paymentDetails.total_net_salary)}<br />
+                  Total Fees: {formatCurrency(paymentDetails.total_amount - paymentDetails.total_net_salary)}<br />
+                  <strong style={{ color: '#10b981' }}>Total: {formatCurrency(paymentDetails.total_amount)}</strong>
                 </div>
                 <div style={{ 
                   marginTop: '16px',
                   padding: '12px',
-                  backgroundColor: '#dbeafe',
+                  backgroundColor: '#f9fafb',
                   borderRadius: '8px',
                   fontSize: '13px',
-                  color: '#1e40af'
+                  color: '#374151'
                 }}>
-                  <strong>Instructions:</strong> Use the control number {controlNumber} and merchant number {paymentDetails.billpay_namba} to pay via your preferred payment method (MNO, Bank, etc.). Once paid, employee salaries will be automatically distributed to their bank accounts.
+                  <strong>Instructions:</strong> Use the control number {controlNumber} to pay via your preferred payment method (MNO, Bank, etc.). Once paid, employee salaries will be automatically distributed to their bank accounts.
                 </div>
               </div>
             )}
@@ -938,26 +935,26 @@ const ProcessPayrollModal: React.FC<ProcessPayrollModalProps> = ({ isOpen, onClo
                 {controlNumber ? 'Close' : 'Cancel'}
               </button>
               {!controlNumber && (
-                <button
-                  onClick={handleMakePayment}
-                  disabled={isMakingPayment}
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: isMakingPayment ? '#d1d5db' : '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '20px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: isMakingPayment ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <DollarSign size={16} />
+              <button
+                onClick={handleMakePayment}
+                disabled={isMakingPayment}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: isMakingPayment ? '#d1d5db' : '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: isMakingPayment ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <DollarSign size={16} />
                   {isMakingPayment ? 'Generating Control Number...' : 'Pay'}
-                </button>
+              </button>
               )}
             </div>
           </div>
